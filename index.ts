@@ -57,6 +57,7 @@ program.command('compute')
                     ![...ignoredAddresses, vaultData.feesReceiver].includes(x.args.to) && ![...ignoredAddresses, vaultData.feesReceiver].includes(x.args.from)
                 ),
                 ...feesTransferts,
+                ...vaultData.totalAssetUpdateds,
                 ...vaultData.settleDeposits,
                 ...vaultData.settleRedeems,
             ].sort((a, b) => Number(a.blockNumber) - Number(b.blockNumber));
@@ -79,13 +80,21 @@ program.command('compute')
             let lastFeeComputationBlock = 0n;
             let firstFeeComputed = false;
             let lastFeeComputed = false;
+            let lastFees = 0n;
+
+            let lastEvent = []
 
             for (const event of events) {
                 if (lastFeeComputed) {
                     break;
                 }
 
+                lastEvent.push(event)
+
                 switch (event.eventName) {
+                    case "TotalAssetsUpdated":
+                        totalSupply += lastFees;
+                        break;
                     case "NewTotalAssetsUpdated":
                         for (const [address, deposited] of Object.entries(prePendingDeposits)) {
                             if (pendingDeposits[address]) {
@@ -179,6 +188,8 @@ program.command('compute')
                         const totalFees = event.args.value * PRECISION_SCALE;
                         let actualFeesDistribution: Record<Address, bigint> = {}
 
+                        lastFees = event.args.value;
+
                         for (const [address, {balance}] of Object.entries(sharesHolding)) {
                             actualFeesDistribution[address] = (balance * totalFees) / totalSupply;
                         }
@@ -192,6 +203,7 @@ program.command('compute')
                             console.log(`[${event.blockNumber}] INVALID FEES`, totalFees / PRECISION_SCALE, totalActualFeesDistribution / PRECISION_SCALE, (totalActualFeesDistribution / PRECISION_SCALE) - (totalFees / PRECISION_SCALE))
                             console.log(sharesHolding, actualFeesDistribution)
 
+                            console.log(lastEvent, lastEvent.map(x => x.eventName))
                             throw new Error(`Invalid fees computed. Expected ${totalFees / PRECISION_SCALE}, Received : ${totalActualFeesDistribution / PRECISION_SCALE}`)
                         }
 
@@ -219,6 +231,7 @@ program.command('compute')
                             }
                         }
                         lastFeeComputationBlock = event.blockNumber;
+                        lastEvent = [];
                         break;
                     case "Transfer":
                         sharesHolding[event.args.from].balance -= event.args.value;

@@ -31,6 +31,7 @@ export const fetchVault = async ({
     }
 
     const [
+        totalAssetUpdateds,
         decimals,
         roles,
         silo,
@@ -44,6 +45,11 @@ export const fetchVault = async ({
         withdraws,
         newTotalAssetUpdateds,
     ] = await Promise.all([
+        client.getLogs({
+            address: address,
+            event: parseAbiItem(events.TotalAssetsUpdated),
+            fromBlock: 0,
+        }),
         client.readContract({
             address,
             abi: VAULT_ABI,
@@ -107,6 +113,7 @@ export const fetchVault = async ({
     ])
 
     return {
+        totalAssetUpdateds,
         decimals,
         feesReceiver: roles.feeReceiver,
         silo,
