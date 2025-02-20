@@ -20,7 +20,8 @@ const events = {
 export const fetchVault = async ({
                                      chainId,
                                      address,
-                                 }: { chainId: number, address: Address
+                                 }: {
+    chainId: number, address: Address
 }) => {
 
     const client = publicClient[chainId];
@@ -30,6 +31,7 @@ export const fetchVault = async ({
     }
 
     const [
+        decimals,
         roles,
         silo,
         transfers,
@@ -45,72 +47,67 @@ export const fetchVault = async ({
         client.readContract({
             address,
             abi: VAULT_ABI,
+            functionName: 'decimals',
+        }),
+        client.readContract({
+            address,
+            abi: VAULT_ABI,
             functionName: 'getRolesStorage',
-            
         }),
         client.readContract({
             address,
             abi: VAULT_ABI,
             functionName: 'pendingSilo',
-            
         }),
         client.getLogs({
             address: address,
             event: parseAbiItem(events.Transfer),
             fromBlock: 0,
-            
         }),
         client.getLogs({
             address: address,
             event: parseAbiItem(events.DepositRequest),
             fromBlock: 0,
-            
         }),
         client.getLogs({
             address: address,
             event: parseAbiItem(events.CancelDeposit),
             fromBlock: 0,
-            
         }),
         client.getLogs({
             address: address,
             event: parseAbiItem(events.SettleDeposit),
             fromBlock: 0,
-            
         }),
         client.getLogs({
             address: address,
             event: parseAbiItem(events.RedeemRequest),
             fromBlock: 0,
-            
         }),
         client.getLogs({
             address: address,
             event: parseAbiItem(events.SettleRedeem),
             fromBlock: 0,
-            
         }),
         client.getLogs({
             address: address,
             event: parseAbiItem(events.Deposit),
             fromBlock: 0,
-            
         }),
         client.getLogs({
             address: address,
             event: parseAbiItem(events.Withdraw),
             fromBlock: 0,
-            
         }),
         client.getLogs({
             address: address,
             event: parseAbiItem(events.NewTotalAssetsUpdated),
             fromBlock: 0,
-            
         }),
     ])
 
     return {
+        decimals,
         feesReceiver: roles.feeReceiver,
         silo,
         transfers,

@@ -2,11 +2,9 @@ import {Command} from 'commander';
 import {parseArguments} from "./utils/parseArguments";
 import {fetchVault} from "./utils/fetchVault";
 import {Address, zeroAddress} from "viem";
-import {getTotalSupply} from "./utils/getTotalSupply";
 import {PRECISION_SCALE} from "./constants";
-import {VAULT_ABI} from "./VaultABI";
-import {publicClient} from "./lib/publicClient";
 import {convertToCSV} from "./utils/convertToCSV";
+import * as fs from "node:fs";
 
 const program = new Command();
 
@@ -20,10 +18,12 @@ program.command('compute')
     .argument('<ChainId:VaultAddress...>', "")
     .option('-f, --firstBlock <number>', 'First block to be used in computation')
     .option('-l, --lastBlock <number>', 'Last block to be used in computation')
+    .option('-r, --readable', 'File to export the CSV')
+    .option('-o, --output <string>', 'File to export the CSV')
+    // -od --otp-deal => Cashback column
+
     .action(async (args, options) => {
         const vaults = parseArguments(args)
-        // const firstBlock = options.firstBlock && !Number.isNaN(options.firstBlock) ? Number(options.firstBlock) : 0;
-        //const lastBlock =  !Number.isNaN(options.lastBlock) ? Number(options.lastBlock) : undefined;
 
         const results = []
 
@@ -45,10 +45,6 @@ program.command('compute')
                     balance: 0n,
                     fees: 0n,
                 },
-                "0xE0E382853D20b187624D3AC64538b5826d3f55F9": {
-                    balance: 0n,
-                    fees: 0n,
-                }
             };
 
             const events = [
@@ -72,6 +68,7 @@ program.command('compute')
   Events : ${events.length}\n\n`)
 
             let totalSupply = 0n;
+            let totalAssets = 0n;
 
             let prePendingDeposits: Record<Address, bigint> = {}
             let prePendingRedeems: Record<Address, bigint> = {}
@@ -81,15 +78,15 @@ program.command('compute')
 
             let lastFeeComputationBlock = 0n;
             let firstFeeComputed = false;
+            let lastFeeComputed = false;
 
             for (const event of events) {
-                if (BigInt(event.blockNumber) > options.lastBlock) {
+                if (lastFeeComputed) {
                     break;
                 }
 
                 switch (event.eventName) {
                     case "NewTotalAssetsUpdated":
-                        /// console.log(prePendingDeposits)
                         for (const [address, deposited] of Object.entries(prePendingDeposits)) {
                             if (pendingDeposits[address]) {
                                 pendingDeposits[address] += deposited;
@@ -142,13 +139,20 @@ program.command('compute')
                         }
                         break;
                     case "SettleDeposit":
-                        const {sharesMinted, assetsDeposited, totalSupply: newTotalSupply}: {
+                        const {
+                            sharesMinted,
+                            assetsDeposited,
+                            totalSupply: newTotalSupply,
+                            totalAssets: newTotalAssets
+                        }: {
                             sharesMinted: bigint,
                             assetsDeposited: bigint,
-                            totalSupply: bigint
+                            totalSupply: bigint,
+                            totalAssets: bigint
                         } = event.args;
 
                         totalSupply = newTotalSupply;
+                        totalAssets = newTotalAssets;
 
                         for (const [address, deposited] of Object.entries(pendingDeposits)) {
                             if (sharesHolding[address]) {
@@ -161,10 +165,10 @@ program.command('compute')
                             }
                         }
                         pendingDeposits = {}
-
                         break;
                     case "SettleRedeem":
                         totalSupply = event.args.totalSupply;
+                        totalAssets = event.args.totalAssets;
 
                         for (const [address, redeemed] of Object.entries(pendingRedeems)) {
                             sharesHolding[address].balance -= redeemed;
@@ -186,29 +190,35 @@ program.command('compute')
 
                         if (totalFees / PRECISION_SCALE !== totalActualFeesDistribution / PRECISION_SCALE && totalFees / PRECISION_SCALE !== (totalActualFeesDistribution / PRECISION_SCALE) + 1n) {
                             console.log(`[${event.blockNumber}] INVALID FEES`, totalFees / PRECISION_SCALE, totalActualFeesDistribution / PRECISION_SCALE, (totalActualFeesDistribution / PRECISION_SCALE) - (totalFees / PRECISION_SCALE))
+                            console.log(sharesHolding, actualFeesDistribution)
 
                             throw new Error(`Invalid fees computed. Expected ${totalFees / PRECISION_SCALE}, Received : ${totalActualFeesDistribution / PRECISION_SCALE}`)
                         }
 
                         sharesHolding[vaultData.feesReceiver].balance += event.args.value
+
                         if (event.blockNumber < options.firstBlock) {
                             break;
                         }
 
-                        if (!firstFeeComputed) {
+                        if (!firstFeeComputed && options.firstBlock) {
                             firstFeeComputed = true;
 
                             for (const [address, fees] of Object.entries(actualFeesDistribution)) {
                                 sharesHolding[address].fees += (fees * (lastFeeComputationBlock / event.blockNumber) / PRECISION_SCALE);
+                            }
+                        } else if (event.blockNumber > options.lastBlock) {
+                            lastFeeComputed = true;
+
+                            for (const [address, fees] of Object.entries(actualFeesDistribution)) {
+                                sharesHolding[address].fees += (fees * (event.blockNumber - lastFeeComputationBlock) / PRECISION_SCALE);
                             }
                         } else {
                             for (const [address, fees] of Object.entries(actualFeesDistribution)) {
                                 sharesHolding[address].fees += (fees / PRECISION_SCALE);
                             }
                         }
-
                         lastFeeComputationBlock = event.blockNumber;
-
                         break;
                     case "Transfer":
                         sharesHolding[event.args.from].balance -= event.args.value;
@@ -226,14 +236,45 @@ program.command('compute')
                 }
             }
 
+            const pricePerShare = (10n ** 18n) * totalAssets / totalSupply
+
             results.push({
                 chainId: vault.chainId,
                 address: vault.address,
-                data: sharesHolding
+                pricePerShare: options.readable ? Number(pricePerShare) / 10 ** vaultData.decimals : pricePerShare,
+                data: options.readable ?
+                    Object.fromEntries(
+                        Object.entries(sharesHolding).map(([address, values]) => [
+                            address,
+                            {
+                                balance: Number(values.balance) / 10 ** vaultData.decimals,
+                                fees: Number(values.fees) / 10 ** vaultData.decimals
+                            }
+                        ])
+                    ) :
+                    sharesHolding
             })
+            console.log(totalSupply, totalAssets);
 
         }
-            console.log(convertToCSV(results))
+        const csv = convertToCSV(results);
+
+        if (options.output) {
+            fs.writeFile(
+                options.output,
+                csv,
+                {
+                    encoding: "utf8",
+                    flag: "w",
+                    mode: 0o666
+                },
+                (err) => {
+                    if (err) console.log(err);
+                }
+            );
+        } else {
+            console.log(csv)
+        }
     });
 
 program.parse();
