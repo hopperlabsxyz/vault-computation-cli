@@ -1,0 +1,21 @@
+{
+  "name": "fees-computation-cli",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "compute": "ts-node index.ts compute"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^18",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "commander": "^13.1.0",
+    "viem": "^2.23.2"
+  }
+}

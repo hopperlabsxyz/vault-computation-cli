@@ -1,0 +1,16 @@
+export const convertToCSV = (vaults: {
+    chainId: bigint,
+    address: string,
+    data: Record<string, { balance: bigint, fees: bigint }>
+}[]) => {
+    const csvRows = [
+        "chainId,vault,wallet,balance,fees", // CSV header
+        ...vaults.flatMap((vault) =>
+            Object.entries(vault.data).map(([address, { balance, fees }]) =>
+                `${vault.chainId.toString()},${vault.address},${address},${balance.toString()},${fees.toString()}`
+            )
+        )
+    ];
+
+    return csvRows.join("\n");
+};
