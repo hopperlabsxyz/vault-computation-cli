@@ -12,17 +12,23 @@ program
     .name('fees-computation-cli')
     .description('CLI to compute fees generated from LagoonProtocol')
     .version('0.0.1');
-
-program.command('compute')
+    
+const computeCommand = program.command('compute')
     .description('Compute fees for a given vault')
     .argument('<ChainId:VaultAddress...>', "")
     .option('-f, --firstBlock <number>', 'First block to be used in computation')
     .option('-l, --lastBlock <number>', 'Last block to be used in computation')
     .option('-r, --readable', 'File to export the CSV')
     .option('-o, --output <string>', 'File to export the CSV')
+    .option('-h, --help', 'Display help for compute command')
     // -od --otp-deal => Cashback column
 
     .action(async (args, options) => {
+        if (options.help) {
+            computeCommand.help();
+            return;
+        }
+
         const vaults = parseArguments(args)
 
         const results = []
