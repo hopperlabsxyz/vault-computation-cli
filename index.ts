@@ -15,7 +15,7 @@ program
     
 const computeCommand = program.command('compute')
     .description('Compute fees for a given vault')
-    .argument('<ChainId:VaultAddress...>', "")
+    .argument('[ChainId:VaultAddress...]', "")
     .option('-f, --firstBlock <number>', 'First block to be used in computation')
     .option('-l, --lastBlock <number>', 'Last block to be used in computation')
     .option('-r, --readable', 'File to export the CSV')
