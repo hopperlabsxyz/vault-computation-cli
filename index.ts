@@ -53,7 +53,9 @@ const computeCommand = program.command('compute')
                 },
             };
 
-            const events = [
+
+            let events = [];
+            events = [
                 ...vaultData.newTotalAssetUpdateds,
                 ...vaultData.depositRequests,
                 ...vaultData.cancelDeposits,
@@ -240,6 +242,9 @@ const computeCommand = program.command('compute')
                         lastEvent = [];
                         break;
                     case "Transfer":
+                        if (!sharesHolding[event.args.from]) {
+                            break;
+                        }
                         sharesHolding[event.args.from].balance -= event.args.value;
                         if (sharesHolding[event.args.to]) {
                             sharesHolding[event.args.to].balance += event.args.value;
