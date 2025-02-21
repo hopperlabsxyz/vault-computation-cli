@@ -102,6 +102,7 @@ const computeCommand = program.command('compute')
                 switch (event.eventName) {
                     case "TotalAssetsUpdated":
                         totalSupply += lastFees;
+                        totalAssets = event.args.totalAssets;
                         break;
                     case "NewTotalAssetsUpdated":
                         for (const [address, deposited] of Object.entries(prePendingDeposits)) {
@@ -278,7 +279,7 @@ const computeCommand = program.command('compute')
                     ) :
                     sharesHolding
             })
-            console.log(totalSupply, totalAssets);
+            //console.log(totalSupply, totalAssets);
 
         }
         const csv = convertToCSV(results);
