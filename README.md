@@ -78,7 +78,12 @@ The `index.ts` file defines the following command options:
 - `-o, --output <string>`: Specifies the file path to export the CSV.
 
 ### Example
-Example usage:
+Example for all the lifetime of the Vault:
+```sh
+pnpm compute 1:0x07ed467acd4ffd13023046968b0859781cb90d9b
+```
+
+Example usage with all parameters:
 ```sh
 pnpm compute 1:0x07ed467acd4ffd13023046968b0859781cb90d9b --firstBlock 1000000 --lastBlock 2000000 --readable --output fees.csv
 ```
