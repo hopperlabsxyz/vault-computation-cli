@@ -12,17 +12,23 @@ program
     .name('fees-computation-cli')
     .description('CLI to compute fees generated from LagoonProtocol')
     .version('0.0.1');
-
-program.command('compute')
+    
+const computeCommand = program.command('compute')
     .description('Compute fees for a given vault')
-    .argument('<ChainId:VaultAddress...>', "")
+    .argument('[ChainId:VaultAddress...]', "")
     .option('-f, --firstBlock <number>', 'First block to be used in computation')
     .option('-l, --lastBlock <number>', 'Last block to be used in computation')
     .option('-r, --readable', 'File to export the CSV')
     .option('-o, --output <string>', 'File to export the CSV')
+    .option('-h, --help', 'Display help for compute command')
     // -od --otp-deal => Cashback column
 
     .action(async (args, options) => {
+        if (options.help) {
+            computeCommand.help();
+            return;
+        }
+
         const vaults = parseArguments(args)
 
         const results = []
@@ -30,12 +36,12 @@ program.command('compute')
         for (const vault of vaults) {
             console.log(`Loading vault ${vault.address} on chain ${vault.chainId}`);
             const vaultData = await fetchVault(vault);
-            const ignoredAddresses = [vault.address, vaultData.silo, zeroAddress]
+            const ignoredAddresses = [vault.address, vaultData.silo, zeroAddress];
 
             const feesTransferts = vaultData.transfers.filter(x => x.args.to === vaultData.feesReceiver).map(x => ({
                 ...x,
                 eventName: "feeTransfer"
-            }))
+            }));
 
             const sharesHolding: Record<Address, {
                 balance: bigint,
@@ -47,7 +53,9 @@ program.command('compute')
                 },
             };
 
-            const events = [
+            
+            let events = [];
+            events = [
                 ...vaultData.newTotalAssetUpdateds,
                 ...vaultData.depositRequests,
                 ...vaultData.cancelDeposits,
@@ -62,38 +70,38 @@ program.command('compute')
                 ...vaultData.settleRedeems,
             ].sort((a, b) => Number(a.blockNumber) - Number(b.blockNumber));
 
-
             console.log(`Data :
   Silo : ${vaultData.silo}
   Fees receiver : ${vaultData.feesReceiver}
-  Events : ${events.length}\n\n`)
+  Events : ${events.length}\n\n`);
 
             let totalSupply = 0n;
             let totalAssets = 0n;
 
-            let prePendingDeposits: Record<Address, bigint> = {}
-            let prePendingRedeems: Record<Address, bigint> = {}
+            let prePendingDeposits: Record<Address, bigint> = {};
+            let prePendingRedeems: Record<Address, bigint> = {};
 
-            let pendingDeposits: Record<Address, bigint> = {}
-            let pendingRedeems: Record<Address, bigint> = {}
+            let pendingDeposits: Record<Address, bigint> = {};
+            let pendingRedeems: Record<Address, bigint> = {};
 
             let lastFeeComputationBlock = 0n;
             let firstFeeComputed = false;
             let lastFeeComputed = false;
             let lastFees = 0n;
 
-            let lastEvent = []
+            let lastEvent = [];
 
             for (const event of events) {
                 if (lastFeeComputed) {
                     break;
                 }
 
-                lastEvent.push(event)
+                lastEvent.push(event);
 
                 switch (event.eventName) {
                     case "TotalAssetsUpdated":
                         totalSupply += lastFees;
+                        totalAssets = event.args.totalAssets;
                         break;
                     case "NewTotalAssetsUpdated":
                         for (const [address, deposited] of Object.entries(prePendingDeposits)) {
@@ -112,18 +120,18 @@ program.command('compute')
                             }
                         }
 
-                        prePendingDeposits = {}
-                        prePendingRedeems = {}
+                        prePendingDeposits = {};
+                        prePendingRedeems = {};
                         break;
                     case "Deposit":
-                        const {controller, receiver, shares} = event.args;
+                        const { controller, receiver, shares } = event.args;
                         if (controller !== receiver) {
-                            sharesHolding[receiver].balance -= shares
+                            sharesHolding[receiver].balance -= shares;
 
                             if (sharesHolding[controller]) {
-                                sharesHolding[controller] += shares
+                                sharesHolding[controller] += shares;
                             } else {
-                                sharesHolding[controller] = shares
+                                sharesHolding[controller] = shares;
                             }
                         }
                         break;
@@ -131,20 +139,20 @@ program.command('compute')
                         const depositUser = event.args.controller;
 
                         if (prePendingDeposits[depositUser]) {
-                            prePendingDeposits[depositUser] += event.args.assets
+                            prePendingDeposits[depositUser] += event.args.assets;
                         } else {
-                            prePendingDeposits[depositUser] = event.args.assets
+                            prePendingDeposits[depositUser] = event.args.assets;
                         }
                         break;
                     case "DepositRequestCanceled":
-                        prePendingDeposits[event.args.controller] = 0n
+                        prePendingDeposits[event.args.controller] = 0n;
                         break;
                     case "RedeemRequest":
                         const redeemUser = event.args.owner;
                         if (prePendingRedeems[redeemUser]) {
-                            prePendingRedeems[redeemUser] += event.args.shares
+                            prePendingRedeems[redeemUser] += event.args.shares;
                         } else {
-                            prePendingRedeems[redeemUser] = event.args.shares
+                            prePendingRedeems[redeemUser] = event.args.shares;
                         }
                         break;
                     case "SettleDeposit":
@@ -170,44 +178,46 @@ program.command('compute')
                                 sharesHolding[address] = {
                                     balance: deposited * sharesMinted / assetsDeposited,
                                     fees: 0n
-                                }
+                                };
                             }
                         }
-                        pendingDeposits = {}
+                        pendingDeposits = {};
                         break;
                     case "SettleRedeem":
                         totalSupply = event.args.totalSupply;
                         totalAssets = event.args.totalAssets;
 
                         for (const [address, redeemed] of Object.entries(pendingRedeems)) {
-                            sharesHolding[address].balance -= redeemed;
+                            if (sharesHolding[address]) {
+                                sharesHolding[address].balance -= redeemed;
+                            }
                         }
-                        pendingRedeems = {}
+                        pendingRedeems = {};
                         break;
                     case "feeTransfer":
                         const totalFees = event.args.value * PRECISION_SCALE;
-                        let actualFeesDistribution: Record<Address, bigint> = {}
+                        let actualFeesDistribution: Record<Address, bigint> = {};
 
                         lastFees = event.args.value;
 
-                        for (const [address, {balance}] of Object.entries(sharesHolding)) {
+                        for (const [address, { balance }] of Object.entries(sharesHolding)) {
                             actualFeesDistribution[address] = (balance * totalFees) / totalSupply;
                         }
 
                         const totalActualFeesDistribution = Object.values(actualFeesDistribution)
                             .reduce((acc, curr) =>
-                                    acc + curr
-                                , 0n)
+                                acc + curr
+                                , 0n);
 
                         if (totalFees / PRECISION_SCALE !== totalActualFeesDistribution / PRECISION_SCALE && totalFees / PRECISION_SCALE !== (totalActualFeesDistribution / PRECISION_SCALE) + 1n) {
-                            console.log(`[${event.blockNumber}] INVALID FEES`, totalFees / PRECISION_SCALE, totalActualFeesDistribution / PRECISION_SCALE, (totalActualFeesDistribution / PRECISION_SCALE) - (totalFees / PRECISION_SCALE))
-                            console.log(sharesHolding, actualFeesDistribution)
+                            console.log(`[${event.blockNumber}] INVALID FEES`, totalFees / PRECISION_SCALE, totalActualFeesDistribution / PRECISION_SCALE, (totalActualFeesDistribution / PRECISION_SCALE) - (totalFees / PRECISION_SCALE));
+                            console.log(sharesHolding, actualFeesDistribution);
 
-                            console.log(lastEvent, lastEvent.map(x => x.eventName))
-                            throw new Error(`Invalid fees computed. Expected ${totalFees / PRECISION_SCALE}, Received : ${totalActualFeesDistribution / PRECISION_SCALE}`)
+                            console.log(lastEvent, lastEvent.map(x => x.eventName));
+                            throw new Error(`Invalid fees computed. Expected ${totalFees / PRECISION_SCALE}, Received : ${totalActualFeesDistribution / PRECISION_SCALE}`);
                         }
 
-                        sharesHolding[vaultData.feesReceiver].balance += event.args.value
+                        sharesHolding[vaultData.feesReceiver].balance += event.args.value;
 
                         if (event.blockNumber < options.firstBlock) {
                             break;
@@ -234,6 +244,9 @@ program.command('compute')
                         lastEvent = [];
                         break;
                     case "Transfer":
+                        if (!sharesHolding[event.args.from]) {
+                            break;
+                        }
                         sharesHolding[event.args.from].balance -= event.args.value;
                         if (sharesHolding[event.args.to]) {
                             sharesHolding[event.args.to].balance += event.args.value;
@@ -245,7 +258,7 @@ program.command('compute')
                         }
                         break;
                     default:
-                        throw new Error(`Unknown event ${event.eventName} : ${event}`)
+                        throw new Error(`Unknown event ${event.eventName} : ${event}`);
                 }
             }
 
@@ -266,10 +279,10 @@ program.command('compute')
                         ])
                     ) :
                     sharesHolding
-            })
+            });
             console.log(totalSupply, totalAssets);
-
         }
+
         const csv = convertToCSV(results);
 
         if (options.output) {
@@ -286,7 +299,7 @@ program.command('compute')
                 }
             );
         } else {
-            console.log(csv)
+            console.log(csv);
         }
     });
 
