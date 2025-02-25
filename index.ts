@@ -219,7 +219,8 @@ const computeCommand = program.command('compute')
 
                         sharesHolding[vaultData.feesReceiver].balance += event.args.value;
 
-                        if (event.blockNumber < options.firstBlock) {
+
+                        if (event.blockNumber < options.firstBlock || lastFeeComputed) {
                             break;
                         }
 
@@ -229,11 +230,11 @@ const computeCommand = program.command('compute')
                             for (const [address, fees] of Object.entries(actualFeesDistribution)) {
                                 sharesHolding[address].fees += (fees * (lastFeeComputationBlock / event.blockNumber) / PRECISION_SCALE);
                             }
-                        } else if (event.blockNumber > options.lastBlock) {
+                        } else if (event.blockNumber >= options.lastBlock) {
                             lastFeeComputed = true;
 
                             for (const [address, fees] of Object.entries(actualFeesDistribution)) {
-                                sharesHolding[address].fees += (fees * (event.blockNumber - lastFeeComputationBlock) / PRECISION_SCALE);
+                                sharesHolding[address].fees += (fees * ((event.blockNumber - lastFeeComputationBlock) / event.blockNumber) / PRECISION_SCALE);
                             }
                         } else {
                             for (const [address, fees] of Object.entries(actualFeesDistribution)) {
@@ -280,7 +281,6 @@ const computeCommand = program.command('compute')
                     ) :
                     sharesHolding
             });
-            console.log(totalSupply, totalAssets);
         }
 
         const csv = convertToCSV(results);
