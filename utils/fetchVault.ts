@@ -32,6 +32,7 @@ export const fetchVault = async ({
 
     const [
         totalAssetUpdateds,
+        fees,
         decimals,
         roles,
         silo,
@@ -49,6 +50,11 @@ export const fetchVault = async ({
             address: address,
             event: parseAbiItem(events.TotalAssetsUpdated),
             fromBlock: 0,
+        }),
+        client.readContract({
+            address,
+            abi: VAULT_ABI,
+            functionName: 'feeRates',
         }),
         client.readContract({
             address,
@@ -114,6 +120,7 @@ export const fetchVault = async ({
 
     return {
         totalAssetUpdateds,
+        fees,
         decimals,
         feesReceiver: roles.feeReceiver,
         silo,
