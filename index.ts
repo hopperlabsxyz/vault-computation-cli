@@ -5,8 +5,6 @@ import {Address, zeroAddress} from "viem";
 import {PRECISION_SCALE} from "./constants";
 import {convertToCSV} from "./utils/convertToCSV";
 import * as fs from "node:fs";
-import {VAULT_ABI} from "./VaultABI";
-import {publicClient} from "./lib/publicClient";
 
 const program = new Command();
 
