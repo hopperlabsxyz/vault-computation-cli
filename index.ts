@@ -5,6 +5,8 @@ import {Address, zeroAddress} from "viem";
 import {PRECISION_SCALE} from "./constants";
 import {convertToCSV} from "./utils/convertToCSV";
 import * as fs from "node:fs";
+import {VAULT_ABI} from "./VaultABI";
+import {publicClient} from "./lib/publicClient";
 
 const program = new Command();
 
@@ -12,7 +14,7 @@ program
     .name('fees-computation-cli')
     .description('CLI to compute fees generated from LagoonProtocol')
     .version('0.0.1');
-    
+
 const computeCommand = program.command('compute')
     .description('Compute fees for a given vault')
     .argument('[ChainId:VaultAddress...]', "")
@@ -21,7 +23,6 @@ const computeCommand = program.command('compute')
     .option('-r, --readable', 'File to export the CSV')
     .option('-o, --output <string>', 'File to export the CSV')
     .option('-h, --help', 'Display help for compute command')
-    // -od --otp-deal => Cashback column
 
     .action(async (args, options) => {
         if (options.help) {
@@ -53,9 +54,8 @@ const computeCommand = program.command('compute')
                 },
             };
 
-            
-            let events = [];
-            events = [
+
+            const events = [
                 ...vaultData.newTotalAssetUpdateds,
                 ...vaultData.depositRequests,
                 ...vaultData.cancelDeposits,
@@ -89,14 +89,10 @@ const computeCommand = program.command('compute')
             let lastFeeComputed = false;
             let lastFees = 0n;
 
-            let lastEvent = [];
-
             for (const event of events) {
                 if (lastFeeComputed) {
                     break;
                 }
-
-                lastEvent.push(event);
 
                 switch (event.eventName) {
                     case "TotalAssetsUpdated":
@@ -124,7 +120,7 @@ const computeCommand = program.command('compute')
                         prePendingRedeems = {};
                         break;
                     case "Deposit":
-                        const { controller, receiver, shares } = event.args;
+                        const {controller, receiver, shares} = event.args;
                         if (controller !== receiver) {
                             sharesHolding[receiver].balance -= shares;
 
@@ -200,26 +196,25 @@ const computeCommand = program.command('compute')
 
                         lastFees = event.args.value;
 
-                        for (const [address, { balance }] of Object.entries(sharesHolding)) {
+                        for (const [address, {balance}] of Object.entries(sharesHolding)) {
                             actualFeesDistribution[address] = (balance * totalFees) / totalSupply;
                         }
 
                         const totalActualFeesDistribution = Object.values(actualFeesDistribution)
                             .reduce((acc, curr) =>
-                                acc + curr
+                                    acc + curr
                                 , 0n);
 
                         if (totalFees / PRECISION_SCALE !== totalActualFeesDistribution / PRECISION_SCALE && totalFees / PRECISION_SCALE !== (totalActualFeesDistribution / PRECISION_SCALE) + 1n) {
                             console.log(`[${event.blockNumber}] INVALID FEES`, totalFees / PRECISION_SCALE, totalActualFeesDistribution / PRECISION_SCALE, (totalActualFeesDistribution / PRECISION_SCALE) - (totalFees / PRECISION_SCALE));
                             console.log(sharesHolding, actualFeesDistribution);
 
-                            console.log(lastEvent, lastEvent.map(x => x.eventName));
                             throw new Error(`Invalid fees computed. Expected ${totalFees / PRECISION_SCALE}, Received : ${totalActualFeesDistribution / PRECISION_SCALE}`);
                         }
 
                         sharesHolding[vaultData.feesReceiver].balance += event.args.value;
 
-
+                        lastFeeComputationBlock = event.blockNumber;
                         if (event.blockNumber < options.firstBlock || lastFeeComputed) {
                             break;
                         }
@@ -242,7 +237,6 @@ const computeCommand = program.command('compute')
                             }
                         }
                         lastFeeComputationBlock = event.blockNumber;
-                        lastEvent = [];
                         break;
                     case "Transfer":
                         if (!sharesHolding[event.args.from]) {
