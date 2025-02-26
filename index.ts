@@ -53,7 +53,8 @@ const computeCommand = program.command('compute')
             };
 
 
-            const events = [
+            let events = [];
+            events = [
                 ...vaultData.newTotalAssetUpdateds,
                 ...vaultData.depositRequests,
                 ...vaultData.cancelDeposits,
