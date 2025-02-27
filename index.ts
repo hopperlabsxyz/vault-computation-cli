@@ -20,7 +20,7 @@ const computeCommand = program.command('compute')
     .option('-l, --lastBlock <number>', 'Last block to be used in computation')
     .option('-r, --readable', 'File to export the CSV')
     .option('-o, --output <string>', 'File to export the CSV')
-    .option('-d, --otp-deals <string>', 'Config file for OTP-deals')
+    .option('-d, --otc-deals <string>', 'Config file for OTC-deals')
     .option('-h, --help', 'Display help for compute command')
 
     .action(async (args, options) => {
@@ -31,18 +31,18 @@ const computeCommand = program.command('compute')
 
         const vaults = parseArguments(args)
 
-        let otpDeals: Record<number, Record<Address, Record<Address, bigint>>> = {}
+        let otcDeals: Record<number, Record<Address, Record<Address, bigint>>> = {}
 
-        if (options.otpDeals) {
-            const otpData = fs.readFileSync(options.otpDeals, { encoding: 'utf8', flag: 'r' }).split('\n');
+        if (options.otcDeals) {
+            const otpData = fs.readFileSync(options.otcDeals, { encoding: 'utf8', flag: 'r' }).split('\n');
 
             for (const entry of otpData.slice(1)) {
                 const [chainId, vaultAddress, otpAddress, otpDeal] = entry.replace(" ", "").split(',');
 
-                otpDeals[chainId] = {
-                    ...otpDeals?.[chainId],
+                otcDeals[chainId] = {
+                    ...otcDeals?.[chainId],
                     [vaultAddress]: {
-                        ...otpDeals?.[chainId]?.[vaultAddress],
+                        ...otcDeals?.[chainId]?.[vaultAddress],
                         [otpAddress]: BigInt(otpDeal)
                     }
                 };
@@ -281,8 +281,8 @@ const computeCommand = program.command('compute')
 
             const pricePerShare = (10n ** 18n) * totalAssets / totalSupply
 
-            if (otpDeals[vault.chainId] && otpDeals[vault.chainId][vault.address]) {
-                for (const [address, deal] of Object.entries(otpDeals[vault.chainId][vault.address])) {
+            if (otcDeals[vault.chainId] && otcDeals[vault.chainId][vault.address]) {
+                for (const [address, deal] of Object.entries(otcDeals[vault.chainId][vault.address])) {
                     let cashbackRate = BigInt(vaultData.fees.performanceRate) - deal;
                     sharesHolding[address].cashback = sharesHolding[address].fees * cashbackRate / BigInt(vaultData.fees.performanceRate);
                 }
@@ -307,7 +307,7 @@ const computeCommand = program.command('compute')
             });
         }
 
-        const csv = convertToCSV(results, {displayCashback: !!options.otpDeals});
+        const csv = convertToCSV(results, {displayCashback: !!options.otcDeals});
 
         if (options.output) {
             fs.writeFile(
