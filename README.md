@@ -58,6 +58,16 @@ The algorithm for calculating fees is as follows:
    pnpm install
    ```
 
+## Environment Setup
+
+Before running the CLI, you need to create a `.env` file in the root directory of the project. This file should contain your Alchemy API key.
+
+```sh
+ALCHEMY_KEY=your-alchemy-api-key
+```
+
+Replace `your-alchemy-api-key` with your actual Alchemy API key.
+
 ## Fees Calculation CLI Usage
 
 ### Description
