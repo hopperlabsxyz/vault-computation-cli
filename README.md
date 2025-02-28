@@ -109,6 +109,21 @@ Example for all the lifetime of the Vault:
 pnpm compute 1:0x07ed467acd4ffd13023046968b0859781cb90d9b
 ```
 
+Example usage with readable and output file parameters:
+```sh
+pnpm compute 1:0x07ed467acd4ffd13023046968b0859781cb90d9b -r -o fees.csv
+```
+
+Example usage with only last block, meaning it's start from the beginning and compute until lastblock parameters:
+```sh
+pnpm compute 1:0x07ed467acd4ffd13023046968b0859781cb90d9b --lastBlock 2000000 -o fees.csv
+```
+
+Example usage with otc deal file to apply cashback fees parameters:
+```sh
+pnpm compute 1:0x07ed467acd4ffd13023046968b0859781cb90d9b --otp-deals dealsExample.csv -o fees.csv
+```
+
 Example usage with all parameters:
 ```sh
 pnpm compute 1:0x07ed467acd4ffd13023046968b0859781cb90d9b --firstBlock 1000000 --lastBlock 2000000 --readable --output fees.csv --otp-deals dealsExample.csv
