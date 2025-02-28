@@ -1,14 +1,14 @@
 import {createPublicClient, fallback, http} from 'viem'
 import {mainnet} from 'viem/chains'
+import {config} from 'dotenv';
+
+config()
 
 export const publicClient = {
     [mainnet.id]: createPublicClient({
         chain: mainnet,
         transport: fallback([
-            http("https://rpc.ankr.com/eth"),
-            http("https://eth.drpc.org"),
-            http("https://rpc.mevblocker.io"),
-            http("https://eth.llamarpc.com"),
+            http(`https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_KEY}`),
         ]),
     })
 }

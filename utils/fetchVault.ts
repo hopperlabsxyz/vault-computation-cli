@@ -49,7 +49,7 @@ export const fetchVault = async ({
         client.getLogs({
             address: address,
             event: parseAbiItem(events.TotalAssetsUpdated),
-            fromBlock: 0,
+            fromBlock: "earliest",
         }),
         client.readContract({
             address,
@@ -74,47 +74,47 @@ export const fetchVault = async ({
         client.getLogs({
             address: address,
             event: parseAbiItem(events.Transfer),
-            fromBlock: 0,
+            fromBlock: "earliest",
         }),
         client.getLogs({
             address: address,
             event: parseAbiItem(events.DepositRequest),
-            fromBlock: 0,
+            fromBlock: "earliest",
         }),
         client.getLogs({
             address: address,
             event: parseAbiItem(events.CancelDeposit),
-            fromBlock: 0,
+            fromBlock: "earliest",
         }),
         client.getLogs({
             address: address,
             event: parseAbiItem(events.SettleDeposit),
-            fromBlock: 0,
+            fromBlock: "earliest",
         }),
         client.getLogs({
             address: address,
             event: parseAbiItem(events.RedeemRequest),
-            fromBlock: 0,
+            fromBlock: "earliest",
         }),
         client.getLogs({
             address: address,
             event: parseAbiItem(events.SettleRedeem),
-            fromBlock: 0,
+            fromBlock: "earliest",
         }),
         client.getLogs({
             address: address,
             event: parseAbiItem(events.Deposit),
-            fromBlock: 0,
+            fromBlock: "earliest",
         }),
         client.getLogs({
             address: address,
             event: parseAbiItem(events.Withdraw),
-            fromBlock: 0,
+            fromBlock: "earliest",
         }),
         client.getLogs({
             address: address,
             event: parseAbiItem(events.NewTotalAssetsUpdated),
-            fromBlock: 0,
+            fromBlock: "earliest",
         }),
     ])
 
