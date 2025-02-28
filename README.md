@@ -69,6 +69,21 @@ To run the command, enter the following in your terminal:
 pnpm compute <ChainId>:<VaultAddress>
 ```
 
+### Building the OTC Deals CSV File
+The OTC deals CSV file should contain the following columns:
+
+- `chainId`: The ID of the blockchain network.
+- `vaultAddress`: The address of the vault.
+- `wallet`: The address of the wallet.
+- `deal`: The deal percentage expressed in basis points (e.g., 8% should be expressed as 800).
+
+Example of a CSV file:
+```csv
+chainId,vaultAddress,wallet,deal
+1,0x07ed467acD4ffd13023046968b0859781cb90D9B,0x77acA7a5E3B67b8f36C1FdD7691eD85bbB54fB34,700
+1,0x07ed467acD4ffd13023046968b0859781cb90D9B,0xbA4E4A09450B4106bE9a4DF3d85dA3F4617e6531,1000
+```
+
 ### Command Options
 The `index.ts` file defines the following command options:
 
@@ -76,6 +91,7 @@ The `index.ts` file defines the following command options:
 - `-l, --lastBlock <number>`: Specifies the last block to be used in the computation.
 - `-r, --readable`: Displays values with decimals for better readability.
 - `-o, --output <string>`: Specifies the file path to export the CSV.
+- `-d, --otc-deals <string>`: Specifies the path to a configuration file for OTC deals. The amount of % is express in 10^2. For exemple, 8% is express 800 into the csv file.
 
 ### Example
 Example for all the lifetime of the Vault:
@@ -85,5 +101,5 @@ pnpm compute 1:0x07ed467acd4ffd13023046968b0859781cb90d9b
 
 Example usage with all parameters:
 ```sh
-pnpm compute 1:0x07ed467acd4ffd13023046968b0859781cb90d9b --firstBlock 1000000 --lastBlock 2000000 --readable --output fees.csv
+pnpm compute 1:0x07ed467acd4ffd13023046968b0859781cb90d9b --firstBlock 1000000 --lastBlock 2000000 --readable --output fees.csv --otp-deals dealsExample.csv
 ```
