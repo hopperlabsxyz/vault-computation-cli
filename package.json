@@ -4,19 +4,22 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "compute": "ts-node index.ts compute"
+    "compute": "bun index.ts compute"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@types/node": "^18",
-    "ts-node": "^10.9.2",
+    "@types/bun": "^1.2.4",
     "typescript": "^5.7.3"
   },
   "dependencies": {
+    "@commander-js/extra-typings": "^13.1.0",
+    "@graphql-codegen/cli": "^5.0.5",
     "commander": "^13.1.0",
-    "dotenv": "^16.4.7",
+    "env-var": "^7.5.0",
+    "graphql": "^16.10.0",
+    "graphql-request": "^7.1.2",
     "viem": "^2.23.2"
   }
 }
