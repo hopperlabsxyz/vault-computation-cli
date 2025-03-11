@@ -11,9 +11,12 @@ export function preprocessEvents({
   ignoredAddresses: Address[];
 }) {
   console.log(Object.keys(events));
-  // Add __typename to deposits
+
+  // Add __typename to deposits and convert relevant fields to BigInt
   events.deposits = events.deposits.map((e) => ({
     ...e,
+    assets: BigInt(e.assets),
+    shares: BigInt(e.shares),
     __typename: "Deposit",
   }));
 
@@ -23,48 +26,55 @@ export function preprocessEvents({
     __typename: "DepositRequestCanceled",
   }));
 
-  // Add __typename to depositRequests
+  // Add __typename to depositRequests and convert relevant fields to BigInt
   events.depositRequests = events.depositRequests.map((e) => ({
     ...e,
+    assets: BigInt(e.assets),
     __typename: "DepositRequest",
   }));
 
-  // Add __typename to redeemRequests
+  // Add __typename to redeemRequests and convert relevant fields to BigInt
   events.redeemRequests = events.redeemRequests.map((e) => ({
     ...e,
+    shares: BigInt(e.shares),
     __typename: "RedeemRequest",
   }));
 
-  // Add __typename to settleRedeems
+  // Add __typename to settleRedeems and convert relevant fields to BigInt
   events.settleRedeems = events.settleRedeems.map((e) => ({
     ...e,
+    assetsWithdrawed: BigInt(e.assetsWithdrawed),
+    sharesBurned: BigInt(e.sharesBurned),
+    totalAssets: BigInt(e.totalAssets),
+    totalSupply: BigInt(e.totalSupply),
     __typename: "SettleRedeem",
   }));
 
-  // Add __typename to settleDeposits
+  // Add __typename to settleDeposits and convert relevant fields to BigInt
   events.settleDeposits = events.settleDeposits.map((e) => ({
     ...e,
+    assetsDeposited: BigInt(e.assetsDeposited),
     sharesMinted: BigInt(e.sharesMinted),
     totalSupply: BigInt(e.totalSupply),
-
+    totalAssets: BigInt(e.totalAssets),
     __typename: "SettleDeposit",
   }));
 
-  // Add __typename to totalAssetsUpdateds
+  // Add __typename to totalAssetsUpdateds and convert relevant fields to BigInt
   events.totalAssetsUpdateds = events.totalAssetsUpdateds.map((e) => ({
     ...e,
     totalAssets: BigInt(e.totalAssets),
     __typename: "TotalAssetsUpdated",
   }));
 
-  // Add __typename to newTotalAssetsUpdateds
+  // Add __typename to newTotalAssetsUpdateds and convert relevant fields to BigInt
   events.newTotalAssetsUpdateds = events.newTotalAssetsUpdateds.map((e) => ({
     ...e,
     totalAssets: BigInt(e.totalAssets),
     __typename: "NewTotalAssetsUpdated",
   }));
 
-  // Add __typename to transfers
+  // Add __typename to transfers, filter ignored addresses, and convert relevant fields to BigInt
   events.transfers = events.transfers
     .filter(
       (x) =>
@@ -73,16 +83,20 @@ export function preprocessEvents({
     )
     .map((e) => ({
       ...e,
+      value: BigInt(e.value),
       __typename: "Transfer",
     }));
 
+  // Add __typename to feeTransfers and convert relevant fields to BigInt
   const feeTransfers = events.transfers
     .filter((t) => t.to === feeReceiver)
     .map((e) => ({
       ...e,
+      value: BigInt(e.value),
       __typename: "FeeTransfer",
     }));
 
+  // Combine all events and sort by blockNumber
   return [
     ...events.newTotalAssetsUpdateds,
     ...events.depositRequests,

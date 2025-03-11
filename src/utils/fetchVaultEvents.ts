@@ -5,23 +5,48 @@ import { graphql } from "gql";
 
 import type { Address } from "viem";
 
-export async function fetchVaultEvents(
-  chainId: number,
-  vaultAddress: Address
-): Promise<VaultEventsQuery> {
+export async function fetchVaultEvents({
+  chainId,
+  vaultAddress,
+  fromBlock,
+  toBlock,
+  skip,
+  first,
+}: {
+  chainId: number;
+  vaultAddress: Address;
+  fromBlock: bigint;
+  toBlock: bigint;
+  skip: number;
+  first: number;
+}): Promise<VaultEventsQuery> {
   return request(SUBGRAPHS[chainId], query, {
-    first: 1000,
+    first,
     vaultAddress,
+    fromBlock: fromBlock.toString(),
+    toBlock: toBlock.toString(),
+    skip,
   });
 }
 
 export const query = graphql(`
-  query VaultEvents($first: Int!, $vaultAddress: Bytes!) {
+  query VaultEvents(
+    $first: Int!
+    $vaultAddress: Bytes!
+    $fromBlock: BigInt!
+    $toBlock: BigInt!
+    $skip: Int!
+  ) {
     depositRequests(
       first: $first
+      skip: $skip
       orderBy: blockTimestamp
       orderDirection: desc
-      where: { vault: $vaultAddress }
+      where: {
+        vault: $vaultAddress
+        blockNumber_gte: $fromBlock
+        blockNumber_lt: $toBlock
+      }
     ) {
       assets
       blockNumber
@@ -36,9 +61,14 @@ export const query = graphql(`
     }
     redeemRequests(
       first: $first
+      skip: $skip
       orderBy: blockTimestamp
       orderDirection: desc
-      where: { vault: $vaultAddress }
+      where: {
+        vault: $vaultAddress
+        blockNumber_gte: $fromBlock
+        blockNumber_lt: $toBlock
+      }
     ) {
       blockNumber
       blockTimestamp
@@ -53,9 +83,14 @@ export const query = graphql(`
     }
     settleRedeems(
       first: $first
+      skip: $skip
       orderBy: blockTimestamp
       orderDirection: desc
-      where: { vault: $vaultAddress }
+      where: {
+        vault: $vaultAddress
+        blockNumber_gte: $fromBlock
+        blockNumber_lt: $toBlock
+      }
     ) {
       assetsWithdrawed
       blockNumber
@@ -71,9 +106,14 @@ export const query = graphql(`
     }
     settleDeposits(
       first: $first
+      skip: $skip
       orderBy: blockTimestamp
       orderDirection: desc
-      where: { vault: $vaultAddress }
+      where: {
+        vault: $vaultAddress
+        blockNumber_gte: $fromBlock
+        blockNumber_lt: $toBlock
+      }
     ) {
       assetsDeposited
       blockNumber
@@ -89,9 +129,14 @@ export const query = graphql(`
     }
     totalAssetsUpdateds(
       first: $first
+      skip: $skip
       orderBy: blockTimestamp
       orderDirection: desc
-      where: { vault: $vaultAddress }
+      where: {
+        vault: $vaultAddress
+        blockNumber_gte: $fromBlock
+        blockNumber_lt: $toBlock
+      }
     ) {
       transactionHash
       totalAssets
@@ -102,9 +147,14 @@ export const query = graphql(`
     }
     newTotalAssetsUpdateds(
       first: $first
+      skip: $skip
       orderBy: blockTimestamp
       orderDirection: desc
-      where: { vault: $vaultAddress }
+      where: {
+        vault: $vaultAddress
+        blockNumber_gte: $fromBlock
+        blockNumber_lt: $toBlock
+      }
     ) {
       transactionHash
       totalAssets
@@ -115,9 +165,14 @@ export const query = graphql(`
     }
     transfers(
       first: $first
+      skip: $skip
       orderBy: blockTimestamp
       orderDirection: desc
-      where: { vault: $vaultAddress }
+      where: {
+        vault: $vaultAddress
+        blockNumber_gte: $fromBlock
+        blockNumber_lt: $toBlock
+      }
     ) {
       blockNumber
       blockTimestamp
@@ -130,9 +185,14 @@ export const query = graphql(`
     }
     depositRequestCanceleds(
       first: $first
+      skip: $skip
       orderBy: blockTimestamp
       orderDirection: desc
-      where: { vault: $vaultAddress }
+      where: {
+        vault: $vaultAddress
+        blockNumber_gte: $fromBlock
+        blockNumber_lt: $toBlock
+      }
     ) {
       blockNumber
       blockTimestamp
@@ -144,9 +204,14 @@ export const query = graphql(`
     }
     deposits(
       first: $first
+      skip: $skip
       orderBy: blockTimestamp
       orderDirection: desc
-      where: { vault: $vaultAddress }
+      where: {
+        vault: $vaultAddress
+        blockNumber_gte: $fromBlock
+        blockNumber_lt: $toBlock
+      }
     ) {
       id
       sender

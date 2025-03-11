@@ -2,7 +2,7 @@ import { LagoonVaultAbi } from "abis/VaultABI";
 import { publicClient } from "../lib/publicClient";
 import { type Address } from "viem";
 import type { VaultEventsQuery } from "gql/graphql";
-import { fetchVaultEvents } from "events-fetching";
+import { fetchVaultEvents } from "utils/fetchVaultEvents";
 
 interface FetchVaultReturn {
   fees: {
@@ -18,9 +18,13 @@ interface FetchVaultReturn {
 export async function fetchVault({
   chainId,
   address,
+  fromBlock,
+  toBlock,
 }: {
   chainId: number;
   address: Address;
+  fromBlock: bigint;
+  toBlock: bigint;
 }): Promise<FetchVaultReturn> {
   const client = publicClient[chainId];
 
@@ -49,7 +53,14 @@ export async function fetchVault({
       abi: LagoonVaultAbi,
       functionName: "pendingSilo",
     }),
-    fetchVaultEvents(chainId, address),
+    fetchVaultEvents({
+      chainId,
+      vaultAddress: address,
+      fromBlock: fromBlock,
+      toBlock: toBlock,
+      first: 1000,
+      skip: 0,
+    }),
   ]);
 
   return {

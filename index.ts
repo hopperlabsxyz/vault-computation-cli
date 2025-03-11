@@ -16,8 +16,8 @@ const computeCommand = program
   .command("compute")
   .description("Compute fees for a given vault")
   .argument("[chainId:VaultAddress...]", "")
-  .option("--firstBlock <number>", "First block to be used in computation")
-  .option("--lastBlock <number>", "Last block to be used in computation")
+  .option("--fromBlock <number>", "First block to be used in computation")
+  .option("--toBlock <number>", "Last block to be used in computation")
   .option("--readable", "File to export the CSV")
   .option("-o, --output <string>", "File to export the CSV")
   .option("--otc-deals <string>", "Config file for OTC-deals")
@@ -56,8 +56,8 @@ const computeCommand = program
 
     for (const vault of vaults) {
       const resultat = await processVault({
-        firstBlock: BigInt(options!.firstBlock!),
-        lastBlock: BigInt(options!.lastBlock!),
+        fromBlock: BigInt(options!.fromBlock!),
+        toBlock: BigInt(options!.toBlock!),
         otcDeals: otcDeals,
         readable: options!.readable!,
         vault,

@@ -17,17 +17,17 @@ export async function processVault({
   vault,
   readable,
   otcDeals,
-  lastBlock,
-  firstBlock,
+  toBlock,
+  fromBlock,
 }: {
   vault: Vault;
   readable: boolean;
   otcDeals: any;
-  firstBlock: bigint;
-  lastBlock: bigint;
+  fromBlock: bigint;
+  toBlock: bigint;
 }): Promise<ProcessVaultReturn> {
   console.log(`Loading vault ${vault.address} on chain ${vault.chainId}`);
-  const vaultData = await fetchVault(vault);
+  const vaultData = await fetchVault({ ...vault, fromBlock, toBlock });
   const ignoredAddresses = [vault.address, vaultData.silo, zeroAddress];
 
   const sharesHolding: Record<
@@ -51,10 +51,8 @@ export async function processVault({
     ignoredAddresses,
   });
 
-  console.log(`Data :
-  Silo : ${vaultData.silo}
-  Fees receiver : ${vaultData.feesReceiver}
-  Events : ${events.length}\n\n`);
+  if (events.length == 1000)
+    throw new Error("you need to handle more than 1000 events");
 
   let totalSupply = 0n;
   let totalAssets = 0n;
@@ -74,7 +72,6 @@ export async function processVault({
     if (lastFeeComputed) {
       break;
     }
-    // console.log(event);
 
     switch (event.__typename) {
       case "TotalAssetsUpdated":
@@ -109,9 +106,13 @@ export async function processVault({
           sharesHolding[receiver].balance -= shares;
 
           if (sharesHolding[controller]) {
-            sharesHolding[controller] += shares;
+            sharesHolding[controller].balance += shares;
           } else {
-            sharesHolding[controller] = shares;
+            sharesHolding[controller] = {
+              balance: shares,
+              cashback: 0n,
+              fees: 0n,
+            };
           }
         }
         break;
@@ -182,7 +183,7 @@ export async function processVault({
         pendingRedeems = {};
         break;
       // since we filtered we are only dealing with fee transfers normally
-      case "Transfer":
+      case "FeeTransfer":
         const totalFees = BigInt(event.value) * PRECISION_SCALE;
         let actualFeesDistribution: Record<Address, bigint> = {};
 
@@ -193,50 +194,24 @@ export async function processVault({
             (balance * totalFees) / totalSupply;
         }
 
-        const totalActualFeesDistribution = Object.values(
-          actualFeesDistribution
-        ).reduce((acc, curr) => acc + curr, 0n);
-
-        if (
-          totalFees / PRECISION_SCALE !==
-            totalActualFeesDistribution / PRECISION_SCALE &&
-          totalFees / PRECISION_SCALE !==
-            totalActualFeesDistribution / PRECISION_SCALE + 1n
-        ) {
-          console.log(
-            `[${event.blockNumber}] INVALID FEES`,
-            totalFees / PRECISION_SCALE,
-            totalActualFeesDistribution / PRECISION_SCALE,
-            totalActualFeesDistribution / PRECISION_SCALE -
-              totalFees / PRECISION_SCALE
-          );
-          console.log(sharesHolding, actualFeesDistribution);
-
-          throw new Error(
-            `Invalid fees computed. Expected ${
-              totalFees / PRECISION_SCALE
-            }, Received : ${totalActualFeesDistribution / PRECISION_SCALE}`
-          );
-        }
-
         sharesHolding[vaultData.feesReceiver].balance += BigInt(event.value);
 
-        lastFeeComputationBlock = event.blockNumber;
-        if (event.blockNumber < firstBlock || lastFeeComputed) {
+        lastFeeComputationBlock = BigInt(event.blockNumber);
+        if (event.blockNumber < fromBlock || lastFeeComputed) {
           break;
         }
 
-        if (!firstFeeComputed && firstBlock) {
+        if (!firstFeeComputed) {
           firstFeeComputed = true;
 
           for (const [address, fees] of Object.entries(
             actualFeesDistribution
           )) {
             sharesHolding[address as Address].fees +=
-              (fees * (lastFeeComputationBlock / event.blockNumber)) /
+              (fees * (lastFeeComputationBlock / BigInt(event.blockNumber))) /
               PRECISION_SCALE;
           }
-        } else if (event.blockNumber >= lastBlock) {
+        } else if (event.blockNumber >= toBlock) {
           lastFeeComputed = true;
 
           for (const [address, fees] of Object.entries(
