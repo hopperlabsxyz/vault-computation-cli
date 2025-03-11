@@ -1,13 +1,12 @@
 import { fetchVault } from "utils/fetchVault";
 import { zeroAddress, type Address } from "viem";
-import type { Vault } from "types/Vault";
-import { preprocessEvents } from "./preprocess";
+import type { ReferralCustom, Vault } from "types/Vault";
+import { preprocessEvents, type DealEvent } from "./preprocess";
 import type {
   Deposit,
   DepositRequest,
   DepositRequestCanceled,
   RedeemRequest,
-  Referral,
   SettleDeposit,
   SettleRedeem,
   TotalAssetsUpdated,
@@ -19,15 +18,19 @@ import { sanityChecks } from "./sanityChecks";
 export async function processVault({
   vault,
   readable,
-  otcDeals,
+  deals,
   toBlock,
   fromBlock,
+  feeBonus,
+  feeRebate,
 }: {
   vault: Vault;
   readable: boolean;
-  otcDeals: any;
+  deals: Record<Address, number>;
   fromBlock: number;
   toBlock: number;
+  feeRebate: number;
+  feeBonus: number;
 }): Promise<ProcessVaultReturn> {
   console.log(`Loading vault ${vault.address} on chain ${vault.chainId}`);
   const vaultData = await fetchVault({ ...vault, fromBlock, toBlock });
@@ -35,15 +38,23 @@ export async function processVault({
 
   sanityChecks({ events: vaultData.events, fromBlock, toBlock });
 
+  // const deals;
+
   let events = preprocessEvents({
     events: vaultData.events,
     feeReceiver: vaultData.feesReceiver,
     ignoredAddresses,
+    referral: {
+      feeBonus,
+      feeRebate,
+    },
+    deals: deals,
   });
   const state = new State({
     feeReceiver: vaultData.feesReceiver,
     decimals: BigInt(vaultData.decimals),
   });
+  // if (deals[vault.chainId] && otcDeals[vault.chainId][vault.address])
   if (events.length == 1000)
     throw new Error("you need to handle more than 1000 events");
 
@@ -80,7 +91,10 @@ export async function processVault({
         state.handleTransfer(event as Transfer);
         break;
       case "Referral":
-        state.handleReferral(event as Referral);
+        state.handleReferral(event as ReferralCustom);
+        break;
+      case "Deal":
+        state.handleDeal(event as DealEvent);
         break;
       default:
         throw new Error(`Unknown event ${event.__typename} : ${event}`);
@@ -89,16 +103,6 @@ export async function processVault({
 
   const pricePerShare = state.pricePerShare();
 
-  // if (otcDeals[vault.chainId] && otcDeals[vault.chainId][vault.address]) {
-  //   for (const [address, deal] of Object.entries(
-  //     otcDeals[vault.chainId][vault.address]
-  //   )) {
-  //     let cashbackRate = BigInt(vaultData.fees.performanceRate) - (deal as any); // TODO: fix
-  //     sharesHolding[address as Address].cashback =
-  //       (sharesHolding[address as Address].fees * cashbackRate) /
-  //       BigInt(vaultData.fees.performanceRate);
-  //   }
-  // }
   const result = state.getResult();
   const decimals = readable ? vaultData.decimals : 0;
   return {

@@ -234,6 +234,8 @@ export const query = graphql(`
         blockNumber_lte: $toBlock
       }
     ) {
+      id
+      transactionHash
       assets
       blockNumber
       blockTimestamp

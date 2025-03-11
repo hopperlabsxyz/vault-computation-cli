@@ -1,14 +1,32 @@
 import type { VaultEventsQuery } from "gql/graphql";
 import type { Address } from "viem";
 
+export interface DealEvent {
+  feeRebate: number;
+  feeBonus: number;
+  vault: "0x";
+  __typename: "Deal";
+  owner: Address;
+  referral: Address;
+  blockNumber: number;
+  blockTimestamp: number;
+}
+
 export function preprocessEvents({
   events,
   feeReceiver,
   ignoredAddresses,
+  referral,
+  deals,
 }: {
   events: VaultEventsQuery;
   feeReceiver: Address;
   ignoredAddresses: Address[];
+  referral: {
+    feeRebate: number;
+    feeBonus: number;
+  };
+  deals: Record<Address, number>;
 }) {
   console.log(Object.keys(events));
 
@@ -74,10 +92,43 @@ export function preprocessEvents({
     __typename: "NewTotalAssetsUpdated",
   }));
 
-  events.referrals = events.referrals.map((e) => ({
+  const referrals = events.referrals
+    .map((e) => ({
+      ...e,
+      feeBonus: referral.feeBonus,
+      feeRebate: referral.feeRebate,
+      __typename: "Referral",
+    }))
+    .filter((r) => r.owner !== r.referral);
+  const dealsArray = Object.entries(deals).map((deal) => {
+    return {
+      owner: deal[0] as Address,
+      referral: deal[0] as Address,
+      feeRebate: deal[1],
+    };
+  });
+  const dealsParsed: DealEvent[] = dealsArray.map((e) => ({
     ...e,
-    __typename: "Referral",
+    blockNumber: 0,
+    blockTimestamp: 0,
+    feeRebate: e.feeRebate,
+    feeBonus: 0,
+    assets: 0n,
+    id: "0x",
+    requestId: 0,
+    transactionHash: "0x",
+    vault: "0x",
+    __typename: "Deal",
   }));
+
+  // Add __typename to feeTransfers and convert relevant fields to BigInt
+  const feeTransfers = events.transfers
+    .filter((t) => t.to.toLowerCase() === feeReceiver.toLowerCase())
+    .map((e) => ({
+      ...e,
+      value: BigInt(e.value),
+      __typename: "FeeTransfer",
+    }));
 
   // Add __typename to transfers, filter ignored addresses, and convert relevant fields to BigInt
   events.transfers = events.transfers
@@ -92,15 +143,6 @@ export function preprocessEvents({
       __typename: "Transfer",
     }));
 
-  // Add __typename to feeTransfers and convert relevant fields to BigInt
-  const feeTransfers = events.transfers
-    .filter((t) => t.to === feeReceiver)
-    .map((e) => ({
-      ...e,
-      value: BigInt(e.value),
-      __typename: "FeeTransfer",
-    }));
-
   // Combine all events and sort by blockNumber
   return [
     ...events.newTotalAssetsUpdateds,
@@ -113,6 +155,7 @@ export function preprocessEvents({
     ...events.totalAssetsUpdateds,
     ...events.settleDeposits,
     ...events.settleRedeems,
-    ...events.referrals,
+    ...referrals,
+    ...dealsParsed,
   ].sort((a, b) => Number(a.blockNumber) - Number(b.blockNumber));
 }

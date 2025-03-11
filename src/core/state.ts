@@ -4,13 +4,16 @@ import type {
   DepositRequest,
   DepositRequestCanceled,
   RedeemRequest,
-  Referral,
   SettleDeposit,
   SettleRedeem,
   TotalAssetsUpdated,
   Transfer,
 } from "gql/graphql";
+
 import type { Address } from "viem";
+// import type { DealEvent } from "./preprocess";
+import type { ReferralConfig, ReferralCustom } from "types/Vault";
+import type { DealEvent } from "./preprocess";
 
 export class State {
   private totalSupply = 0n;
@@ -24,8 +27,8 @@ export class State {
   private pendingDeposits: Record<Address, bigint | undefined> = {};
   private pendingRedeems: Record<Address, bigint | undefined> = {};
 
-  private preReferrals: Record<Address, Address | undefined> = {}; // first address is referee, second is referrer
-  private referrals: Record<Address, Address | undefined> = {};
+  private preReferrals: Record<Address, ReferralConfig | undefined> = {}; // first address is referee, second is referrer
+  private referrals: Record<Address, ReferralConfig | undefined> = {};
 
   private lastFees = 0n;
 
@@ -133,30 +136,22 @@ export class State {
     this.totalAssets = newTotalAssets;
 
     for (const [address, deposited] of Object.entries(this.pendingDeposits)) {
-      if (this.result[address as Address]) {
-        this.result[address as Address].balance +=
-          (deposited! * sharesMinted) / assetsDeposited;
-      } else {
+      if (!this.result[address as Address]) {
         this.result[address as Address] = {
-          balance: (deposited! * sharesMinted) / assetsDeposited,
+          balance: 0n,
           fees: 0n,
           cashback: 0n,
         };
       }
+
+      this.result[address as Address].balance +=
+        (deposited! * sharesMinted) / assetsDeposited;
     }
     this.pendingDeposits = {};
 
-    for (const [referee, referer] of Object.entries(this.preReferrals) as [
-      Address,
-      Address
-    ][]) {
-      if (this.referrals[referee]) {
-        console.log("referee already taken");
-        break;
-      } else {
-        console.log("new referral");
-        this.referrals[referee] = referer;
-      }
+    for (const [referee, config] of Object.entries(this.preReferrals)) {
+      if (!this.referrals[referee as Address])
+        this.referrals[referee as Address] = config;
     }
     this.preReferrals = {};
   }
@@ -176,16 +171,18 @@ export class State {
   public handleFeeTransfer(event: Transfer) {
     const totalFees = BigInt(event.value) * PRECISION_SCALE;
     let feePerUser: Record<Address, bigint> = {};
-
+    console.log("he");
     this.lastFees = BigInt(event.value);
 
     for (const [address, { balance }] of Object.entries(this.result)) {
+      console.log("ehco");
       feePerUser[address as Address] = (balance * totalFees) / this.totalSupply;
     }
 
     this.result[this.feeReceiver].balance += BigInt(event.value);
 
     for (const [address, fees] of Object.entries(feePerUser)) {
+      console.log("let 's go");
       this.result[address as Address].fees += fees / PRECISION_SCALE;
     }
   }
@@ -206,20 +203,24 @@ export class State {
     }
   }
 
-  public handleReferral(event: Referral) {
+  public handleReferral(event: ReferralCustom) {
     if (event.owner === event.referral) return;
-    if (this.preReferrals[event.owner]) {
-      console.log("already loading a referral");
-      return;
-    } else {
-      // we do not allow auto referral
-      if (event.owner == event.referral) return;
+    if (this.preReferrals[event.owner]) return;
+    else {
       this.preReferrals[event.owner] = this.preReferrals[event.referral];
     }
   }
 
   public pricePerShare(): bigint {
     return (10n ** this.decimals * this.totalAssets) / this.totalSupply;
+  }
+
+  public handleDeal(deal: DealEvent) {
+    this.preReferrals[deal.owner] = {
+      feeBonus: deal.feeBonus,
+      feeRebate: deal.feeRebate,
+      referrer: deal.referral,
+    };
   }
 
   public getResult() {
