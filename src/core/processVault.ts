@@ -55,7 +55,6 @@ export async function processVault({
   if (events.length == 1000)
     throw new Error("you need to handle more than 1000 events");
   for (let i = 0; i < events.length; i++) {
-    console.log(`NextEvent: ${events[i].__typename}`);
     eventBranching({
       state,
       event: events[i] as { __typename: string; blockNumber: bigint },
@@ -63,11 +62,15 @@ export async function processVault({
     });
   }
 
+  // console.log(state.referrals);
+  // now we can compute the rebate users can get
+  state.rebate();
+
   const result = state.getState();
   const decimals = readable ? vaultData.decimals : 0;
-  console.log(
-    formatUnits(state.accumulatedFeesSinceFromBlock(), 18 + decimals)
-  );
+  // console.log(
+  //   formatUnits(state.accumulatedFeesSinceFromBlock(), 18 + decimals)
+  // );
   return {
     chainId: vault.chainId,
     address: vault.address,
@@ -76,9 +79,9 @@ export async function processVault({
       Object.entries(result).map(([address, values]) => [
         address,
         {
-          balance: Number(formatUnits(values.balance, decimals + 18)),
-          fees: Number(formatUnits(values.fees, decimals + 18)),
-          cashback: Number(formatUnits(values.cashback, decimals + 18)),
+          balance: Number(formatUnits(values.balance, decimals)),
+          fees: Number(formatUnits(values.fees, decimals)),
+          cashback: Number(formatUnits(values.cashback, decimals)),
         },
       ])
     ),

@@ -13,7 +13,7 @@ export function sanityChecks({
   if (updatedTotalAssets.length == 0) throw new Error("0 totalAssetsUpdateds");
 
   const found = updatedTotalAssets.find(
-    (event) => event.blockNumber === fromBlock
+    (event) => BigInt(event.blockNumber) === BigInt(fromBlock)
   );
   if (!found) {
     throw new Error(`invalid fromBlock, run bun `);

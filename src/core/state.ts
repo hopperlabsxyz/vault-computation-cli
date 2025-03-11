@@ -1,4 +1,4 @@
-import { PRECISION_SCALE } from "../constants";
+import { BPS_DIVIDER } from "../constants";
 import type {
   Deposit,
   DepositRequest,
@@ -10,8 +10,7 @@ import type {
   Transfer,
 } from "gql/graphql";
 
-import { erc20Abi, type Address } from "viem";
-// import type { DealEvent } from "./preprocess";
+import { erc20Abi, formatUnits, type Address } from "viem";
 import type { ReferralConfig, ReferralCustom } from "types/Vault";
 import type { DealEvent } from "./preprocess";
 import { publicClient } from "lib/publicClient";
@@ -153,8 +152,9 @@ export class State {
     this.pendingDeposits = {};
 
     for (const [referee, config] of Object.entries(this.preReferrals)) {
-      if (!this.referrals[referee as Address])
+      if (!this.referrals[referee as Address]) {
         this.referrals[referee as Address] = config;
+      }
     }
     this.preReferrals = {};
   }
@@ -172,7 +172,7 @@ export class State {
   }
 
   public handleFeeTransfer(event: Transfer, distributeFees: boolean) {
-    const totalFees = BigInt(event.value) * PRECISION_SCALE;
+    const totalFees = BigInt(event.value);
     let feePerUser: Record<Address, bigint> = {};
     // this.lastFees = BigInt(event.value);
 
@@ -220,7 +220,11 @@ export class State {
     if (event.owner === event.referral) return;
     if (this.preReferrals[event.owner]) return;
     else {
-      this.preReferrals[event.owner] = this.preReferrals[event.referral];
+      this.preReferrals[event.owner] = {
+        feeBonus: event.feeBonus,
+        feeRebate: event.feeRebate,
+        referrer: event.referral,
+      };
     }
   }
 
@@ -240,22 +244,47 @@ export class State {
     return this.state;
   }
 
+  public rebate() {
+    const stateArray = Object.entries(this.state);
+    stateArray.forEach((user) => {
+      const address = user[0] as Address;
+      const referrer = this.referrals[address]?.referrer;
+      const fees = this.state[address].fees;
+      const rebate = this.referrals[address]?.feeRebate;
+      const bonus = this.referrals[address]?.feeBonus;
+
+      if (rebate) {
+        this.state[address].cashback += (fees * BigInt(rebate)) / BPS_DIVIDER;
+      }
+      if (bonus && referrer) {
+        if (!this.state[referrer]) {
+          this.state[referrer] = {
+            balance: 0n,
+            cashback: 0n,
+            fees: 0n,
+          };
+        }
+        this.state[referrer].cashback += (fees * BigInt(bonus)) / BPS_DIVIDER;
+      }
+    });
+  }
+
   public async testSupply(
     blockNumber: number,
     address: Address
   ): Promise<bigint> {
     const acc = this.accumulatedSupply();
     if (this.totalSupply + 100n < acc || this.totalSupply - 100n > acc) {
-      console.log(this.totalSupply, acc);
-      console.log("this.totalSupply   ", "acc");
+      console.error(this.totalSupply, acc);
+      console.error("this.totalSupply   ", "acc");
 
-      console.log(
+      console.error(
         "Good value",
         await this.rightTotalSupply(blockNumber, address)
       );
       throw "mismatch in totalsupply";
     }
-    console.log(" ");
+    console.error(" ");
     return acc;
   }
 

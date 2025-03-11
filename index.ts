@@ -64,8 +64,9 @@ const computeCommand = program
       feeBonus: Number(options!.feeBonus!),
       vault,
     });
-    results.push(result);
 
+    results.push(result);
+    console.log(result.data);
     const csv = convertToCSV(results, { displayCashback: !!options.deals });
 
     if (options.output) {
@@ -153,9 +154,9 @@ program
       )
       .map((e) => e.blockNumber)
       .reverse();
-    console.log("Oldest");
+    console.log(`From ${options.fromBlock}`);
     events.forEach((block) => console.log(block));
-    console.log("Most Recent");
+    console.log(`To ${options.toBlock}`);
   });
 
 program.parse();
