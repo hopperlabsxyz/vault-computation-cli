@@ -18,12 +18,10 @@ interface FetchVaultReturn {
 export async function fetchVault({
   chainId,
   address,
-  fromBlock,
   toBlock,
 }: {
   chainId: number;
   address: Address;
-  fromBlock: number;
   toBlock: number;
 }): Promise<FetchVaultReturn> {
   const client = publicClient[chainId];
@@ -56,7 +54,6 @@ export async function fetchVault({
     fetchVaultEvents({
       chainId,
       vaultAddress: address,
-      fromBlock: BigInt(fromBlock),
       toBlock: BigInt(toBlock),
       first: 1000,
       skip: 0,

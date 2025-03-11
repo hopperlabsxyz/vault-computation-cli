@@ -8,14 +8,12 @@ import type { Address } from "viem";
 export async function fetchVaultEvents({
   chainId,
   vaultAddress,
-  fromBlock,
   toBlock,
   skip,
   first,
 }: {
   chainId: number;
   vaultAddress: Address;
-  fromBlock: bigint;
   toBlock: bigint;
   skip: number;
   first: number;
@@ -23,7 +21,6 @@ export async function fetchVaultEvents({
   return request(SUBGRAPHS[chainId], query, {
     first,
     vaultAddress,
-    fromBlock: fromBlock.toString(),
     toBlock: toBlock.toString(),
     skip,
   });

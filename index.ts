@@ -4,7 +4,11 @@ import { convertToCSV } from "utils/convertToCSV";
 import * as fs from "node:fs";
 import { processVault, type ProcessVaultReturn } from "core/processVault";
 import { parseDeals, type AllDeals } from "parsing/parseDeals";
-import type { Address } from "viem";
+import { maxUint256, type Address } from "viem";
+import { publicClient } from "lib/publicClient";
+import { fetchVaultTotalAssetsUpdated } from "utils/fetchVaultTotalAssetsUpdated";
+import { fetchVaultTransfers } from "utils/fetchTransfer";
+import { LagoonVaultAbi } from "abis/VaultABI";
 
 const program = new Command();
 
@@ -16,9 +20,12 @@ program
 const computeCommand = program
   .command("compute")
   .description("Compute fees for a given vault")
-  .argument("[chainId:VaultAddress...]")
+  .argument("chainId:VaultAddress")
   .option("--fromBlock <number>", "First block to be used in computation")
-  .option("--toBlock <number>", "Last block to be used in computation")
+  .option(
+    "--toBlock <number>",
+    "Last block to be used in computation; if not specified we will use"
+  )
   .option("--readable", "Should we format the output ?")
   .option("-o, --output <string>", "File to export the CSV")
   .option("--deals <string>", "Config file for OTC-deals")
@@ -39,29 +46,25 @@ const computeCommand = program
       return;
     }
 
-    const vaults = parseArguments(args);
+    const vault = parseArguments(args);
 
     let deals: AllDeals = {};
     if (options.deals) deals = await parseDeals(options.deals);
     const results: ProcessVaultReturn[] = [];
 
-    for (const vault of vaults) {
-      let vaultDeals: Record<Address, number> = {};
-      console.log(deals);
-      if (deals[vault.chainId])
-        vaultDeals = deals[vault.chainId][vault.address];
+    let vaultDeals: Record<Address, number> = {};
+    if (deals[vault.chainId]) vaultDeals = deals[vault.chainId][vault.address];
 
-      const result = await processVault({
-        fromBlock: Number(options!.fromBlock!),
-        toBlock: Number(options!.toBlock!),
-        deals: vaultDeals,
-        readable: options!.readable!,
-        feeRebate: Number(options!.feeRebate!),
-        feeBonus: Number(options!.feeBonus!),
-        vault,
-      });
-      results.push(result);
-    }
+    const result = await processVault({
+      fromBlock: Number(options!.fromBlock!),
+      toBlock: Number(options!.toBlock!),
+      deals: vaultDeals,
+      readable: options!.readable!,
+      feeRebate: Number(options!.feeRebate!),
+      feeBonus: Number(options!.feeBonus!),
+      vault,
+    });
+    results.push(result);
 
     const csv = convertToCSV(results, { displayCashback: !!options.deals });
 
@@ -79,8 +82,80 @@ const computeCommand = program
         }
       );
     } else {
-      console.log(csv);
+      // console.log(csv);
     }
+  });
+
+program
+  .command("blocks")
+  .argument("chainId:VaultAddress")
+  .description(
+    "Display all blocks that can be used to compute fees for a specific vault"
+  )
+  .option(
+    "--fromBlock <number>",
+    "Display valid blocks higher or equal to this one"
+  )
+  .option(
+    "--toBlock <number>",
+    "Display valid blocks lower or equal to this one; default is latests"
+  )
+  .option(
+    "-d, --since-last-distribute",
+    "Use the first totalAssetsUpdate before the last transfer of shares from feeReceiver"
+  )
+  .action(async (args, options) => {
+    const vault = parseArguments(args);
+    const client = publicClient[vault.chainId];
+    if (!options.toBlock) {
+      options.toBlock = (
+        await client.getBlock({ blockTag: "latest" })
+      ).number.toString();
+    }
+
+    if (options?.sinceLastDistribute) {
+      const roles = await client.readContract({
+        address: vault.address,
+        abi: LagoonVaultAbi,
+        functionName: "getRolesStorage",
+      });
+      const { transfers } = await fetchVaultTransfers({
+        address: vault.address,
+        chainId: vault.chainId,
+        toBlock: maxUint256,
+        skip: 0,
+        first: 1000,
+      });
+      const feeReceiverDistribution = transfers.filter(
+        (t) => t.from == roles.feeReceiver
+      );
+      const mostRecent =
+        feeReceiverDistribution[feeReceiverDistribution.length - 1];
+      if (mostRecent) options.fromBlock = mostRecent.blockNumber;
+      else options.fromBlock = "0";
+    }
+
+    let vaultData = (
+      await fetchVaultTotalAssetsUpdated({
+        address: vault.address,
+        chainId: vault.chainId,
+        toBlock: BigInt(options.toBlock),
+        skip: 0,
+        first: 1000,
+      })
+    ).totalAssetsUpdateds;
+
+    const events = vaultData
+      .filter(
+        (ev) =>
+          ev.blockNumber >= options.fromBlock! &&
+          ev.blockNumber <= options.toBlock!
+      )
+      .map((e) => e.blockNumber)
+      .reverse();
+    console.log("Oldest");
+    events.forEach((block) => console.log(block));
+    console.log("Most Recent");
   });
 
 program.parse();

@@ -12,10 +12,12 @@ export function sanityChecks({
   const updatedTotalAssets = events.totalAssetsUpdateds;
   if (updatedTotalAssets.length == 0) throw new Error("0 totalAssetsUpdateds");
 
-  const firstBlock =
-    updatedTotalAssets[updatedTotalAssets.length - 1].blockNumber;
-  if (fromBlock != firstBlock)
-    throw new Error(`invalid fromBlock, found: ${firstBlock}`);
+  const found = updatedTotalAssets.find(
+    (event) => event.blockNumber === fromBlock
+  );
+  if (!found) {
+    throw new Error(`invalid fromBlock, run bun `);
+  }
   const lastBlock = updatedTotalAssets[0].blockNumber;
   if (lastBlock != toBlock)
     throw new Error(`invalid toBlock, found: ${lastBlock}`);

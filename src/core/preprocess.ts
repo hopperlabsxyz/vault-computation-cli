@@ -15,7 +15,6 @@ export interface DealEvent {
 export function preprocessEvents({
   events,
   feeReceiver,
-  ignoredAddresses,
   referral,
   deals,
 }: {

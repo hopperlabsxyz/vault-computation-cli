@@ -12,7 +12,6 @@ test("events of same blocknumber must follow specific order", async () => {
   const vault = await fetchVault({
     address,
     chainId,
-    fromBlock,
     toBlock,
   });
   sanityChecks({ events: vault.events, fromBlock, toBlock });

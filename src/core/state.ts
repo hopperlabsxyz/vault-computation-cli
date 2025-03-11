@@ -171,21 +171,24 @@ export class State {
     this.pendingRedeems = {};
   }
 
-  public handleFeeTransfer(event: Transfer) {
+  public handleFeeTransfer(event: Transfer, distributeFees: boolean) {
     const totalFees = BigInt(event.value) * PRECISION_SCALE;
     let feePerUser: Record<Address, bigint> = {};
     // this.lastFees = BigInt(event.value);
 
     // we compute how much fees they paid for this epoch
     // TODO: only if we are >= fromBlock
-    for (const [address, { balance }] of Object.entries(this.state)) {
-      feePerUser[address as Address] = (balance * totalFees) / this.totalSupply;
-    }
+    if (distributeFees) {
+      for (const [address, { balance }] of Object.entries(this.state)) {
+        feePerUser[address as Address] =
+          (balance * totalFees) / this.totalSupply;
+      }
 
-    // then we increment the total of fees they paid
-    // TODO: only if we are >= fromBlock
-    for (const [address, fees] of Object.entries(feePerUser)) {
-      this.state[address as Address].fees += fees;
+      // then we increment the total of fees they paid
+      // TODO: only if we are >= fromBlock
+      for (const [address, fees] of Object.entries(feePerUser)) {
+        this.state[address as Address].fees += fees;
+      }
     }
 
     // we can also update the feeReceiver balance
@@ -250,7 +253,7 @@ export class State {
         "Good value",
         await this.rightTotalSupply(blockNumber, address)
       );
-      throw "lala";
+      throw "mismatch in totalsupply";
     }
     console.log(" ");
     return acc;
@@ -260,6 +263,16 @@ export class State {
     const states = Object.entries(this.state);
     const acc = states.reduce((acc, curr) => acc + curr[1].balance, 0n);
     return acc;
+  }
+
+  public accumulatedFeesSinceFromBlock(): bigint {
+    const states = Object.entries(this.state);
+    const acc = states.reduce((acc, curr) => acc + curr[1].fees, 0n);
+    return acc;
+  }
+
+  public balanceOf(user: Address): bigint {
+    return this.state[user].balance;
   }
 
   public async rightTotalSupply(
