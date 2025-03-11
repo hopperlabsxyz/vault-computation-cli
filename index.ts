@@ -56,8 +56,8 @@ const computeCommand = program
 
     for (const vault of vaults) {
       const resultat = await processVault({
-        fromBlock: BigInt(options!.fromBlock!),
-        toBlock: BigInt(options!.toBlock!),
+        fromBlock: options!.fromBlock!,
+        toBlock: options!.toBlock!,
         otcDeals: otcDeals,
         readable: options!.readable!,
         vault,

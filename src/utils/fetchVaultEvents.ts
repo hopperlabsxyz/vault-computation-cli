@@ -45,7 +45,7 @@ export const query = graphql(`
       where: {
         vault: $vaultAddress
         blockNumber_gte: $fromBlock
-        blockNumber_lt: $toBlock
+        blockNumber_lte: $toBlock
       }
     ) {
       assets
@@ -67,7 +67,7 @@ export const query = graphql(`
       where: {
         vault: $vaultAddress
         blockNumber_gte: $fromBlock
-        blockNumber_lt: $toBlock
+        blockNumber_lte: $toBlock
       }
     ) {
       blockNumber
@@ -89,7 +89,7 @@ export const query = graphql(`
       where: {
         vault: $vaultAddress
         blockNumber_gte: $fromBlock
-        blockNumber_lt: $toBlock
+        blockNumber_lte: $toBlock
       }
     ) {
       assetsWithdrawed
@@ -112,7 +112,7 @@ export const query = graphql(`
       where: {
         vault: $vaultAddress
         blockNumber_gte: $fromBlock
-        blockNumber_lt: $toBlock
+        blockNumber_lte: $toBlock
       }
     ) {
       assetsDeposited
@@ -135,7 +135,7 @@ export const query = graphql(`
       where: {
         vault: $vaultAddress
         blockNumber_gte: $fromBlock
-        blockNumber_lt: $toBlock
+        blockNumber_lte: $toBlock
       }
     ) {
       transactionHash
@@ -153,7 +153,7 @@ export const query = graphql(`
       where: {
         vault: $vaultAddress
         blockNumber_gte: $fromBlock
-        blockNumber_lt: $toBlock
+        blockNumber_lte: $toBlock
       }
     ) {
       transactionHash
@@ -171,7 +171,7 @@ export const query = graphql(`
       where: {
         vault: $vaultAddress
         blockNumber_gte: $fromBlock
-        blockNumber_lt: $toBlock
+        blockNumber_lte: $toBlock
       }
     ) {
       blockNumber
@@ -191,7 +191,7 @@ export const query = graphql(`
       where: {
         vault: $vaultAddress
         blockNumber_gte: $fromBlock
-        blockNumber_lt: $toBlock
+        blockNumber_lte: $toBlock
       }
     ) {
       blockNumber
@@ -210,7 +210,7 @@ export const query = graphql(`
       where: {
         vault: $vaultAddress
         blockNumber_gte: $fromBlock
-        blockNumber_lt: $toBlock
+        blockNumber_lte: $toBlock
       }
     ) {
       id
@@ -231,7 +231,7 @@ export const query = graphql(`
       where: {
         vault: $vaultAddress
         blockNumber_gte: $fromBlock
-        blockNumber_lt: $toBlock
+        blockNumber_lte: $toBlock
       }
     ) {
       assets

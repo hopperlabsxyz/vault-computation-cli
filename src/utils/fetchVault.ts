@@ -23,8 +23,8 @@ export async function fetchVault({
 }: {
   chainId: number;
   address: Address;
-  fromBlock: bigint;
-  toBlock: bigint;
+  fromBlock: number;
+  toBlock: number;
 }): Promise<FetchVaultReturn> {
   const client = publicClient[chainId];
 
@@ -56,8 +56,8 @@ export async function fetchVault({
     fetchVaultEvents({
       chainId,
       vaultAddress: address,
-      fromBlock: fromBlock,
-      toBlock: toBlock,
+      fromBlock: BigInt(fromBlock),
+      toBlock: BigInt(toBlock),
       first: 1000,
       skip: 0,
     }),
