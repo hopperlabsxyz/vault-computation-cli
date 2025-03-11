@@ -1,4 +1,4 @@
-import type { VaultEventsQuery } from "gql/graphql";
+import type { Transfer, VaultEventsQuery } from "gql/graphql";
 import type { Address } from "viem";
 
 export interface DealEvent {
@@ -28,8 +28,6 @@ export function preprocessEvents({
   };
   deals: Record<Address, number>;
 }) {
-  console.log(Object.keys(events));
-
   // Add __typename to deposits and convert relevant fields to BigInt
   events.deposits = events.deposits.map((e) => ({
     ...e,
@@ -131,17 +129,13 @@ export function preprocessEvents({
     }));
 
   // Add __typename to transfers, filter ignored addresses, and convert relevant fields to BigInt
-  events.transfers = events.transfers
-    .filter(
-      (x) =>
-        ![...ignoredAddresses, feeReceiver].includes(x.to) &&
-        ![...ignoredAddresses, feeReceiver].includes(x.from)
-    )
-    .map((e) => ({
+  events.transfers = filterTransfers(events.transfers, feeReceiver).map(
+    (e) => ({
       ...e,
       value: BigInt(e.value),
       __typename: "Transfer",
-    }));
+    })
+  );
 
   // Combine all events and sort by blockNumber
   return [
@@ -150,12 +144,29 @@ export function preprocessEvents({
     ...events.depositRequestCanceleds,
     ...events.redeemRequests,
     ...events.deposits,
-    ...events.transfers,
-    ...feeTransfers,
     ...events.totalAssetsUpdateds,
+    ...feeTransfers,
     ...events.settleDeposits,
     ...events.settleRedeems,
+    ...events.transfers,
     ...referrals,
     ...dealsParsed,
   ].sort((a, b) => Number(a.blockNumber) - Number(b.blockNumber));
+}
+
+function filterTransfers(transfers: Transfer[], feeReceiver: Address) {
+  return transfers.filter(
+    (t) => t.to.toLowerCase() !== feeReceiver.toLowerCase()
+  );
+  // .filter(
+  //   (x) =>
+  //     ![
+  //       ...ignoredAddresses.map((x) => x.toLowerCase()),
+  //       feeReceiver.toLowerCase(),
+  //     ].includes(x.to.toLowerCase()) &&
+  //     ![
+  //       ...ignoredAddresses.map((x) => x.toLowerCase()),
+  //       feeReceiver.toLowerCase(),
+  //     ].includes(x.from.toLowerCase())
+  // )
 }

@@ -6,7 +6,6 @@ export type Deals = Record<Address, Record<Address, number>>;
 
 export async function parseDeals(filePath: string): Promise<AllDeals> {
   const otcData = (await Bun.file(filePath).text()).split("\n");
-  console.log(otcData);
   const deals: Record<number, Record<Address, Record<Address, number>>> = {};
   for (const entry of otcData.slice(1)) {
     const [chainId, vaultAddress, owner, otcDeal] = parseLine(entry);

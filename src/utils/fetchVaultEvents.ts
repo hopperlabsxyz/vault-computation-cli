@@ -33,7 +33,6 @@ export const query = graphql(`
   query VaultEvents(
     $first: Int!
     $vaultAddress: Bytes!
-    $fromBlock: BigInt!
     $toBlock: BigInt!
     $skip: Int!
   ) {
@@ -42,11 +41,7 @@ export const query = graphql(`
       skip: $skip
       orderBy: blockTimestamp
       orderDirection: desc
-      where: {
-        vault: $vaultAddress
-        blockNumber_gte: $fromBlock
-        blockNumber_lte: $toBlock
-      }
+      where: { vault: $vaultAddress, blockNumber_lte: $toBlock }
     ) {
       assets
       blockNumber
@@ -64,11 +59,7 @@ export const query = graphql(`
       skip: $skip
       orderBy: blockTimestamp
       orderDirection: desc
-      where: {
-        vault: $vaultAddress
-        blockNumber_gte: $fromBlock
-        blockNumber_lte: $toBlock
-      }
+      where: { vault: $vaultAddress, blockNumber_lte: $toBlock }
     ) {
       blockNumber
       blockTimestamp
@@ -86,11 +77,7 @@ export const query = graphql(`
       skip: $skip
       orderBy: blockTimestamp
       orderDirection: desc
-      where: {
-        vault: $vaultAddress
-        blockNumber_gte: $fromBlock
-        blockNumber_lte: $toBlock
-      }
+      where: { vault: $vaultAddress, blockNumber_lte: $toBlock }
     ) {
       assetsWithdrawed
       blockNumber
@@ -109,11 +96,7 @@ export const query = graphql(`
       skip: $skip
       orderBy: blockTimestamp
       orderDirection: desc
-      where: {
-        vault: $vaultAddress
-        blockNumber_gte: $fromBlock
-        blockNumber_lte: $toBlock
-      }
+      where: { vault: $vaultAddress, blockNumber_lte: $toBlock }
     ) {
       assetsDeposited
       blockNumber
@@ -132,11 +115,7 @@ export const query = graphql(`
       skip: $skip
       orderBy: blockTimestamp
       orderDirection: desc
-      where: {
-        vault: $vaultAddress
-        blockNumber_gte: $fromBlock
-        blockNumber_lte: $toBlock
-      }
+      where: { vault: $vaultAddress, blockNumber_lte: $toBlock }
     ) {
       transactionHash
       totalAssets
@@ -150,11 +129,7 @@ export const query = graphql(`
       skip: $skip
       orderBy: blockTimestamp
       orderDirection: desc
-      where: {
-        vault: $vaultAddress
-        blockNumber_gte: $fromBlock
-        blockNumber_lte: $toBlock
-      }
+      where: { vault: $vaultAddress, blockNumber_lte: $toBlock }
     ) {
       transactionHash
       totalAssets
@@ -168,11 +143,7 @@ export const query = graphql(`
       skip: $skip
       orderBy: blockTimestamp
       orderDirection: desc
-      where: {
-        vault: $vaultAddress
-        blockNumber_gte: $fromBlock
-        blockNumber_lte: $toBlock
-      }
+      where: { vault: $vaultAddress, blockNumber_lte: $toBlock }
     ) {
       blockNumber
       blockTimestamp
@@ -188,11 +159,7 @@ export const query = graphql(`
       skip: $skip
       orderBy: blockTimestamp
       orderDirection: desc
-      where: {
-        vault: $vaultAddress
-        blockNumber_gte: $fromBlock
-        blockNumber_lte: $toBlock
-      }
+      where: { vault: $vaultAddress, blockNumber_lte: $toBlock }
     ) {
       blockNumber
       blockTimestamp
@@ -207,11 +174,7 @@ export const query = graphql(`
       skip: $skip
       orderBy: blockTimestamp
       orderDirection: desc
-      where: {
-        vault: $vaultAddress
-        blockNumber_gte: $fromBlock
-        blockNumber_lte: $toBlock
-      }
+      where: { vault: $vaultAddress, blockNumber_lte: $toBlock }
     ) {
       id
       sender
@@ -228,11 +191,7 @@ export const query = graphql(`
       skip: $skip
       orderBy: blockTimestamp
       orderDirection: desc
-      where: {
-        vault: $vaultAddress
-        blockNumber_gte: $fromBlock
-        blockNumber_lte: $toBlock
-      }
+      where: { vault: $vaultAddress, blockNumber_lte: $toBlock }
     ) {
       id
       transactionHash

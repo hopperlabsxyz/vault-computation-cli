@@ -1,5 +1,5 @@
 import { fetchVault } from "utils/fetchVault";
-import { zeroAddress, type Address } from "viem";
+import { formatUnits, zeroAddress, type Address } from "viem";
 import type { ReferralCustom, Vault } from "types/Vault";
 import { preprocessEvents, type DealEvent } from "./preprocess";
 import type {
@@ -14,6 +14,7 @@ import type {
 } from "gql/graphql";
 import { State } from "./state";
 import { sanityChecks } from "./sanityChecks";
+import { PRECISION_SCALE } from "../constants";
 
 export async function processVault({
   vault,
@@ -38,8 +39,6 @@ export async function processVault({
 
   sanityChecks({ events: vaultData.events, fromBlock, toBlock });
 
-  // const deals;
-
   let events = preprocessEvents({
     events: vaultData.events,
     feeReceiver: vaultData.feesReceiver,
@@ -57,53 +56,55 @@ export async function processVault({
   // if (deals[vault.chainId] && otcDeals[vault.chainId][vault.address])
   if (events.length == 1000)
     throw new Error("you need to handle more than 1000 events");
+  let prev = "0";
+  for (let i = 0; i < events.length; i++) {
+    // if there is a change of block we must find the same balance
 
-  for (const event of events) {
-    switch (event.__typename) {
-      case "TotalAssetsUpdated":
-        state.handleTotalAssetsUpdated(event as TotalAssetsUpdated);
-        break;
-      case "NewTotalAssetsUpdated":
-        state.handleNewTotalAssetsUpdated();
-        break;
-      case "Deposit":
-        state.handleDeposit(event as Deposit);
-        break;
-      case "DepositRequest":
-        state.depositRequest(event as DepositRequest);
-        break;
-      case "DepositRequestCanceled":
-        state.handleDepositRequestCanceled(event as DepositRequestCanceled);
-        break;
-      case "RedeemRequest":
-        state.redeemRequest(event as RedeemRequest);
-        break;
-      case "SettleDeposit":
-        state.handleSettleDeposit(event as SettleDeposit);
-        break;
-      case "SettleRedeem":
-        state.handleSettleRedeem(event as SettleRedeem);
-        break;
-      case "FeeTransfer":
-        state.handleFeeTransfer(event as Transfer);
-        break;
-      case "Transfer":
-        state.handleTransfer(event as Transfer);
-        break;
-      case "Referral":
-        state.handleReferral(event as ReferralCustom);
-        break;
-      case "Deal":
-        state.handleDeal(event as DealEvent);
-        break;
-      default:
-        throw new Error(`Unknown event ${event.__typename} : ${event}`);
+    console.log(`NextEvent: ${events[i].__typename}`);
+    if (prev !== events[i].blockNumber) {
+      console.log(" ");
+      console.log("blockNumber", events[i].blockNumber);
+    }
+    console.log(events[i].__typename);
+    if (events[i].__typename === "TotalAssetsUpdated") {
+      state.handleTotalAssetsUpdated(events[i] as TotalAssetsUpdated);
+    } else if (events[i].__typename === "NewTotalAssetsUpdated") {
+      state.handleNewTotalAssetsUpdated();
+    } else if (events[i].__typename === "Deposit") {
+      state.handleDeposit(events[i] as Deposit);
+    } else if (events[i].__typename === "DepositRequest") {
+      state.depositRequest(events[i] as DepositRequest);
+    } else if (events[i].__typename === "DepositRequestCanceled") {
+      state.handleDepositRequestCanceled(events[i] as DepositRequestCanceled);
+    } else if (events[i].__typename === "RedeemRequest") {
+      state.redeemRequest(events[i] as RedeemRequest);
+    } else if (events[i].__typename === "SettleDeposit") {
+      state.handleSettleDeposit(events[i] as SettleDeposit);
+    } else if (events[i].__typename === "SettleRedeem") {
+      state.handleSettleRedeem(events[i] as SettleRedeem);
+    } else if (events[i].__typename === "FeeTransfer") {
+      state.handleFeeTransfer(events[i] as Transfer);
+    } else if (events[i].__typename === "Transfer") {
+      state.handleTransfer(events[i] as Transfer);
+    } else if (events[i].__typename === "Referral") {
+      state.handleReferral(events[i] as ReferralCustom);
+    } else if (events[i].__typename === "Deal") {
+      state.handleDeal(events[i] as DealEvent);
+    } else {
+      throw new Error(
+        `Unknown events[i] ${events[i].__typename} : ${events[i]}`
+      );
+    }
+    if (events[i + 1] && events[i].blockNumber !== events[i + 1].blockNumber) {
+      console.log("we are at the end of a block");
+      await state.testSupply(events[i].blockNumber, vault.address);
+      prev = events[i].blockNumber;
     }
   }
 
   const pricePerShare = state.pricePerShare();
 
-  const result = state.getResult();
+  const result = state.getState();
   const decimals = readable ? vaultData.decimals : 0;
   return {
     chainId: vault.chainId,
@@ -113,9 +114,9 @@ export async function processVault({
       Object.entries(result).map(([address, values]) => [
         address,
         {
-          balance: Number(values.balance) / 10 ** decimals,
-          fees: Number(values.fees) / 10 ** decimals,
-          cashback: Number(values.cashback) / 10 ** decimals,
+          balance: Number(formatUnits(values.balance, decimals + 18)),
+          fees: Number(formatUnits(values.fees, decimals + 18)),
+          cashback: Number(formatUnits(values.cashback, decimals + 18)),
         },
       ])
     ),

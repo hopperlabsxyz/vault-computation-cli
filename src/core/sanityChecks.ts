@@ -11,7 +11,6 @@ export function sanityChecks({
 }) {
   const updatedTotalAssets = events.totalAssetsUpdateds;
   if (updatedTotalAssets.length == 0) throw new Error("0 totalAssetsUpdateds");
-  console.debug(updatedTotalAssets.length);
 
   const firstBlock =
     updatedTotalAssets[updatedTotalAssets.length - 1].blockNumber;
