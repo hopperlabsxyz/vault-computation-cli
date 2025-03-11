@@ -81,7 +81,7 @@ const computeCommand = program
         }
       );
     } else {
-      console.log(csv);
+      // console.log(csv);
     }
   });
 

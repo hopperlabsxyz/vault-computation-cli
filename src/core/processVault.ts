@@ -8,10 +8,12 @@ import type {
   DepositRequest,
   DepositRequestCanceled,
   RedeemRequest,
+  Referral,
   SettleDeposit,
   SettleRedeem,
   TotalAssetsUpdated,
 } from "gql/graphql";
+import { State } from "./state";
 
 export async function processVault({
   vault,
@@ -50,18 +52,21 @@ export async function processVault({
     feeReceiver: vaultData.feesReceiver,
     ignoredAddresses,
   });
-
+  const state = new State();
   if (events.length == 1000)
     throw new Error("you need to handle more than 1000 events");
 
   let totalSupply = 0n;
   let totalAssets = 0n;
 
-  let prePendingDeposits: Record<Address, bigint> = {};
-  let prePendingRedeems: Record<Address, bigint> = {};
+  let prePendingDeposits: Record<Address, bigint | undefined> = {};
+  let prePendingRedeems: Record<Address, bigint | undefined> = {};
 
-  let pendingDeposits: Record<Address, bigint> = {};
-  let pendingRedeems: Record<Address, bigint> = {};
+  let pendingDeposits: Record<Address, bigint | undefined> = {};
+  let pendingRedeems: Record<Address, bigint | undefined> = {};
+
+  let preReferrals: Record<Address, Address | undefined> = {}; // first address is referee, second is referrer
+  let referrals: Record<Address, Address | undefined> = {};
 
   let lastFeeComputationBlock = 0n;
   let firstFeeComputed = false;
@@ -81,7 +86,7 @@ export async function processVault({
       case "NewTotalAssetsUpdated":
         for (const [address, deposited] of Object.entries(prePendingDeposits)) {
           if (pendingDeposits[address as Address]) {
-            pendingDeposits[address as Address] += deposited;
+            pendingDeposits[address as Address]! += deposited!;
           } else {
             pendingDeposits[address as Address] = deposited;
           }
@@ -89,7 +94,7 @@ export async function processVault({
 
         for (const [address, deposited] of Object.entries(prePendingRedeems)) {
           if (pendingRedeems[address as Address]) {
-            pendingRedeems[address as Address] += deposited;
+            pendingRedeems[address as Address]! += deposited!;
           } else {
             pendingRedeems[address as Address] = deposited;
           }
@@ -125,11 +130,16 @@ export async function processVault({
         } else {
           prePendingDeposits[depositUser] = depositRequest.assets;
         }
+        state.depositRequest(depositRequest);
         break;
+
       case "DepositRequestCanceled":
         const depositRequestCanceled = event as DepositRequestCanceled;
 
         prePendingDeposits[depositRequestCanceled.controller] = 0n;
+
+        // If the deposit is cancelled we remove referrals
+        preReferrals[depositRequestCanceled.controller] = undefined;
         break;
       case "RedeemRequest":
         const redeemRequest = event as RedeemRequest;
@@ -139,6 +149,7 @@ export async function processVault({
         } else {
           prePendingRedeems[redeemUser] = redeemRequest.shares;
         }
+        state.redeemRequest(redeemRequest);
         break;
       case "SettleDeposit":
         const {
@@ -159,16 +170,30 @@ export async function processVault({
         for (const [address, deposited] of Object.entries(pendingDeposits)) {
           if (sharesHolding[address as Address]) {
             sharesHolding[address as Address].balance +=
-              (deposited * sharesMinted) / assetsDeposited;
+              (deposited! * sharesMinted) / assetsDeposited;
           } else {
             sharesHolding[address as Address] = {
-              balance: (deposited * sharesMinted) / assetsDeposited,
+              balance: (deposited! * sharesMinted) / assetsDeposited,
               fees: 0n,
               cashback: 0n,
             };
           }
         }
         pendingDeposits = {};
+
+        for (const [referee, referer] of Object.entries(preReferrals) as [
+          Address,
+          Address
+        ][]) {
+          if (referrals[referee]) {
+            console.log("referee already taken");
+            break;
+          } else {
+            console.log("new referral");
+            referrals[referee] = referer;
+          }
+        }
+        preReferrals = {};
         break;
       case "SettleRedeem":
         const settleRedeem = event as SettleRedeem;
@@ -177,7 +202,7 @@ export async function processVault({
 
         for (const [address, redeemed] of Object.entries(pendingRedeems)) {
           if (sharesHolding[address as Address]) {
-            sharesHolding[address as Address].balance -= redeemed;
+            sharesHolding[address as Address].balance -= redeemed!;
           }
         }
         pendingRedeems = {};
@@ -247,8 +272,20 @@ export async function processVault({
           };
         }
         break;
+      case "Referral":
+        const referral = event as Referral;
+        if (referral.owner === referral.referral) break;
+        if (preReferrals[referral.owner]) {
+          console.log("already loading a referral");
+          break;
+        } else {
+          // we do not allow auto referral
+          if (referral.owner == referral.referral) break;
+          preReferrals[referral.owner] = preReferrals[referral.referral];
+        }
+        break;
       default:
-        throw new Error(`Unknown event ${event.__typename} : ${event.id}`);
+        throw new Error(`Unknown event ${event.__typename} : ${event}`);
     }
   }
 

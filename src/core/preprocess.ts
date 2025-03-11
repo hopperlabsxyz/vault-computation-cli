@@ -74,6 +74,11 @@ export function preprocessEvents({
     __typename: "NewTotalAssetsUpdated",
   }));
 
+  events.referrals = events.referrals.map((e) => ({
+    ...e,
+    __typename: "Referral",
+  }));
+
   // Add __typename to transfers, filter ignored addresses, and convert relevant fields to BigInt
   events.transfers = events.transfers
     .filter(
@@ -108,5 +113,6 @@ export function preprocessEvents({
     ...events.totalAssetsUpdateds,
     ...events.settleDeposits,
     ...events.settleRedeems,
+    ...events.referrals,
   ].sort((a, b) => Number(a.blockNumber) - Number(b.blockNumber));
 }
