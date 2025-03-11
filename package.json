@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "compute": "bun index.ts compute"
+    "compute": "bun index.ts compute",
+    "generate": "bunx --bun graphql-codegen --config graphql-codegen-cli/fetch-schema.ts"
   },
   "keywords": [],
   "author": "",

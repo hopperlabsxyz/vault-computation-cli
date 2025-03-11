@@ -223,5 +223,23 @@ export const query = graphql(`
       blockTimestamp
       blockNumber
     }
+    referrals(
+      first: $first
+      skip: $skip
+      orderBy: blockTimestamp
+      orderDirection: desc
+      where: {
+        vault: $vaultAddress
+        blockNumber_gte: $fromBlock
+        blockNumber_lt: $toBlock
+      }
+    ) {
+      assets
+      blockNumber
+      blockTimestamp
+      owner
+      referral
+      requestId
+    }
   }
 `);

@@ -2,8 +2,7 @@ import type { CodegenConfig } from "@graphql-codegen/cli";
 
 const config: CodegenConfig = {
   overwrite: true,
-  schema:
-    "https://subgraph.satsuma-prod.com/7b4d432e7d53/hopperlabs--103040/lagoon-vault-release/api",
+  schema: process.env["MAINNET_SUBGRAPH_URL"],
   documents: ["src/**/*.tsx", "src/**/*.ts"],
   generates: {
     "src/gql/": {
