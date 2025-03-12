@@ -1,5 +1,5 @@
 import type { Transfer, VaultEventsQuery } from "gql/graphql";
-import type { Address } from "viem";
+import { type Address } from "viem";
 
 export interface DealEvent {
   feeRebate: number;
@@ -14,13 +14,16 @@ export interface DealEvent {
 
 export function preprocessEvents({
   events,
-  feeReceiver,
   referral,
+  addresses,
   deals,
 }: {
   events: VaultEventsQuery;
-  feeReceiver: Address;
-  ignoredAddresses: Address[];
+  addresses: {
+    feeReceiver: Address;
+    silo: Address;
+    vault: Address;
+  };
   referral: {
     feeRebate: number;
     feeBonus: number;
@@ -120,7 +123,7 @@ export function preprocessEvents({
 
   // Add __typename to feeTransfers and convert relevant fields to BigInt
   const feeTransfers = events.transfers
-    .filter((t) => t.to.toLowerCase() === feeReceiver.toLowerCase())
+    .filter((t) => t.to.toLowerCase() === addresses.feeReceiver.toLowerCase())
     .map((e) => ({
       ...e,
       value: BigInt(e.value),
@@ -128,13 +131,11 @@ export function preprocessEvents({
     }));
 
   // Add __typename to transfers, filter ignored addresses, and convert relevant fields to BigInt
-  events.transfers = filterTransfers(events.transfers, feeReceiver).map(
-    (e) => ({
-      ...e,
-      value: BigInt(e.value),
-      __typename: "Transfer",
-    })
-  );
+  events.transfers = filterTransfers(events.transfers, addresses).map((e) => ({
+    ...e,
+    value: BigInt(e.value),
+    __typename: "Transfer",
+  }));
 
   // Combine all events and sort by blockNumber
   return [
@@ -153,19 +154,22 @@ export function preprocessEvents({
   ].sort((a, b) => Number(a.blockNumber) - Number(b.blockNumber));
 }
 
-function filterTransfers(transfers: Transfer[], feeReceiver: Address) {
+function filterTransfers(
+  transfers: Transfer[],
+  addresses: {
+    feeReceiver: Address;
+    silo: Address;
+    vault: Address;
+  }
+): Transfer[] {
   return transfers.filter(
-    (t) => t.to.toLowerCase() !== feeReceiver.toLowerCase()
+    (t) =>
+      t.to.toLowerCase() !== addresses.feeReceiver.toLowerCase() &&
+      // we ignore all transfers from and to the vault because those we be handled when we settleDeposit
+      t.to.toLowerCase() !== addresses.silo.toLowerCase() &&
+      t.from.toLowerCase() !== addresses.silo.toLowerCase() &&
+      // we ignore all transfers from and to the vault because those we be handled when we settleDeposit
+      t.to.toLowerCase() !== addresses.vault.toLowerCase() &&
+      t.from.toLowerCase() !== addresses.vault.toLowerCase()
   );
-  // .filter(
-  //   (x) =>
-  //     ![
-  //       ...ignoredAddresses.map((x) => x.toLowerCase()),
-  //       feeReceiver.toLowerCase(),
-  //     ].includes(x.to.toLowerCase()) &&
-  //     ![
-  //       ...ignoredAddresses.map((x) => x.toLowerCase()),
-  //       feeReceiver.toLowerCase(),
-  //     ].includes(x.from.toLowerCase())
-  // )
 }

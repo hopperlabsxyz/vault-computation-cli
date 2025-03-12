@@ -1,5 +1,5 @@
 import { fetchVault } from "utils/fetchVault";
-import { formatUnits, zeroAddress, type Address } from "viem";
+import { formatUnits, type Address } from "viem";
 import type { ReferralCustom, Vault } from "types/Vault";
 import { preprocessEvents, type DealEvent } from "./preprocess";
 import type {
@@ -33,15 +33,17 @@ export async function processVault({
   feeBonus: number;
 }): Promise<ProcessVaultReturn> {
   console.log(`Loading vault ${vault.address} on chain ${vault.chainId}`);
-  const vaultData = await fetchVault({ ...vault, toBlock });
-  const ignoredAddresses = [vault.address, vaultData.silo, zeroAddress];
 
+  const vaultData = await fetchVault({ ...vault, toBlock });
   sanityChecks({ events: vaultData.events, fromBlock, toBlock });
 
   let events = preprocessEvents({
     events: vaultData.events,
-    feeReceiver: vaultData.feesReceiver,
-    ignoredAddresses,
+    addresses: {
+      feeReceiver: vaultData.feesReceiver,
+      silo: vaultData.silo,
+      vault: vault.address,
+    },
     referral: {
       feeBonus,
       feeRebate,
@@ -62,15 +64,12 @@ export async function processVault({
     });
   }
 
-  // console.log(state.referrals);
   // now we can compute the rebate users can get
   state.rebate();
 
   const result = state.getState();
   const decimals = readable ? vaultData.decimals : 0;
-  // console.log(
-  //   formatUnits(state.accumulatedFeesSinceFromBlock(), 18 + decimals)
-  // );
+
   return {
     chainId: vault.chainId,
     address: vault.address,

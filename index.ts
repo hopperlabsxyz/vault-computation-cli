@@ -50,7 +50,6 @@ const computeCommand = program
 
     let deals: AllDeals = {};
     if (options.deals) deals = await parseDeals(options.deals);
-    const results: ProcessVaultReturn[] = [];
 
     let vaultDeals: Record<Address, number> = {};
     if (deals[vault.chainId]) vaultDeals = deals[vault.chainId][vault.address];
@@ -65,9 +64,8 @@ const computeCommand = program
       vault,
     });
 
-    results.push(result);
     console.log(result.data);
-    const csv = convertToCSV(results, { displayCashback: !!options.deals });
+    const csv = convertToCSV([result], { displayCashback: !!options.deals });
 
     if (options.output) {
       fs.writeFile(

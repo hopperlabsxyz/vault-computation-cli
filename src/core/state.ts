@@ -10,7 +10,7 @@ import type {
   Transfer,
 } from "gql/graphql";
 
-import { erc20Abi, formatUnits, type Address } from "viem";
+import { erc20Abi, type Address } from "viem";
 import type { ReferralConfig, ReferralCustom } from "types/Vault";
 import type { DealEvent } from "./preprocess";
 import { publicClient } from "lib/publicClient";
@@ -30,12 +30,13 @@ export class State {
   public preReferrals: Record<Address, ReferralConfig | undefined> = {}; // first address is referee, second is referrer
   public referrals: Record<Address, ReferralConfig | undefined> = {};
 
-  public lastFees = 0n;
-
   public state: Record<
     Address,
     { balance: bigint; cashback: bigint; fees: bigint }
   > = {};
+
+  // DEBUG //
+  public accumulatedFees = 0n;
 
   constructor({
     feeReceiver,
@@ -90,11 +91,10 @@ export class State {
 
     // same logic for the redeem
     for (const [address, deposited] of Object.entries(this.prePendingRedeems)) {
-      if (this.pendingRedeems[address as Address]) {
-        this.pendingRedeems[address as Address]! += deposited!;
-      } else {
-        this.pendingRedeems[address as Address] = deposited;
-      }
+      if (!this.pendingRedeems[address as Address])
+        this.pendingRedeems[address as Address] = 0n;
+
+      this.pendingRedeems[address as Address]! += deposited!;
     }
 
     // we reinitialized both
@@ -173,8 +173,8 @@ export class State {
 
   public handleFeeTransfer(event: Transfer, distributeFees: boolean) {
     const totalFees = BigInt(event.value);
+    this.accumulatedFees += totalFees;
     let feePerUser: Record<Address, bigint> = {};
-    // this.lastFees = BigInt(event.value);
 
     // we compute how much fees they paid for this epoch
     // TODO: only if we are >= fromBlock
@@ -198,19 +198,24 @@ export class State {
   }
 
   public handleTransfer(event: Transfer) {
-    if (!this.state[event.from]) {
-      return;
-    }
-
-    // we decrement the balance of the sender
-    this.state[event.from].balance -= BigInt(event.value);
     // we initiate the state if it is not
+    if (!this.state[event.from])
+      this.state[event.from] = {
+        balance: 0n,
+        fees: 0n,
+        cashback: 0n,
+      };
+
     if (!this.state[event.to])
       this.state[event.to] = {
         balance: 0n,
         fees: 0n,
         cashback: 0n,
       };
+
+    // we decrement the balance of the sender
+    this.state[event.from].balance -= BigInt(event.value);
+    // we initiate the state if it is not
 
     // we increment the balance of the receiver
     this.state[event.to].balance += BigInt(event.value);
@@ -269,6 +274,52 @@ export class State {
     });
   }
 
+  public accumulatedSupply(): bigint {
+    const states = Object.entries(this.state);
+    const acc = states.reduce((acc, curr) => acc + curr[1].balance, 0n);
+    return acc;
+  }
+
+  public accumulatedFeesSinceFromBlock(): bigint {
+    const states = Object.entries(this.state);
+    const acc = states.reduce((acc, curr) => acc + curr[1].fees, 0n);
+    return acc;
+  }
+
+  public balanceOf(user: Address): bigint {
+    return this.state[user].balance;
+  }
+
+  public async onChainbalanceOf(
+    blockNumber: number,
+    address: Address
+  ): Promise<bigint> {
+    const client = publicClient[1];
+    const totalSupp = await client.readContract({
+      abi: erc20Abi,
+      functionName: "balanceOf",
+      address,
+      args: [address],
+      blockNumber: BigInt(blockNumber),
+    });
+    return totalSupp;
+  }
+
+  public async rightTotalSupply(
+    blockNumber: number,
+    address: Address
+  ): Promise<bigint> {
+    const client = publicClient[1];
+    const totalSupp = await client.readContract({
+      abi: erc20Abi,
+      functionName: "totalSupply",
+      address,
+      blockNumber: BigInt(blockNumber),
+    });
+    return totalSupp;
+  }
+
+  // DEBUG //
   public async testSupply(
     blockNumber: number,
     address: Address
@@ -286,35 +337,5 @@ export class State {
     }
     console.error(" ");
     return acc;
-  }
-
-  public accumulatedSupply(): bigint {
-    const states = Object.entries(this.state);
-    const acc = states.reduce((acc, curr) => acc + curr[1].balance, 0n);
-    return acc;
-  }
-
-  public accumulatedFeesSinceFromBlock(): bigint {
-    const states = Object.entries(this.state);
-    const acc = states.reduce((acc, curr) => acc + curr[1].fees, 0n);
-    return acc;
-  }
-
-  public balanceOf(user: Address): bigint {
-    return this.state[user].balance;
-  }
-
-  public async rightTotalSupply(
-    blockNumber: number,
-    address: Address
-  ): Promise<bigint> {
-    const client = publicClient[1];
-    const totalSupp = await client.readContract({
-      abi: erc20Abi,
-      functionName: "totalSupply",
-      address,
-      blockNumber: BigInt(blockNumber),
-    });
-    return totalSupp;
   }
 }

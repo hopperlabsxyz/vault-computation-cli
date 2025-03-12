@@ -15,12 +15,14 @@ test("events of same blocknumber must follow specific order", async () => {
     toBlock,
   });
   sanityChecks({ events: vault.events, fromBlock, toBlock });
-  const ignoredAddresses = [zeroAddress] as Address[];
 
   let events = preprocessEvents({
     events: vault.events,
-    feeReceiver: vault.feesReceiver,
-    ignoredAddresses,
+    addresses: {
+      feeReceiver: vault.feesReceiver,
+      silo: vault.silo,
+      vault: address,
+    },
     referral: {
       feeBonus: 0,
       feeRebate: 0,
