@@ -30,10 +30,11 @@ export class State {
   public preReferrals: Record<Address, ReferralConfig | undefined> = {}; // first address is referee, second is referrer
   public referrals: Record<Address, ReferralConfig | undefined> = {};
 
-  public state: Record<
+  private accounts: Record<
     Address,
     { balance: bigint; cashback: bigint; fees: bigint }
   > = {};
+  private alternateZeroOne = this.createAlternateFunction();
 
   // DEBUG //
   public accumulatedFees = 0n;
@@ -47,7 +48,7 @@ export class State {
   }) {
     this.feeReceiver = feeReceiver;
     this.decimals = decimals;
-    this.state[feeReceiver] = {
+    this.accounts[feeReceiver] = {
       balance: 0n,
       fees: 0n,
       cashback: 0n,
@@ -107,12 +108,12 @@ export class State {
     const receiver = owner;
     const controller = sender;
     if (controller !== receiver) {
-      this.state[receiver].balance -= shares;
+      this.accounts[receiver].balance -= shares;
 
-      if (this.state[controller]) {
-        this.state[controller].balance += shares;
+      if (this.accounts[controller]) {
+        this.accounts[controller].balance += shares;
       } else {
-        this.state[controller] = {
+        this.accounts[controller] = {
           balance: shares,
           cashback: 0n,
           fees: 0n,
@@ -136,16 +137,19 @@ export class State {
 
     this.totalSupply = newTotalSupply;
     this.totalAssets = newTotalAssets;
+    // for each users who has pending deposit:
     for (const [address, userRequest] of Object.entries(this.pendingDeposits)) {
-      if (!this.state[address as Address]) {
-        this.state[address as Address] = {
+      // we initiate his accounts
+      if (!this.accounts[address as Address]) {
+        this.accounts[address as Address] = {
           balance: 0n,
           fees: 0n,
           cashback: 0n,
         };
       }
 
-      this.state[address as Address].balance +=
+      // we increase it's balance (like if he claimed his shares)
+      this.accounts[address as Address].balance +=
         (userRequest! * sharesMinted) / assetsDeposited;
       // we don't update total supply because it will naturally be updated via the transfer
     }
@@ -164,11 +168,20 @@ export class State {
     this.totalAssets = event.totalAssets;
 
     for (const [address, redeemed] of Object.entries(this.pendingRedeems)) {
-      if (this.state[address as Address]) {
-        this.state[address as Address].balance -= redeemed!;
+      if (this.accounts[address as Address]) {
+        this.accounts[address as Address].balance -= redeemed!;
       }
     }
     this.pendingRedeems = {};
+  }
+
+  private createAlternateFunction() {
+    let lastValue = 1n; // Commence à 1 pour que le premier appel retourne 0
+
+    return function alternateZeroOne(): bigint {
+      lastValue = lastValue === 0n ? 1n : 0n; // Alterne entre 0 et 1
+      return lastValue;
+    };
   }
 
   public handleFeeTransfer(event: Transfer, distributeFees: boolean) {
@@ -177,48 +190,45 @@ export class State {
     let feePerUser: Record<Address, bigint> = {};
 
     // we compute how much fees they paid for this epoch
-    // TODO: only if we are >= fromBlock
     if (distributeFees) {
-      for (const [address, { balance }] of Object.entries(this.state)) {
+      for (const [address, { balance }] of Object.entries(this.accounts)) {
         feePerUser[address as Address] =
-          (balance * totalFees) / this.totalSupply;
+          (balance * totalFees) / this.totalSupply + this.alternateZeroOne();
       }
-
       // then we increment the total of fees they paid
-      // TODO: only if we are >= fromBlock
       for (const [address, fees] of Object.entries(feePerUser)) {
-        this.state[address as Address].fees += fees;
+        this.accounts[address as Address].fees += fees;
       }
     }
 
     // we can also update the feeReceiver balance
     // we must do this after everything
-    this.state[this.feeReceiver].balance += BigInt(event.value);
+    this.accounts[this.feeReceiver].balance += BigInt(event.value);
     this.totalSupply += BigInt(event.value);
   }
 
   public handleTransfer(event: Transfer) {
-    // we initiate the state if it is not
-    if (!this.state[event.from])
-      this.state[event.from] = {
+    // we initiate the accounts if it is not
+    if (!this.accounts[event.from])
+      this.accounts[event.from] = {
         balance: 0n,
         fees: 0n,
         cashback: 0n,
       };
 
-    if (!this.state[event.to])
-      this.state[event.to] = {
+    if (!this.accounts[event.to])
+      this.accounts[event.to] = {
         balance: 0n,
         fees: 0n,
         cashback: 0n,
       };
 
     // we decrement the balance of the sender
-    this.state[event.from].balance -= BigInt(event.value);
-    // we initiate the state if it is not
+    this.accounts[event.from].balance -= BigInt(event.value);
+    // we initiate the accounts if it is not
 
     // we increment the balance of the receiver
-    this.state[event.to].balance += BigInt(event.value);
+    this.accounts[event.to].balance += BigInt(event.value);
   }
 
   public handleReferral(event: ReferralCustom) {
@@ -245,52 +255,60 @@ export class State {
     };
   }
 
-  public getState() {
-    return this.state;
-  }
-
   public rebate() {
-    const stateArray = Object.entries(this.state);
-    stateArray.forEach((user) => {
+    const accountsArray = Object.entries(this.accounts);
+    accountsArray.forEach((user) => {
       const address = user[0] as Address;
       const referrer = this.referrals[address]?.referrer;
-      const fees = this.state[address].fees;
+      const fees = this.accounts[address].fees;
       const rebate = this.referrals[address]?.feeRebate;
       const bonus = this.referrals[address]?.feeBonus;
 
       if (rebate) {
-        this.state[address].cashback += (fees * BigInt(rebate)) / BPS_DIVIDER;
+        this.accounts[address].cashback +=
+          (fees * BigInt(rebate)) / BPS_DIVIDER;
       }
       if (bonus && referrer) {
-        if (!this.state[referrer]) {
-          this.state[referrer] = {
+        if (!this.accounts[referrer]) {
+          this.accounts[referrer] = {
             balance: 0n,
             cashback: 0n,
             fees: 0n,
           };
         }
-        this.state[referrer].cashback += (fees * BigInt(bonus)) / BPS_DIVIDER;
+        this.accounts[referrer].cashback +=
+          (fees * BigInt(bonus)) / BPS_DIVIDER;
       }
     });
   }
 
+  // public allAccounts(): Address[] {}
+
   public accumulatedSupply(): bigint {
-    const states = Object.entries(this.state);
-    const acc = states.reduce((acc, curr) => acc + curr[1].balance, 0n);
+    const accountss = Object.entries(this.accounts);
+    const acc = accountss.reduce((acc, curr) => acc + curr[1].balance, 0n);
     return acc;
   }
 
   public accumulatedFeesSinceFromBlock(): bigint {
-    const states = Object.entries(this.state);
-    const acc = states.reduce((acc, curr) => acc + curr[1].fees, 0n);
+    const accountss = Object.entries(this.accounts);
+    const acc = accountss.reduce((acc, curr) => acc + curr[1].fees, 0n);
     return acc;
   }
 
-  public balanceOf(user: Address): bigint {
-    return this.state[user].balance;
+  public balance(user: Address): bigint {
+    return this.accounts[user].balance;
   }
 
-  public async onChainbalanceOf(
+  public users(): Address[] {
+    const _users: Address[] = [];
+    for (const [address, _] of Object.entries(this.accounts)) {
+      _users.push(address as Address);
+    }
+    return _users;
+  }
+
+  public async balanceOf(
     blockNumber: number,
     address: Address
   ): Promise<bigint> {
@@ -337,5 +355,26 @@ export class State {
     }
     console.error(" ");
     return acc;
+  }
+
+  public getAccountsDeepCopy(): Record<
+    Address,
+    { balance: bigint; cashback: bigint; fees: bigint }
+  > {
+    const copiedAccounts: Record<
+      Address,
+      { balance: bigint; cashback: bigint; fees: bigint }
+    > = {};
+
+    // Iterate through each account and copy its properties
+    for (const [address, account] of Object.entries(this.accounts)) {
+      copiedAccounts[address as Address] = {
+        balance: account.balance,
+        cashback: account.cashback,
+        fees: account.fees,
+      };
+    }
+
+    return copiedAccounts;
   }
 }

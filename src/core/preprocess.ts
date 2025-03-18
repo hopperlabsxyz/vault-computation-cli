@@ -12,6 +12,8 @@ export interface DealEvent {
   blockTimestamp: number;
 }
 
+export type EventsArray = ReturnType<typeof preprocessEvents>;
+
 export function preprocessEvents({
   events,
   referral,
@@ -138,7 +140,7 @@ export function preprocessEvents({
   }));
 
   // Combine all events and sort by blockNumber
-  return [
+  const a = [
     ...events.newTotalAssetsUpdateds,
     ...events.depositRequests,
     ...events.depositRequestCanceleds,
@@ -152,6 +154,7 @@ export function preprocessEvents({
     ...referrals,
     ...dealsParsed,
   ].sort((a, b) => Number(a.blockNumber) - Number(b.blockNumber));
+  return a;
 }
 
 function filterTransfers(

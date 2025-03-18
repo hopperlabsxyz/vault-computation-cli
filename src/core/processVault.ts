@@ -87,7 +87,7 @@ export async function processVault({
   };
 }
 
-function eventBranching({
+export function eventBranching({
   state,
   event,
   fromBlock,

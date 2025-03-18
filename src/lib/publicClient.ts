@@ -6,6 +6,9 @@ export const publicClient: Record<number, PublicClient> = {
   [mainnet.id]: createPublicClient({
     chain: mainnet,
     transport: fallback([http(RPC_URLS[mainnet.id])]),
+    batch: {
+      multicall: true,
+    },
   }),
 };
 

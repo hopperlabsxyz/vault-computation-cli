@@ -4,7 +4,7 @@ import { type Address } from "viem";
 import type { VaultEventsQuery } from "gql/graphql";
 import { fetchVaultEvents } from "utils/fetchVaultEvents";
 
-interface FetchVaultReturn {
+export interface FetchVaultReturn {
   fees: {
     managementRate: number;
     performanceRate: number;
