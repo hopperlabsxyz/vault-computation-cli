@@ -1,7 +1,10 @@
 {
   "name": "fees-computation-cli",
   "version": "1.0.0",
-  "description": "",
+  "engines": {
+    "bun": ">=1.0.0"
+  },
+  "description": "Compute fees for a specific vault within a block range",
   "main": "index.js",
   "scripts": {
     "compute": "bun index.ts compute",

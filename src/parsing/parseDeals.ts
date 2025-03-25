@@ -48,7 +48,6 @@ function parseLine(
     Address,
     number
   ];
-  console.log({ chainId, vault, owner, deal });
   if (!isAddress(vault) && vault !== "0x0") {
     throw new Error(`Invalid vault address in OTC deals file: ${vault}`);
   }
