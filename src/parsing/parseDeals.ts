@@ -4,11 +4,29 @@ import { isAddress, type Address } from "viem";
 export type AllDeals = Record<number, Deals>;
 export type Deals = Record<Address, Record<Address, number>>;
 
+// merge deals
+// in case of conflict, the deal from deals2 will be used
+export function mergeDeals(
+  deals1: Record<Address, number>,
+  deals2: Record<Address, number>
+): Record<Address, number> {
+  const merged: Record<Address, number> = { ...deals1 };
+
+  for (const [ownerAddress, deal] of Object.entries(deals2)) {
+    const ownerAddressLower = ownerAddress.toLowerCase() as Address;
+    merged[ownerAddressLower] = deal;
+  }
+
+  return merged;
+}
+
 export async function parseDeals(filePath: string): Promise<AllDeals> {
   const otcData = (await Bun.file(filePath).text()).split("\n");
   const deals: Record<number, Record<Address, Record<Address, number>>> = {};
   for (const entry of otcData.slice(1)) {
-    const [chainId, vault, owner, otcDeal] = parseLine(entry);
+    const line = parseLine(entry);
+    if (!line) continue;
+    const [chainId, vault, owner, otcDeal] = line;
     deals[chainId] = {
       ...deals?.[chainId],
       [vault]: {
@@ -20,15 +38,18 @@ export async function parseDeals(filePath: string): Promise<AllDeals> {
   return deals;
 }
 
-function parseLine(line: string): [number, Address, Address, number] {
+function parseLine(
+  line: string
+): [number, Address, Address, number] | undefined {
+  if (line === "") return [0, "0x0", "0x0", 0];
   const [chainId, vault, owner, deal] = line.replace(" ", "").split(",") as [
     number,
     Address,
     Address,
     number
   ];
-
-  if (!isAddress(vault)) {
+  console.log({ chainId, vault, owner, deal });
+  if (!isAddress(vault) && vault !== "0x0") {
     throw new Error(`Invalid vault address in OTC deals file: ${vault}`);
   }
   if (!isAddress(owner)) {
@@ -45,5 +66,10 @@ function parseLine(line: string): [number, Address, Address, number] {
     );
   }
 
-  return [chainId, vault, owner, deal];
+  return [
+    chainId,
+    vault.toLowerCase() as Address,
+    owner.toLowerCase() as Address,
+    deal,
+  ];
 }

@@ -102,6 +102,7 @@ export function preprocessEvents({
       __typename: "Referral",
     }))
     .filter((r) => r.owner !== r.referral);
+  console.log(deals);
   const dealsArray = Object.entries(deals).map((deal) => {
     return {
       owner: deal[0] as Address,
