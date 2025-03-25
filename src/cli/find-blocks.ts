@@ -9,23 +9,33 @@ import type { Transfer } from "gql/graphql";
 
 export function setBlocksCommand(command: Command) {
   command
-    .command("blocks")
+    .command("find-blocks")
     .argument("chainId:VaultAddress")
     .description(
-      "Display all blocks that can be used to compute fees for a specific vault"
+      "Find all blocks where fee distributions occurred for a specific vault. Use this command to determine the block range for fee computation."
     )
     .option(
       "--fromBlock <number>",
-      "Display valid blocks higher or equal to this one. Default 0",
+      "Start searching from this block number (inclusive). Defaults to 0",
       "0"
     )
     .option(
       "--toBlock <number>",
-      "Display valid blocks lower or equal to this one; default is latests"
+      "Search up to this block number (inclusive). Defaults to the latest block"
     )
     .option(
       "-d, --since-last-transfer",
-      "Use the first totalAssetsUpdate before the last transfer of shares from feeReceiver"
+      "Start searching from the block of the most recent share transfer from the fee receiver. Useful for finding the last fee distribution period"
+    )
+    .addHelpText(
+      "after",
+      `
+Examples:
+  $ fees-computation-cli find-blocks 1:0x123...                    # Find all fee distribution blocks
+  $ fees-computation-cli find-blocks 1:0x123... --fromBlock 1000000 # Find blocks from block 1000000
+  $ fees-computation-cli find-blocks 1:0x123... --toBlock 1001000   # Find blocks up to block 1001000
+  $ fees-computation-cli find-blocks 1:0x123... -d                 # Find blocks since last fee receiver transfer
+    `
     )
     .action(async (args, options) => {
       const vault = parseArguments(args);
@@ -36,6 +46,12 @@ export function setBlocksCommand(command: Command) {
         ).number.toString();
       }
 
+      const roles = await client.readContract({
+        address: vault.address,
+        abi: LagoonVaultAbi,
+        functionName: "getRolesStorage",
+      });
+
       if (options?.sinceLastTransfer) {
         const { transfers } = await fetchVaultTransfers({
           address: vault.address,
@@ -43,11 +59,6 @@ export function setBlocksCommand(command: Command) {
           toBlock: maxUint256,
           skip: 0,
           first: 1000,
-        });
-        const roles = await client.readContract({
-          address: vault.address,
-          abi: LagoonVaultAbi,
-          functionName: "getRolesStorage",
         });
 
         const mostRecent = getMostRecentTransfer({
@@ -60,6 +71,25 @@ export function setBlocksCommand(command: Command) {
           options.fromBlock = "0";
         }
       }
+
+      // Fetch fee receiver transfers
+      const { transfers } = await fetchVaultTransfers({
+        address: vault.address,
+        chainId: vault.chainId,
+        toBlock: BigInt(options.toBlock),
+        skip: 0,
+        first: 1000,
+      });
+
+      const feeReceiverTransfers = transfers
+        .filter(
+          (t) =>
+            t.from.toLowerCase() === roles.feeReceiver.toLowerCase() &&
+            t.blockNumber >= options.fromBlock! &&
+            t.blockNumber <= options.toBlock!
+        )
+        .map((t) => t.blockNumber)
+        .sort((a, b) => a - b);
 
       let vaultData = (
         await fetchVaultTotalAssetsUpdated({
@@ -78,11 +108,23 @@ export function setBlocksCommand(command: Command) {
             ev.blockNumber >= options.fromBlock! &&
             ev.blockNumber <= options.toBlock!
         )
-        .map((e) => e.blockNumber)
-        .reverse();
+        .map((e) => ({ blockNumber: e.blockNumber, type: "Fee distribution" }));
+
+      // Combine and sort all events chronologically
+      const allEvents = [
+        ...events,
+        ...feeReceiverTransfers.map((block) => ({
+          blockNumber: block,
+          type: "Fee receiver transfer",
+        })),
+      ].sort((a, b) => a.blockNumber - b.blockNumber);
+
       console.log(`From ${options.fromBlock}`);
-      events.forEach((block) => console.log("Fee distribution", block));
-      console.log(`To ${options.toBlock}`);
+      console.log("\nEvents in chronological order:");
+      allEvents.forEach((event) =>
+        console.log(`${event.blockNumber} - ${event.type}`)
+      );
+      console.log(`\nTo ${options.toBlock}`);
     });
 }
 

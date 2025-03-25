@@ -2,8 +2,8 @@ import type { Transfer, VaultEventsQuery } from "gql/graphql";
 import { type Address } from "viem";
 
 export interface DealEvent {
-  feeRebate: number;
-  feeBonus: number;
+  feeRebateRate: number;
+  feeRewardRate: number;
   vault: "0x";
   __typename: "Deal";
   owner: Address;
@@ -27,8 +27,8 @@ export function preprocessEvents({
     vault: Address;
   };
   referral: {
-    feeRebate: number;
-    feeBonus: number;
+    feeRebateRate: number;
+    feeRewardRate: number;
   };
   deals: Record<Address, number>;
 }) {
@@ -97,8 +97,8 @@ export function preprocessEvents({
   const referrals = events.referrals
     .map((e) => ({
       ...e,
-      feeBonus: referral.feeBonus,
-      feeRebate: referral.feeRebate,
+      feeRewardRate: referral.feeRewardRate,
+      feeRebateRate: referral.feeRebateRate,
       __typename: "Referral",
     }))
     .filter((r) => r.owner !== r.referral);
@@ -106,15 +106,16 @@ export function preprocessEvents({
     return {
       owner: deal[0] as Address,
       referral: deal[0] as Address,
-      feeRebate: deal[1],
+      feeRebateRate: deal[1],
+      feeRewardRate: 0,
     };
   });
   const dealsParsed: DealEvent[] = dealsArray.map((e) => ({
     ...e,
     blockNumber: 0,
     blockTimestamp: 0,
-    feeRebate: e.feeRebate,
-    feeBonus: 0,
+    feeRebateRate: e.feeRebateRate,
+    feeRewardRate: 0,
     assets: 0n,
     id: "0x",
     requestId: 0,

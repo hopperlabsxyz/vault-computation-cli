@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { preprocessEvents } from "core/preprocess";
+import { preprocessEvents } from "core/preProcess";
 import { sanityChecks } from "core/sanityChecks";
 import { fetchVault } from "utils/fetchVault";
 
@@ -43,8 +43,8 @@ test("events of same blocknumber must follow specific order", async () => {
       vault: address,
     },
     referral: {
-      feeBonus: 0,
-      feeRebate: 0,
+      feeRewardRate: 0,
+      feeRebateRate: 0,
     },
     deals: {},
   });

@@ -7,12 +7,12 @@ export type Vault = {
 };
 
 export type ReferralCustom = Referral & {
-  feeRebate: number;
-  feeBonus: number;
+  feeRebateRate: number;
+  feeRewardRate: number;
 };
 
 export type ReferralConfig = {
   referrer: Address;
-  feeRebate: number;
-  feeBonus: number;
+  feeRebateRate: number;
+  feeRewardRate: number;
 };

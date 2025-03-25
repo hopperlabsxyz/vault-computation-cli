@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
-import { preprocessEvents, type EventsArray } from "core/preprocess";
-import { eventBranching } from "core/processVault";
+import { preprocessEvents, type EventsArray } from "core/preProcess";
+import { processEvent } from "core/processVault";
 import { sanityChecks } from "core/sanityChecks";
 import { State } from "core/state";
 import { totalBalanceOf } from "core/vault";
@@ -26,8 +26,8 @@ test(
         vault: address,
       },
       referral: {
-        feeBonus: 15,
-        feeRebate: 5,
+        feeRewardRate: 15,
+        feeRebateRate: 5,
       },
       deals: {},
     });
@@ -45,12 +45,11 @@ test(
       fromBlock,
       vaultData,
     });
-    // console.log(historicBalance[0]);
 
     for (let i = 0; i < events.length; i++) {
       const currentBlock: BigInt = events[i].blockNumber;
       const nextBlock = events[i + 1] ? events[i + 1].blockNumber : maxUint256;
-      eventBranching({
+      processEvent({
         state,
         event: events[i] as { __typename: string; blockNumber: bigint },
         fromBlock,
@@ -93,7 +92,7 @@ function getFinalState({
   });
 
   for (let i = 0; i < events.length; i++) {
-    eventBranching({
+    processEvent({
       state,
       event: events[i] as { __typename: string; blockNumber: bigint },
       fromBlock,

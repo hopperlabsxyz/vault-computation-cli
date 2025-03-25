@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
-import { preprocessEvents } from "core/preprocess";
-import { eventBranching } from "core/processVault";
+import { preprocessEvents } from "core/preProcess";
+import { processEvent } from "core/processVault";
 import { sanityChecks } from "core/sanityChecks";
 import { State } from "core/state";
 import { publicClient } from "lib/publicClient";
@@ -22,8 +22,8 @@ test("check total fees are consistent all attributed fees", async () => {
       vault: address,
     },
     referral: {
-      feeBonus: 15,
-      feeRebate: 5,
+      feeRewardRate: 15,
+      feeRebateRate: 5,
     },
     deals: {},
   });
@@ -37,7 +37,7 @@ test("check total fees are consistent all attributed fees", async () => {
   for (let i = 0; i < events.length; i++) {
     const currentBlock: BigInt = events[i].blockNumber;
     const nextBlock = events[i + 1] ? events[i + 1].blockNumber : maxUint256;
-    eventBranching({
+    processEvent({
       state,
       event: events[i] as { __typename: string; blockNumber: bigint },
       fromBlock,

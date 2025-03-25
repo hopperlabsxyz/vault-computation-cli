@@ -12,7 +12,7 @@ import type {
 
 import { erc20Abi, type Address } from "viem";
 import type { ReferralConfig, ReferralCustom } from "types/Vault";
-import type { DealEvent } from "./preprocess";
+import type { DealEvent } from "./preProcess";
 import { publicClient } from "lib/publicClient";
 
 export class State {
@@ -236,21 +236,21 @@ export class State {
     if (this.preReferrals[event.owner]) return;
     else {
       this.preReferrals[event.owner] = {
-        feeBonus: event.feeBonus,
-        feeRebate: event.feeRebate,
+        feeRewardRate: event.feeRewardRate,
+        feeRebateRate: event.feeRebateRate,
         referrer: event.referral,
       };
     }
   }
 
   public pricePerShare(): bigint {
-    return (10n ** this.decimals * this.totalAssets) / this.totalSupply;
+    return (this.totalAssets * 10n ** this.decimals) / this.totalSupply;
   }
 
   public handleDeal(deal: DealEvent) {
     this.preReferrals[deal.owner] = {
-      feeBonus: deal.feeBonus,
-      feeRebate: deal.feeRebate,
+      feeRewardRate: deal.feeRewardRate,
+      feeRebateRate: deal.feeRebateRate,
       referrer: deal.referral,
     };
   }
@@ -261,8 +261,8 @@ export class State {
       const address = user[0] as Address;
       const referrer = this.referrals[address]?.referrer;
       const fees = this.accounts[address].fees;
-      const rebate = this.referrals[address]?.feeRebate;
-      const bonus = this.referrals[address]?.feeBonus;
+      const rebate = this.referrals[address]?.feeRebateRate;
+      const bonus = this.referrals[address]?.feeRewardRate;
 
       if (rebate) {
         this.accounts[address].cashback +=

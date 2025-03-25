@@ -58,6 +58,5 @@ export async function totalBalanceOf({
     }),
   ]);
 
-  // console.log(balanceOf, maxMint, pendingRedeem);
   return balanceOf + maxMint + pendingRedeem;
 }

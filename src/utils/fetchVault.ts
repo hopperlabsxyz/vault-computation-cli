@@ -1,6 +1,6 @@
 import { LagoonVaultAbi } from "abis/VaultABI";
 import { publicClient } from "../lib/publicClient";
-import { type Address } from "viem";
+import { erc20Abi, type Address } from "viem";
 import type { VaultEventsQuery } from "gql/graphql";
 import { fetchVaultEvents } from "utils/fetchVaultEvents";
 
@@ -13,6 +13,10 @@ export interface FetchVaultReturn {
   feesReceiver: Address;
   silo: Address;
   events: VaultEventsQuery;
+  asset: {
+    address: Address;
+    decimals: number;
+  };
 }
 
 export async function fetchVault({
@@ -30,7 +34,7 @@ export async function fetchVault({
     throw new Error(`Missing client for chaindId : ${chainId}`);
   }
 
-  const [fees, decimals, roles, silo, events] = await Promise.all([
+  const [fees, decimals, roles, silo, events, asset] = await Promise.all([
     client.readContract({
       address,
       abi: LagoonVaultAbi,
@@ -58,7 +62,18 @@ export async function fetchVault({
       first: 1000,
       skip: 0,
     }),
+    client.readContract({
+      address,
+      abi: LagoonVaultAbi,
+      functionName: "asset",
+    }),
   ]);
+
+  const assetDecimals = await client.readContract({
+    address: asset,
+    abi: erc20Abi,
+    functionName: "decimals",
+  });
 
   return {
     fees,
@@ -66,5 +81,9 @@ export async function fetchVault({
     feesReceiver: roles.feeReceiver,
     silo,
     events,
+    asset: {
+      address: asset,
+      decimals: assetDecimals,
+    },
   };
 }

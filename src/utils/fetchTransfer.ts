@@ -18,7 +18,12 @@ export async function fetchVaultTransfers({
   skip: number;
   first: number;
 }): Promise<VaultTransfersQuery> {
-  return request(SUBGRAPHS[chainId], query, {
+  const subgraph = SUBGRAPHS[chainId];
+  if (!subgraph)
+    throw new Error(
+      `Subgraph not found for chainId: ${chainId} Please fill the .env file`
+    );
+  return request(subgraph, query, {
     first,
     vaultAddress: address,
     toBlock: toBlock.toString(),

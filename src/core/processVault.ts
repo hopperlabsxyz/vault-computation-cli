@@ -1,7 +1,7 @@
 import { fetchVault } from "utils/fetchVault";
 import { formatUnits, type Address } from "viem";
 import type { ReferralCustom, Vault } from "types/Vault";
-import { preprocessEvents, type DealEvent } from "./preprocess";
+import { preprocessEvents, type DealEvent } from "./preProcess";
 import type {
   Deposit,
   DepositRequest,
@@ -21,16 +21,16 @@ export async function processVault({
   deals,
   toBlock,
   fromBlock,
-  feeBonus,
-  feeRebate,
+  feeRewardRate,
+  feeRebateRate,
 }: {
   vault: Vault;
   readable: boolean;
   deals: Record<Address, number>;
   fromBlock: number;
   toBlock: number;
-  feeRebate: number;
-  feeBonus: number;
+  feeRebateRate: number;
+  feeRewardRate: number;
 }): Promise<ProcessVaultReturn> {
   console.log(`Loading vault ${vault.address} on chain ${vault.chainId}`);
 
@@ -45,8 +45,8 @@ export async function processVault({
       vault: vault.address,
     },
     referral: {
-      feeBonus,
-      feeRebate,
+      feeRewardRate,
+      feeRebateRate,
     },
     deals: deals,
   });
@@ -57,7 +57,7 @@ export async function processVault({
   if (events.length == 1000)
     throw new Error("you need to handle more than 1000 events");
   for (let i = 0; i < events.length; i++) {
-    eventBranching({
+    processEvent({
       state,
       event: events[i] as { __typename: string; blockNumber: bigint },
       fromBlock,
@@ -67,27 +67,28 @@ export async function processVault({
   // now we can compute the rebate users can get
   state.rebate();
 
-  const result = state.getState();
-  const decimals = readable ? vaultData.decimals : 0;
-
+  const result = state.getAccountsDeepCopy();
+  const sharesDecimals = readable ? vaultData.decimals : 0;
+  const assetDecimals = readable ? vaultData.asset.decimals : 0;
+  console.log(state.pricePerShare(), assetDecimals);
   return {
     chainId: vault.chainId,
     address: vault.address,
-    pricePerShare: Number(state.pricePerShare()) / 10 ** decimals,
+    pricePerShare: Number(formatUnits(state.pricePerShare(), assetDecimals)),
     data: Object.fromEntries(
       Object.entries(result).map(([address, values]) => [
         address,
         {
-          balance: Number(formatUnits(values.balance, decimals)),
-          fees: Number(formatUnits(values.fees, decimals)),
-          cashback: Number(formatUnits(values.cashback, decimals)),
+          balance: Number(formatUnits(values.balance, sharesDecimals)),
+          fees: Number(formatUnits(values.fees, sharesDecimals)),
+          cashback: Number(formatUnits(values.cashback, sharesDecimals)),
         },
       ])
     ),
   };
 }
 
-export function eventBranching({
+export function processEvent({
   state,
   event,
   fromBlock,

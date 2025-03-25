@@ -1,8 +1,5 @@
 import { SUBGRAPHS } from "environnement";
-import type {
-  VaultEventsQuery,
-  VaultTotalAssetsUpdatedQuery,
-} from "gql/graphql";
+import type { VaultTotalAssetsUpdatedQuery } from "gql/graphql";
 import request from "graphql-request";
 import { graphql } from "gql";
 

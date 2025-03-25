@@ -1,5 +1,5 @@
 import { Command } from "@commander-js/extra-typings";
-import { setBlocksCommand } from "cli/blocks";
+import { setBlocksCommand } from "cli/find-blocks";
 import { setComputeCommand } from "cli/compute";
 
 export const computationProgram = new Command();
