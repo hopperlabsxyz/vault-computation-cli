@@ -65,8 +65,8 @@ Examples:
         toBlock: Number(options!.toBlock!),
         deals: vaultDeals,
         readable: options!.readable!,
-        feeRebateRate: Number(options!.feeRebateRate!) * 100,
-        feeRewardRate: Number(options!.feeRewardRate!) * 100,
+        feeRebateRate: Number(options!.feeRebateRate!),
+        feeRewardRate: Number(options!.feeRewardRate!),
         vault,
       });
 

@@ -94,6 +94,7 @@ export function preprocessEvents({
     __typename: "NewTotalAssetsUpdated",
   }));
 
+  // Add __typename to referrals and we inject the parameters of the referral
   const referrals = events.referrals
     .map((e) => ({
       ...e,
@@ -102,6 +103,10 @@ export function preprocessEvents({
       __typename: "Referral",
     }))
     .filter((r) => r.owner !== r.referral);
+
+  // Add __typename to deals and we inject the parameters of the deals
+  // An otc deal is a deal on the fee rebate exclusively
+  // thus referral is the user and the feeRewardRate is 0
   const dealsArray = Object.entries(deals).map((deal) => {
     return {
       owner: deal[0] as Address,
@@ -110,6 +115,9 @@ export function preprocessEvents({
       feeRewardRate: 0,
     };
   });
+
+  // We create fake events for the deals to be able to process them like the other events
+  // we give them a block number 0 and a timestamp 0 so that they are processed first
   const dealsParsed: DealEvent[] = dealsArray.map((e) => ({
     ...e,
     blockNumber: 0,
@@ -125,6 +133,7 @@ export function preprocessEvents({
   }));
 
   // Add __typename to feeTransfers and convert relevant fields to BigInt
+  // we filter the transfers to only get the ones to the fee receiver
   const feeTransfers = events.transfers
     .filter((t) => t.to.toLowerCase() === addresses.feeReceiver.toLowerCase())
     .map((e) => ({

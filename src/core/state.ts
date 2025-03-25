@@ -262,13 +262,13 @@ export class State {
       const referrer = this.referrals[address]?.referrer;
       const fees = this.accounts[address].fees;
       const rebate = this.referrals[address]?.feeRebateRate;
-      const bonus = this.referrals[address]?.feeRewardRate;
+      const reward = this.referrals[address]?.feeRewardRate;
 
       if (rebate) {
         this.accounts[address].cashback +=
           (fees * BigInt(rebate)) / BPS_DIVIDER;
       }
-      if (bonus && referrer) {
+      if (reward && referrer) {
         if (!this.accounts[referrer]) {
           this.accounts[referrer] = {
             balance: 0n,
@@ -277,7 +277,7 @@ export class State {
           };
         }
         this.accounts[referrer].cashback +=
-          (fees * BigInt(bonus)) / BPS_DIVIDER;
+          (fees * BigInt(reward)) / BPS_DIVIDER;
       }
     });
   }
