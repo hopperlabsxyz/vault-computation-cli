@@ -59,8 +59,6 @@ export async function fetchVault({
       chainId,
       vaultAddress: address,
       toBlock: BigInt(toBlock),
-      first: 1000,
-      skip: 0,
     }),
     client.readContract({
       address,

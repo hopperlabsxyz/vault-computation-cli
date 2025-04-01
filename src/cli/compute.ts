@@ -14,14 +14,17 @@ export function setComputeCommand(command: Command) {
     .argument("chainId:VaultAddress")
     .requiredOption(
       "--from-block <number>",
-      "Starting block number for fee computation (inclusive). Use 'find-blocks' command to find the appropriate block number"
+      "Starting block number for fee computation (exclusive). Use 'find-blocks' command to find the appropriate block number"
     )
     .requiredOption(
       "--to-block <number>",
       "Ending block number for fee computation (inclusive). Use 'find-blocks' command to find the appropriate block number"
     )
     .option("-r, --readable", "Format the output in a human-readable format")
-    .option("-o, --output <string>", "Output file path for the CSV report")
+    .option(
+      "-o, --output",
+      "Will save the result in a file with following format: <chainId>-<vaultAddress>-<from-block>-<to-block>.csv"
+    )
     .option(
       "-d, --deals <string>",
       "Path to the configuration file containing OTC (Over-The-Counter) deals. The amount of % is express in 10^2. For example, 8% is express 800 into the csv file."
@@ -74,9 +77,11 @@ Examples:
 
       if (options.output) {
         try {
-          const file = Bun.file(options.output);
+          const file = Bun.file(
+            `${vault.chainId}-${vault.address}-${options.fromBlock}-${options.toBlock}.csv`
+          );
           await file.write(csv);
-          console.log(`CSV report written to: ${options.output}`);
+          console.log(`CSV report written to: ${file.name}`);
         } catch (error: any) {
           console.error("Error writing CSV file:", error.message);
           console.log("CSV content:");

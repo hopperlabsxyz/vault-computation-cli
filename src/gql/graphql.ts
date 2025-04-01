@@ -39,6 +39,7 @@ export type Approval = {
   blockNumber: Scalars['BigInt']['output'];
   blockTimestamp: Scalars['BigInt']['output'];
   id: Scalars['Bytes']['output'];
+  logIndex: Scalars['Int']['output'];
   owner: Scalars['Bytes']['output'];
   spender: Scalars['Bytes']['output'];
   transactionHash: Scalars['Bytes']['output'];
@@ -76,6 +77,14 @@ export type Approval_Filter = {
   id_not: InputMaybe<Scalars['Bytes']['input']>;
   id_not_contains: InputMaybe<Scalars['Bytes']['input']>;
   id_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  logIndex: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_in: InputMaybe<Array<Scalars['Int']['input']>>;
+  logIndex_lt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_lte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not_in: InputMaybe<Array<Scalars['Int']['input']>>;
   or: InputMaybe<Array<InputMaybe<Approval_Filter>>>;
   owner: InputMaybe<Scalars['Bytes']['input']>;
   owner_contains: InputMaybe<Scalars['Bytes']['input']>;
@@ -131,11 +140,94 @@ export enum Approval_OrderBy {
   BlockNumber = 'blockNumber',
   BlockTimestamp = 'blockTimestamp',
   Id = 'id',
+  LogIndex = 'logIndex',
   Owner = 'owner',
   Spender = 'spender',
   TransactionHash = 'transactionHash',
   Value = 'value',
   Vault = 'vault'
+}
+
+export type BeaconProxyDeployed = {
+  __typename?: 'BeaconProxyDeployed';
+  blockNumber: Scalars['BigInt']['output'];
+  blockTimestamp: Scalars['BigInt']['output'];
+  deployer: Scalars['Bytes']['output'];
+  id: Scalars['Bytes']['output'];
+  proxy: Scalars['Bytes']['output'];
+  transactionHash: Scalars['Bytes']['output'];
+};
+
+export type BeaconProxyDeployed_Filter = {
+  /** Filter for the block changed event. */
+  _change_block: InputMaybe<BlockChangedFilter>;
+  and: InputMaybe<Array<InputMaybe<BeaconProxyDeployed_Filter>>>;
+  blockNumber: InputMaybe<Scalars['BigInt']['input']>;
+  blockNumber_gt: InputMaybe<Scalars['BigInt']['input']>;
+  blockNumber_gte: InputMaybe<Scalars['BigInt']['input']>;
+  blockNumber_in: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  blockNumber_lt: InputMaybe<Scalars['BigInt']['input']>;
+  blockNumber_lte: InputMaybe<Scalars['BigInt']['input']>;
+  blockNumber_not: InputMaybe<Scalars['BigInt']['input']>;
+  blockNumber_not_in: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  blockTimestamp: InputMaybe<Scalars['BigInt']['input']>;
+  blockTimestamp_gt: InputMaybe<Scalars['BigInt']['input']>;
+  blockTimestamp_gte: InputMaybe<Scalars['BigInt']['input']>;
+  blockTimestamp_in: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  blockTimestamp_lt: InputMaybe<Scalars['BigInt']['input']>;
+  blockTimestamp_lte: InputMaybe<Scalars['BigInt']['input']>;
+  blockTimestamp_not: InputMaybe<Scalars['BigInt']['input']>;
+  blockTimestamp_not_in: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  deployer: InputMaybe<Scalars['Bytes']['input']>;
+  deployer_contains: InputMaybe<Scalars['Bytes']['input']>;
+  deployer_gt: InputMaybe<Scalars['Bytes']['input']>;
+  deployer_gte: InputMaybe<Scalars['Bytes']['input']>;
+  deployer_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  deployer_lt: InputMaybe<Scalars['Bytes']['input']>;
+  deployer_lte: InputMaybe<Scalars['Bytes']['input']>;
+  deployer_not: InputMaybe<Scalars['Bytes']['input']>;
+  deployer_not_contains: InputMaybe<Scalars['Bytes']['input']>;
+  deployer_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  id: InputMaybe<Scalars['Bytes']['input']>;
+  id_contains: InputMaybe<Scalars['Bytes']['input']>;
+  id_gt: InputMaybe<Scalars['Bytes']['input']>;
+  id_gte: InputMaybe<Scalars['Bytes']['input']>;
+  id_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  id_lt: InputMaybe<Scalars['Bytes']['input']>;
+  id_lte: InputMaybe<Scalars['Bytes']['input']>;
+  id_not: InputMaybe<Scalars['Bytes']['input']>;
+  id_not_contains: InputMaybe<Scalars['Bytes']['input']>;
+  id_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  or: InputMaybe<Array<InputMaybe<BeaconProxyDeployed_Filter>>>;
+  proxy: InputMaybe<Scalars['Bytes']['input']>;
+  proxy_contains: InputMaybe<Scalars['Bytes']['input']>;
+  proxy_gt: InputMaybe<Scalars['Bytes']['input']>;
+  proxy_gte: InputMaybe<Scalars['Bytes']['input']>;
+  proxy_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  proxy_lt: InputMaybe<Scalars['Bytes']['input']>;
+  proxy_lte: InputMaybe<Scalars['Bytes']['input']>;
+  proxy_not: InputMaybe<Scalars['Bytes']['input']>;
+  proxy_not_contains: InputMaybe<Scalars['Bytes']['input']>;
+  proxy_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  transactionHash: InputMaybe<Scalars['Bytes']['input']>;
+  transactionHash_contains: InputMaybe<Scalars['Bytes']['input']>;
+  transactionHash_gt: InputMaybe<Scalars['Bytes']['input']>;
+  transactionHash_gte: InputMaybe<Scalars['Bytes']['input']>;
+  transactionHash_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  transactionHash_lt: InputMaybe<Scalars['Bytes']['input']>;
+  transactionHash_lte: InputMaybe<Scalars['Bytes']['input']>;
+  transactionHash_not: InputMaybe<Scalars['Bytes']['input']>;
+  transactionHash_not_contains: InputMaybe<Scalars['Bytes']['input']>;
+  transactionHash_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+};
+
+export enum BeaconProxyDeployed_OrderBy {
+  BlockNumber = 'blockNumber',
+  BlockTimestamp = 'blockTimestamp',
+  Deployer = 'deployer',
+  Id = 'id',
+  Proxy = 'proxy',
+  TransactionHash = 'transactionHash'
 }
 
 export type BlockChangedFilter = {
@@ -154,6 +246,7 @@ export type Deposit = {
   blockNumber: Scalars['BigInt']['output'];
   blockTimestamp: Scalars['BigInt']['output'];
   id: Scalars['Bytes']['output'];
+  logIndex: Scalars['Int']['output'];
   owner: Scalars['Bytes']['output'];
   sender: Scalars['Bytes']['output'];
   shares: Scalars['BigInt']['output'];
@@ -168,6 +261,7 @@ export type DepositRequest = {
   blockTimestamp: Scalars['BigInt']['output'];
   controller: Scalars['Bytes']['output'];
   id: Scalars['Bytes']['output'];
+  logIndex: Scalars['Int']['output'];
   owner: Scalars['Bytes']['output'];
   requestId: Scalars['BigInt']['output'];
   sender: Scalars['Bytes']['output'];
@@ -181,6 +275,7 @@ export type DepositRequestCanceled = {
   blockTimestamp: Scalars['BigInt']['output'];
   controller: Scalars['Bytes']['output'];
   id: Scalars['Bytes']['output'];
+  logIndex: Scalars['Int']['output'];
   requestId: Scalars['BigInt']['output'];
   transactionHash: Scalars['Bytes']['output'];
   vault: Scalars['Bytes']['output'];
@@ -226,6 +321,14 @@ export type DepositRequestCanceled_Filter = {
   id_not: InputMaybe<Scalars['Bytes']['input']>;
   id_not_contains: InputMaybe<Scalars['Bytes']['input']>;
   id_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  logIndex: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_in: InputMaybe<Array<Scalars['Int']['input']>>;
+  logIndex_lt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_lte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not_in: InputMaybe<Array<Scalars['Int']['input']>>;
   or: InputMaybe<Array<InputMaybe<DepositRequestCanceled_Filter>>>;
   requestId: InputMaybe<Scalars['BigInt']['input']>;
   requestId_gt: InputMaybe<Scalars['BigInt']['input']>;
@@ -262,6 +365,7 @@ export enum DepositRequestCanceled_OrderBy {
   BlockTimestamp = 'blockTimestamp',
   Controller = 'controller',
   Id = 'id',
+  LogIndex = 'logIndex',
   RequestId = 'requestId',
   TransactionHash = 'transactionHash',
   Vault = 'vault'
@@ -315,6 +419,14 @@ export type DepositRequest_Filter = {
   id_not: InputMaybe<Scalars['Bytes']['input']>;
   id_not_contains: InputMaybe<Scalars['Bytes']['input']>;
   id_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  logIndex: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_in: InputMaybe<Array<Scalars['Int']['input']>>;
+  logIndex_lt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_lte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not_in: InputMaybe<Array<Scalars['Int']['input']>>;
   or: InputMaybe<Array<InputMaybe<DepositRequest_Filter>>>;
   owner: InputMaybe<Scalars['Bytes']['input']>;
   owner_contains: InputMaybe<Scalars['Bytes']['input']>;
@@ -372,6 +484,7 @@ export enum DepositRequest_OrderBy {
   BlockTimestamp = 'blockTimestamp',
   Controller = 'controller',
   Id = 'id',
+  LogIndex = 'logIndex',
   Owner = 'owner',
   RequestId = 'requestId',
   Sender = 'sender',
@@ -417,6 +530,14 @@ export type Deposit_Filter = {
   id_not: InputMaybe<Scalars['Bytes']['input']>;
   id_not_contains: InputMaybe<Scalars['Bytes']['input']>;
   id_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  logIndex: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_in: InputMaybe<Array<Scalars['Int']['input']>>;
+  logIndex_lt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_lte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not_in: InputMaybe<Array<Scalars['Int']['input']>>;
   or: InputMaybe<Array<InputMaybe<Deposit_Filter>>>;
   owner: InputMaybe<Scalars['Bytes']['input']>;
   owner_contains: InputMaybe<Scalars['Bytes']['input']>;
@@ -473,6 +594,7 @@ export enum Deposit_OrderBy {
   BlockNumber = 'blockNumber',
   BlockTimestamp = 'blockTimestamp',
   Id = 'id',
+  LogIndex = 'logIndex',
   Owner = 'owner',
   Sender = 'sender',
   Shares = 'shares',
@@ -480,11 +602,94 @@ export enum Deposit_OrderBy {
   Vault = 'vault'
 }
 
+export type FactoryOwnershipTransferred = {
+  __typename?: 'FactoryOwnershipTransferred';
+  blockNumber: Scalars['BigInt']['output'];
+  blockTimestamp: Scalars['BigInt']['output'];
+  id: Scalars['Bytes']['output'];
+  newOwner: Scalars['Bytes']['output'];
+  previousOwner: Scalars['Bytes']['output'];
+  transactionHash: Scalars['Bytes']['output'];
+};
+
+export type FactoryOwnershipTransferred_Filter = {
+  /** Filter for the block changed event. */
+  _change_block: InputMaybe<BlockChangedFilter>;
+  and: InputMaybe<Array<InputMaybe<FactoryOwnershipTransferred_Filter>>>;
+  blockNumber: InputMaybe<Scalars['BigInt']['input']>;
+  blockNumber_gt: InputMaybe<Scalars['BigInt']['input']>;
+  blockNumber_gte: InputMaybe<Scalars['BigInt']['input']>;
+  blockNumber_in: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  blockNumber_lt: InputMaybe<Scalars['BigInt']['input']>;
+  blockNumber_lte: InputMaybe<Scalars['BigInt']['input']>;
+  blockNumber_not: InputMaybe<Scalars['BigInt']['input']>;
+  blockNumber_not_in: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  blockTimestamp: InputMaybe<Scalars['BigInt']['input']>;
+  blockTimestamp_gt: InputMaybe<Scalars['BigInt']['input']>;
+  blockTimestamp_gte: InputMaybe<Scalars['BigInt']['input']>;
+  blockTimestamp_in: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  blockTimestamp_lt: InputMaybe<Scalars['BigInt']['input']>;
+  blockTimestamp_lte: InputMaybe<Scalars['BigInt']['input']>;
+  blockTimestamp_not: InputMaybe<Scalars['BigInt']['input']>;
+  blockTimestamp_not_in: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  id: InputMaybe<Scalars['Bytes']['input']>;
+  id_contains: InputMaybe<Scalars['Bytes']['input']>;
+  id_gt: InputMaybe<Scalars['Bytes']['input']>;
+  id_gte: InputMaybe<Scalars['Bytes']['input']>;
+  id_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  id_lt: InputMaybe<Scalars['Bytes']['input']>;
+  id_lte: InputMaybe<Scalars['Bytes']['input']>;
+  id_not: InputMaybe<Scalars['Bytes']['input']>;
+  id_not_contains: InputMaybe<Scalars['Bytes']['input']>;
+  id_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  newOwner: InputMaybe<Scalars['Bytes']['input']>;
+  newOwner_contains: InputMaybe<Scalars['Bytes']['input']>;
+  newOwner_gt: InputMaybe<Scalars['Bytes']['input']>;
+  newOwner_gte: InputMaybe<Scalars['Bytes']['input']>;
+  newOwner_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  newOwner_lt: InputMaybe<Scalars['Bytes']['input']>;
+  newOwner_lte: InputMaybe<Scalars['Bytes']['input']>;
+  newOwner_not: InputMaybe<Scalars['Bytes']['input']>;
+  newOwner_not_contains: InputMaybe<Scalars['Bytes']['input']>;
+  newOwner_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  or: InputMaybe<Array<InputMaybe<FactoryOwnershipTransferred_Filter>>>;
+  previousOwner: InputMaybe<Scalars['Bytes']['input']>;
+  previousOwner_contains: InputMaybe<Scalars['Bytes']['input']>;
+  previousOwner_gt: InputMaybe<Scalars['Bytes']['input']>;
+  previousOwner_gte: InputMaybe<Scalars['Bytes']['input']>;
+  previousOwner_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  previousOwner_lt: InputMaybe<Scalars['Bytes']['input']>;
+  previousOwner_lte: InputMaybe<Scalars['Bytes']['input']>;
+  previousOwner_not: InputMaybe<Scalars['Bytes']['input']>;
+  previousOwner_not_contains: InputMaybe<Scalars['Bytes']['input']>;
+  previousOwner_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  transactionHash: InputMaybe<Scalars['Bytes']['input']>;
+  transactionHash_contains: InputMaybe<Scalars['Bytes']['input']>;
+  transactionHash_gt: InputMaybe<Scalars['Bytes']['input']>;
+  transactionHash_gte: InputMaybe<Scalars['Bytes']['input']>;
+  transactionHash_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  transactionHash_lt: InputMaybe<Scalars['Bytes']['input']>;
+  transactionHash_lte: InputMaybe<Scalars['Bytes']['input']>;
+  transactionHash_not: InputMaybe<Scalars['Bytes']['input']>;
+  transactionHash_not_contains: InputMaybe<Scalars['Bytes']['input']>;
+  transactionHash_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+};
+
+export enum FactoryOwnershipTransferred_OrderBy {
+  BlockNumber = 'blockNumber',
+  BlockTimestamp = 'blockTimestamp',
+  Id = 'id',
+  NewOwner = 'newOwner',
+  PreviousOwner = 'previousOwner',
+  TransactionHash = 'transactionHash'
+}
+
 export type FeeReceiverUpdated = {
   __typename?: 'FeeReceiverUpdated';
   blockNumber: Scalars['BigInt']['output'];
   blockTimestamp: Scalars['BigInt']['output'];
   id: Scalars['Bytes']['output'];
+  logIndex: Scalars['Int']['output'];
   newReceiver: Scalars['Bytes']['output'];
   oldReceiver: Scalars['Bytes']['output'];
   transactionHash: Scalars['Bytes']['output'];
@@ -521,6 +726,14 @@ export type FeeReceiverUpdated_Filter = {
   id_not: InputMaybe<Scalars['Bytes']['input']>;
   id_not_contains: InputMaybe<Scalars['Bytes']['input']>;
   id_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  logIndex: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_in: InputMaybe<Array<Scalars['Int']['input']>>;
+  logIndex_lt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_lte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not_in: InputMaybe<Array<Scalars['Int']['input']>>;
   newReceiver: InputMaybe<Scalars['Bytes']['input']>;
   newReceiver_contains: InputMaybe<Scalars['Bytes']['input']>;
   newReceiver_gt: InputMaybe<Scalars['Bytes']['input']>;
@@ -568,6 +781,7 @@ export enum FeeReceiverUpdated_OrderBy {
   BlockNumber = 'blockNumber',
   BlockTimestamp = 'blockTimestamp',
   Id = 'id',
+  LogIndex = 'logIndex',
   NewReceiver = 'newReceiver',
   OldReceiver = 'oldReceiver',
   TransactionHash = 'transactionHash',
@@ -579,6 +793,7 @@ export type HighWaterMarkUpdated = {
   blockNumber: Scalars['BigInt']['output'];
   blockTimestamp: Scalars['BigInt']['output'];
   id: Scalars['Bytes']['output'];
+  logIndex: Scalars['Int']['output'];
   newHighWaterMark: Scalars['BigInt']['output'];
   oldHighWaterMark: Scalars['BigInt']['output'];
   transactionHash: Scalars['Bytes']['output'];
@@ -615,6 +830,14 @@ export type HighWaterMarkUpdated_Filter = {
   id_not: InputMaybe<Scalars['Bytes']['input']>;
   id_not_contains: InputMaybe<Scalars['Bytes']['input']>;
   id_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  logIndex: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_in: InputMaybe<Array<Scalars['Int']['input']>>;
+  logIndex_lt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_lte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not_in: InputMaybe<Array<Scalars['Int']['input']>>;
   newHighWaterMark: InputMaybe<Scalars['BigInt']['input']>;
   newHighWaterMark_gt: InputMaybe<Scalars['BigInt']['input']>;
   newHighWaterMark_gte: InputMaybe<Scalars['BigInt']['input']>;
@@ -658,6 +881,7 @@ export enum HighWaterMarkUpdated_OrderBy {
   BlockNumber = 'blockNumber',
   BlockTimestamp = 'blockTimestamp',
   Id = 'id',
+  LogIndex = 'logIndex',
   NewHighWaterMark = 'newHighWaterMark',
   OldHighWaterMark = 'oldHighWaterMark',
   TransactionHash = 'transactionHash',
@@ -669,6 +893,7 @@ export type Initialized = {
   blockNumber: Scalars['BigInt']['output'];
   blockTimestamp: Scalars['BigInt']['output'];
   id: Scalars['Bytes']['output'];
+  logIndex: Scalars['Int']['output'];
   transactionHash: Scalars['Bytes']['output'];
   vault: Scalars['Bytes']['output'];
   version: Scalars['BigInt']['output'];
@@ -704,6 +929,14 @@ export type Initialized_Filter = {
   id_not: InputMaybe<Scalars['Bytes']['input']>;
   id_not_contains: InputMaybe<Scalars['Bytes']['input']>;
   id_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  logIndex: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_in: InputMaybe<Array<Scalars['Int']['input']>>;
+  logIndex_lt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_lte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not_in: InputMaybe<Array<Scalars['Int']['input']>>;
   or: InputMaybe<Array<InputMaybe<Initialized_Filter>>>;
   transactionHash: InputMaybe<Scalars['Bytes']['input']>;
   transactionHash_contains: InputMaybe<Scalars['Bytes']['input']>;
@@ -739,6 +972,7 @@ export enum Initialized_OrderBy {
   BlockNumber = 'blockNumber',
   BlockTimestamp = 'blockTimestamp',
   Id = 'id',
+  LogIndex = 'logIndex',
   TransactionHash = 'transactionHash',
   Vault = 'vault',
   Version = 'version'
@@ -749,6 +983,7 @@ export type NewTotalAssetsUpdated = {
   blockNumber: Scalars['BigInt']['output'];
   blockTimestamp: Scalars['BigInt']['output'];
   id: Scalars['Bytes']['output'];
+  logIndex: Scalars['Int']['output'];
   totalAssets: Scalars['BigInt']['output'];
   totalSupply: Scalars['BigInt']['output'];
   transactionHash: Scalars['Bytes']['output'];
@@ -785,6 +1020,14 @@ export type NewTotalAssetsUpdated_Filter = {
   id_not: InputMaybe<Scalars['Bytes']['input']>;
   id_not_contains: InputMaybe<Scalars['Bytes']['input']>;
   id_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  logIndex: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_in: InputMaybe<Array<Scalars['Int']['input']>>;
+  logIndex_lt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_lte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not_in: InputMaybe<Array<Scalars['Int']['input']>>;
   or: InputMaybe<Array<InputMaybe<NewTotalAssetsUpdated_Filter>>>;
   totalAssets: InputMaybe<Scalars['BigInt']['input']>;
   totalAssets_gt: InputMaybe<Scalars['BigInt']['input']>;
@@ -828,6 +1071,7 @@ export enum NewTotalAssetsUpdated_OrderBy {
   BlockNumber = 'blockNumber',
   BlockTimestamp = 'blockTimestamp',
   Id = 'id',
+  LogIndex = 'logIndex',
   TotalAssets = 'totalAssets',
   TotalSupply = 'totalSupply',
   TransactionHash = 'transactionHash',
@@ -841,6 +1085,7 @@ export type OperatorSet = {
   blockTimestamp: Scalars['BigInt']['output'];
   controller: Scalars['Bytes']['output'];
   id: Scalars['Bytes']['output'];
+  logIndex: Scalars['Int']['output'];
   operator: Scalars['Bytes']['output'];
   transactionHash: Scalars['Bytes']['output'];
   vault: Scalars['Bytes']['output'];
@@ -890,6 +1135,14 @@ export type OperatorSet_Filter = {
   id_not: InputMaybe<Scalars['Bytes']['input']>;
   id_not_contains: InputMaybe<Scalars['Bytes']['input']>;
   id_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  logIndex: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_in: InputMaybe<Array<Scalars['Int']['input']>>;
+  logIndex_lt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_lte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not_in: InputMaybe<Array<Scalars['Int']['input']>>;
   operator: InputMaybe<Scalars['Bytes']['input']>;
   operator_contains: InputMaybe<Scalars['Bytes']['input']>;
   operator_gt: InputMaybe<Scalars['Bytes']['input']>;
@@ -929,6 +1182,7 @@ export enum OperatorSet_OrderBy {
   BlockTimestamp = 'blockTimestamp',
   Controller = 'controller',
   Id = 'id',
+  LogIndex = 'logIndex',
   Operator = 'operator',
   TransactionHash = 'transactionHash',
   Vault = 'vault'
@@ -945,6 +1199,7 @@ export type OwnershipTransferStarted = {
   blockNumber: Scalars['BigInt']['output'];
   blockTimestamp: Scalars['BigInt']['output'];
   id: Scalars['Bytes']['output'];
+  logIndex: Scalars['Int']['output'];
   newOwner: Scalars['Bytes']['output'];
   previousOwner: Scalars['Bytes']['output'];
   transactionHash: Scalars['Bytes']['output'];
@@ -981,6 +1236,14 @@ export type OwnershipTransferStarted_Filter = {
   id_not: InputMaybe<Scalars['Bytes']['input']>;
   id_not_contains: InputMaybe<Scalars['Bytes']['input']>;
   id_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  logIndex: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_in: InputMaybe<Array<Scalars['Int']['input']>>;
+  logIndex_lt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_lte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not_in: InputMaybe<Array<Scalars['Int']['input']>>;
   newOwner: InputMaybe<Scalars['Bytes']['input']>;
   newOwner_contains: InputMaybe<Scalars['Bytes']['input']>;
   newOwner_gt: InputMaybe<Scalars['Bytes']['input']>;
@@ -1028,6 +1291,7 @@ export enum OwnershipTransferStarted_OrderBy {
   BlockNumber = 'blockNumber',
   BlockTimestamp = 'blockTimestamp',
   Id = 'id',
+  LogIndex = 'logIndex',
   NewOwner = 'newOwner',
   PreviousOwner = 'previousOwner',
   TransactionHash = 'transactionHash',
@@ -1039,6 +1303,7 @@ export type OwnershipTransferred = {
   blockNumber: Scalars['BigInt']['output'];
   blockTimestamp: Scalars['BigInt']['output'];
   id: Scalars['Bytes']['output'];
+  logIndex: Scalars['Int']['output'];
   newOwner: Scalars['Bytes']['output'];
   previousOwner: Scalars['Bytes']['output'];
   transactionHash: Scalars['Bytes']['output'];
@@ -1075,6 +1340,14 @@ export type OwnershipTransferred_Filter = {
   id_not: InputMaybe<Scalars['Bytes']['input']>;
   id_not_contains: InputMaybe<Scalars['Bytes']['input']>;
   id_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  logIndex: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_in: InputMaybe<Array<Scalars['Int']['input']>>;
+  logIndex_lt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_lte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not_in: InputMaybe<Array<Scalars['Int']['input']>>;
   newOwner: InputMaybe<Scalars['Bytes']['input']>;
   newOwner_contains: InputMaybe<Scalars['Bytes']['input']>;
   newOwner_gt: InputMaybe<Scalars['Bytes']['input']>;
@@ -1122,6 +1395,7 @@ export enum OwnershipTransferred_OrderBy {
   BlockNumber = 'blockNumber',
   BlockTimestamp = 'blockTimestamp',
   Id = 'id',
+  LogIndex = 'logIndex',
   NewOwner = 'newOwner',
   PreviousOwner = 'previousOwner',
   TransactionHash = 'transactionHash',
@@ -1134,6 +1408,7 @@ export type Paused = {
   blockNumber: Scalars['BigInt']['output'];
   blockTimestamp: Scalars['BigInt']['output'];
   id: Scalars['Bytes']['output'];
+  logIndex: Scalars['Int']['output'];
   transactionHash: Scalars['Bytes']['output'];
   vault: Scalars['Bytes']['output'];
 };
@@ -1178,6 +1453,14 @@ export type Paused_Filter = {
   id_not: InputMaybe<Scalars['Bytes']['input']>;
   id_not_contains: InputMaybe<Scalars['Bytes']['input']>;
   id_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  logIndex: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_in: InputMaybe<Array<Scalars['Int']['input']>>;
+  logIndex_lt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_lte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not_in: InputMaybe<Array<Scalars['Int']['input']>>;
   or: InputMaybe<Array<InputMaybe<Paused_Filter>>>;
   transactionHash: InputMaybe<Scalars['Bytes']['input']>;
   transactionHash_contains: InputMaybe<Scalars['Bytes']['input']>;
@@ -1206,6 +1489,7 @@ export enum Paused_OrderBy {
   BlockNumber = 'blockNumber',
   BlockTimestamp = 'blockTimestamp',
   Id = 'id',
+  LogIndex = 'logIndex',
   TransactionHash = 'transactionHash',
   Vault = 'vault'
 }
@@ -1216,12 +1500,16 @@ export type Query = {
   _meta: Maybe<_Meta_>;
   approval: Maybe<Approval>;
   approvals: Array<Approval>;
+  beaconProxyDeployed: Maybe<BeaconProxyDeployed>;
+  beaconProxyDeployeds: Array<BeaconProxyDeployed>;
   deposit: Maybe<Deposit>;
   depositRequest: Maybe<DepositRequest>;
   depositRequestCanceled: Maybe<DepositRequestCanceled>;
   depositRequestCanceleds: Array<DepositRequestCanceled>;
   depositRequests: Array<DepositRequest>;
   deposits: Array<Deposit>;
+  factoryOwnershipTransferred: Maybe<FactoryOwnershipTransferred>;
+  factoryOwnershipTransferreds: Array<FactoryOwnershipTransferred>;
   feeReceiverUpdated: Maybe<FeeReceiverUpdated>;
   feeReceiverUpdateds: Array<FeeReceiverUpdated>;
   highWaterMarkUpdated: Maybe<HighWaterMarkUpdated>;
@@ -1250,12 +1538,16 @@ export type Query = {
   settleRedeems: Array<SettleRedeem>;
   stateUpdated: Maybe<StateUpdated>;
   stateUpdateds: Array<StateUpdated>;
+  totalAssets: Maybe<TotalAssets>;
   totalAssetsUpdated: Maybe<TotalAssetsUpdated>;
   totalAssetsUpdateds: Array<TotalAssetsUpdated>;
+  totalAssets_collection: Array<TotalAssets>;
   transfer: Maybe<Transfer>;
   transfers: Array<Transfer>;
   unpaused: Maybe<Unpaused>;
   unpauseds: Array<Unpaused>;
+  upgraded: Maybe<Upgraded>;
+  upgradeds: Array<Upgraded>;
   valuationManagerUpdated: Maybe<ValuationManagerUpdated>;
   valuationManagerUpdateds: Array<ValuationManagerUpdated>;
   whitelistDisabled: Maybe<WhitelistDisabled>;
@@ -1289,6 +1581,24 @@ export type QueryApprovalsArgs = {
   skip?: InputMaybe<Scalars['Int']['input']>;
   subgraphError?: _SubgraphErrorPolicy_;
   where: InputMaybe<Approval_Filter>;
+};
+
+
+export type QueryBeaconProxyDeployedArgs = {
+  block: InputMaybe<Block_Height>;
+  id: Scalars['ID']['input'];
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QueryBeaconProxyDeployedsArgs = {
+  block: InputMaybe<Block_Height>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  orderBy: InputMaybe<BeaconProxyDeployed_OrderBy>;
+  orderDirection: InputMaybe<OrderDirection>;
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  subgraphError?: _SubgraphErrorPolicy_;
+  where: InputMaybe<BeaconProxyDeployed_Filter>;
 };
 
 
@@ -1343,6 +1653,24 @@ export type QueryDepositsArgs = {
   skip?: InputMaybe<Scalars['Int']['input']>;
   subgraphError?: _SubgraphErrorPolicy_;
   where: InputMaybe<Deposit_Filter>;
+};
+
+
+export type QueryFactoryOwnershipTransferredArgs = {
+  block: InputMaybe<Block_Height>;
+  id: Scalars['ID']['input'];
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QueryFactoryOwnershipTransferredsArgs = {
+  block: InputMaybe<Block_Height>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  orderBy: InputMaybe<FactoryOwnershipTransferred_OrderBy>;
+  orderDirection: InputMaybe<OrderDirection>;
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  subgraphError?: _SubgraphErrorPolicy_;
+  where: InputMaybe<FactoryOwnershipTransferred_Filter>;
 };
 
 
@@ -1598,6 +1926,13 @@ export type QueryStateUpdatedsArgs = {
 };
 
 
+export type QueryTotalAssetsArgs = {
+  block: InputMaybe<Block_Height>;
+  id: Scalars['ID']['input'];
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
 export type QueryTotalAssetsUpdatedArgs = {
   block: InputMaybe<Block_Height>;
   id: Scalars['ID']['input'];
@@ -1613,6 +1948,17 @@ export type QueryTotalAssetsUpdatedsArgs = {
   skip?: InputMaybe<Scalars['Int']['input']>;
   subgraphError?: _SubgraphErrorPolicy_;
   where: InputMaybe<TotalAssetsUpdated_Filter>;
+};
+
+
+export type QueryTotalAssets_CollectionArgs = {
+  block: InputMaybe<Block_Height>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  orderBy: InputMaybe<TotalAssets_OrderBy>;
+  orderDirection: InputMaybe<OrderDirection>;
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  subgraphError?: _SubgraphErrorPolicy_;
+  where: InputMaybe<TotalAssets_Filter>;
 };
 
 
@@ -1649,6 +1995,24 @@ export type QueryUnpausedsArgs = {
   skip?: InputMaybe<Scalars['Int']['input']>;
   subgraphError?: _SubgraphErrorPolicy_;
   where: InputMaybe<Unpaused_Filter>;
+};
+
+
+export type QueryUpgradedArgs = {
+  block: InputMaybe<Block_Height>;
+  id: Scalars['ID']['input'];
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QueryUpgradedsArgs = {
+  block: InputMaybe<Block_Height>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  orderBy: InputMaybe<Upgraded_OrderBy>;
+  orderDirection: InputMaybe<OrderDirection>;
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  subgraphError?: _SubgraphErrorPolicy_;
+  where: InputMaybe<Upgraded_Filter>;
 };
 
 
@@ -1746,6 +2110,7 @@ export type RatesUpdated = {
   blockNumber: Scalars['BigInt']['output'];
   blockTimestamp: Scalars['BigInt']['output'];
   id: Scalars['Bytes']['output'];
+  logIndex: Scalars['Int']['output'];
   newRate_managementRate: Scalars['Int']['output'];
   newRate_performanceRate: Scalars['Int']['output'];
   oldRates_managementRate: Scalars['Int']['output'];
@@ -1785,6 +2150,14 @@ export type RatesUpdated_Filter = {
   id_not: InputMaybe<Scalars['Bytes']['input']>;
   id_not_contains: InputMaybe<Scalars['Bytes']['input']>;
   id_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  logIndex: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_in: InputMaybe<Array<Scalars['Int']['input']>>;
+  logIndex_lt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_lte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not_in: InputMaybe<Array<Scalars['Int']['input']>>;
   newRate_managementRate: InputMaybe<Scalars['Int']['input']>;
   newRate_managementRate_gt: InputMaybe<Scalars['Int']['input']>;
   newRate_managementRate_gte: InputMaybe<Scalars['Int']['input']>;
@@ -1852,6 +2225,7 @@ export enum RatesUpdated_OrderBy {
   BlockNumber = 'blockNumber',
   BlockTimestamp = 'blockTimestamp',
   Id = 'id',
+  LogIndex = 'logIndex',
   NewRateManagementRate = 'newRate_managementRate',
   NewRatePerformanceRate = 'newRate_performanceRate',
   OldRatesManagementRate = 'oldRates_managementRate',
@@ -1867,6 +2241,7 @@ export type RedeemRequest = {
   blockTimestamp: Scalars['BigInt']['output'];
   controller: Scalars['Bytes']['output'];
   id: Scalars['Bytes']['output'];
+  logIndex: Scalars['Int']['output'];
   owner: Scalars['Bytes']['output'];
   requestId: Scalars['BigInt']['output'];
   sender: Scalars['Bytes']['output'];
@@ -1915,6 +2290,14 @@ export type RedeemRequest_Filter = {
   id_not: InputMaybe<Scalars['Bytes']['input']>;
   id_not_contains: InputMaybe<Scalars['Bytes']['input']>;
   id_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  logIndex: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_in: InputMaybe<Array<Scalars['Int']['input']>>;
+  logIndex_lt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_lte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not_in: InputMaybe<Array<Scalars['Int']['input']>>;
   or: InputMaybe<Array<InputMaybe<RedeemRequest_Filter>>>;
   owner: InputMaybe<Scalars['Bytes']['input']>;
   owner_contains: InputMaybe<Scalars['Bytes']['input']>;
@@ -1979,6 +2362,7 @@ export enum RedeemRequest_OrderBy {
   BlockTimestamp = 'blockTimestamp',
   Controller = 'controller',
   Id = 'id',
+  LogIndex = 'logIndex',
   Owner = 'owner',
   RequestId = 'requestId',
   Sender = 'sender',
@@ -1993,6 +2377,7 @@ export type Referral = {
   blockNumber: Scalars['BigInt']['output'];
   blockTimestamp: Scalars['BigInt']['output'];
   id: Scalars['Bytes']['output'];
+  logIndex: Scalars['Int']['output'];
   owner: Scalars['Bytes']['output'];
   referral: Scalars['Bytes']['output'];
   requestId: Scalars['BigInt']['output'];
@@ -2038,6 +2423,14 @@ export type Referral_Filter = {
   id_not: InputMaybe<Scalars['Bytes']['input']>;
   id_not_contains: InputMaybe<Scalars['Bytes']['input']>;
   id_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  logIndex: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_in: InputMaybe<Array<Scalars['Int']['input']>>;
+  logIndex_lt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_lte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not_in: InputMaybe<Array<Scalars['Int']['input']>>;
   or: InputMaybe<Array<InputMaybe<Referral_Filter>>>;
   owner: InputMaybe<Scalars['Bytes']['input']>;
   owner_contains: InputMaybe<Scalars['Bytes']['input']>;
@@ -2094,6 +2487,7 @@ export enum Referral_OrderBy {
   BlockNumber = 'blockNumber',
   BlockTimestamp = 'blockTimestamp',
   Id = 'id',
+  LogIndex = 'logIndex',
   Owner = 'owner',
   Referral = 'referral',
   RequestId = 'requestId',
@@ -2108,6 +2502,7 @@ export type SettleDeposit = {
   blockTimestamp: Scalars['BigInt']['output'];
   epochId: Scalars['BigInt']['output'];
   id: Scalars['Bytes']['output'];
+  logIndex: Scalars['Int']['output'];
   settledId: Scalars['BigInt']['output'];
   sharesMinted: Scalars['BigInt']['output'];
   totalAssets: Scalars['BigInt']['output'];
@@ -2162,6 +2557,14 @@ export type SettleDeposit_Filter = {
   id_not: InputMaybe<Scalars['Bytes']['input']>;
   id_not_contains: InputMaybe<Scalars['Bytes']['input']>;
   id_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  logIndex: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_in: InputMaybe<Array<Scalars['Int']['input']>>;
+  logIndex_lt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_lte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not_in: InputMaybe<Array<Scalars['Int']['input']>>;
   or: InputMaybe<Array<InputMaybe<SettleDeposit_Filter>>>;
   settledId: InputMaybe<Scalars['BigInt']['input']>;
   settledId_gt: InputMaybe<Scalars['BigInt']['input']>;
@@ -2223,6 +2626,7 @@ export enum SettleDeposit_OrderBy {
   BlockTimestamp = 'blockTimestamp',
   EpochId = 'epochId',
   Id = 'id',
+  LogIndex = 'logIndex',
   SettledId = 'settledId',
   SharesMinted = 'sharesMinted',
   TotalAssets = 'totalAssets',
@@ -2238,6 +2642,7 @@ export type SettleRedeem = {
   blockTimestamp: Scalars['BigInt']['output'];
   epochId: Scalars['BigInt']['output'];
   id: Scalars['Bytes']['output'];
+  logIndex: Scalars['Int']['output'];
   settledId: Scalars['BigInt']['output'];
   sharesBurned: Scalars['BigInt']['output'];
   totalAssets: Scalars['BigInt']['output'];
@@ -2292,6 +2697,14 @@ export type SettleRedeem_Filter = {
   id_not: InputMaybe<Scalars['Bytes']['input']>;
   id_not_contains: InputMaybe<Scalars['Bytes']['input']>;
   id_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  logIndex: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_in: InputMaybe<Array<Scalars['Int']['input']>>;
+  logIndex_lt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_lte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not_in: InputMaybe<Array<Scalars['Int']['input']>>;
   or: InputMaybe<Array<InputMaybe<SettleRedeem_Filter>>>;
   settledId: InputMaybe<Scalars['BigInt']['input']>;
   settledId_gt: InputMaybe<Scalars['BigInt']['input']>;
@@ -2353,6 +2766,7 @@ export enum SettleRedeem_OrderBy {
   BlockTimestamp = 'blockTimestamp',
   EpochId = 'epochId',
   Id = 'id',
+  LogIndex = 'logIndex',
   SettledId = 'settledId',
   SharesBurned = 'sharesBurned',
   TotalAssets = 'totalAssets',
@@ -2366,6 +2780,7 @@ export type StateUpdated = {
   blockNumber: Scalars['BigInt']['output'];
   blockTimestamp: Scalars['BigInt']['output'];
   id: Scalars['Bytes']['output'];
+  logIndex: Scalars['Int']['output'];
   state: Scalars['Int']['output'];
   transactionHash: Scalars['Bytes']['output'];
   vault: Scalars['Bytes']['output'];
@@ -2401,6 +2816,14 @@ export type StateUpdated_Filter = {
   id_not: InputMaybe<Scalars['Bytes']['input']>;
   id_not_contains: InputMaybe<Scalars['Bytes']['input']>;
   id_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  logIndex: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_in: InputMaybe<Array<Scalars['Int']['input']>>;
+  logIndex_lt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_lte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not_in: InputMaybe<Array<Scalars['Int']['input']>>;
   or: InputMaybe<Array<InputMaybe<StateUpdated_Filter>>>;
   state: InputMaybe<Scalars['Int']['input']>;
   state_gt: InputMaybe<Scalars['Int']['input']>;
@@ -2436,6 +2859,7 @@ export enum StateUpdated_OrderBy {
   BlockNumber = 'blockNumber',
   BlockTimestamp = 'blockTimestamp',
   Id = 'id',
+  LogIndex = 'logIndex',
   State = 'state',
   TransactionHash = 'transactionHash',
   Vault = 'vault'
@@ -2447,12 +2871,16 @@ export type Subscription = {
   _meta: Maybe<_Meta_>;
   approval: Maybe<Approval>;
   approvals: Array<Approval>;
+  beaconProxyDeployed: Maybe<BeaconProxyDeployed>;
+  beaconProxyDeployeds: Array<BeaconProxyDeployed>;
   deposit: Maybe<Deposit>;
   depositRequest: Maybe<DepositRequest>;
   depositRequestCanceled: Maybe<DepositRequestCanceled>;
   depositRequestCanceleds: Array<DepositRequestCanceled>;
   depositRequests: Array<DepositRequest>;
   deposits: Array<Deposit>;
+  factoryOwnershipTransferred: Maybe<FactoryOwnershipTransferred>;
+  factoryOwnershipTransferreds: Array<FactoryOwnershipTransferred>;
   feeReceiverUpdated: Maybe<FeeReceiverUpdated>;
   feeReceiverUpdateds: Array<FeeReceiverUpdated>;
   highWaterMarkUpdated: Maybe<HighWaterMarkUpdated>;
@@ -2481,12 +2909,16 @@ export type Subscription = {
   settleRedeems: Array<SettleRedeem>;
   stateUpdated: Maybe<StateUpdated>;
   stateUpdateds: Array<StateUpdated>;
+  totalAssets: Maybe<TotalAssets>;
   totalAssetsUpdated: Maybe<TotalAssetsUpdated>;
   totalAssetsUpdateds: Array<TotalAssetsUpdated>;
+  totalAssets_collection: Array<TotalAssets>;
   transfer: Maybe<Transfer>;
   transfers: Array<Transfer>;
   unpaused: Maybe<Unpaused>;
   unpauseds: Array<Unpaused>;
+  upgraded: Maybe<Upgraded>;
+  upgradeds: Array<Upgraded>;
   valuationManagerUpdated: Maybe<ValuationManagerUpdated>;
   valuationManagerUpdateds: Array<ValuationManagerUpdated>;
   whitelistDisabled: Maybe<WhitelistDisabled>;
@@ -2520,6 +2952,24 @@ export type SubscriptionApprovalsArgs = {
   skip?: InputMaybe<Scalars['Int']['input']>;
   subgraphError?: _SubgraphErrorPolicy_;
   where: InputMaybe<Approval_Filter>;
+};
+
+
+export type SubscriptionBeaconProxyDeployedArgs = {
+  block: InputMaybe<Block_Height>;
+  id: Scalars['ID']['input'];
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type SubscriptionBeaconProxyDeployedsArgs = {
+  block: InputMaybe<Block_Height>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  orderBy: InputMaybe<BeaconProxyDeployed_OrderBy>;
+  orderDirection: InputMaybe<OrderDirection>;
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  subgraphError?: _SubgraphErrorPolicy_;
+  where: InputMaybe<BeaconProxyDeployed_Filter>;
 };
 
 
@@ -2574,6 +3024,24 @@ export type SubscriptionDepositsArgs = {
   skip?: InputMaybe<Scalars['Int']['input']>;
   subgraphError?: _SubgraphErrorPolicy_;
   where: InputMaybe<Deposit_Filter>;
+};
+
+
+export type SubscriptionFactoryOwnershipTransferredArgs = {
+  block: InputMaybe<Block_Height>;
+  id: Scalars['ID']['input'];
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type SubscriptionFactoryOwnershipTransferredsArgs = {
+  block: InputMaybe<Block_Height>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  orderBy: InputMaybe<FactoryOwnershipTransferred_OrderBy>;
+  orderDirection: InputMaybe<OrderDirection>;
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  subgraphError?: _SubgraphErrorPolicy_;
+  where: InputMaybe<FactoryOwnershipTransferred_Filter>;
 };
 
 
@@ -2829,6 +3297,13 @@ export type SubscriptionStateUpdatedsArgs = {
 };
 
 
+export type SubscriptionTotalAssetsArgs = {
+  block: InputMaybe<Block_Height>;
+  id: Scalars['ID']['input'];
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
 export type SubscriptionTotalAssetsUpdatedArgs = {
   block: InputMaybe<Block_Height>;
   id: Scalars['ID']['input'];
@@ -2844,6 +3319,17 @@ export type SubscriptionTotalAssetsUpdatedsArgs = {
   skip?: InputMaybe<Scalars['Int']['input']>;
   subgraphError?: _SubgraphErrorPolicy_;
   where: InputMaybe<TotalAssetsUpdated_Filter>;
+};
+
+
+export type SubscriptionTotalAssets_CollectionArgs = {
+  block: InputMaybe<Block_Height>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  orderBy: InputMaybe<TotalAssets_OrderBy>;
+  orderDirection: InputMaybe<OrderDirection>;
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  subgraphError?: _SubgraphErrorPolicy_;
+  where: InputMaybe<TotalAssets_Filter>;
 };
 
 
@@ -2880,6 +3366,24 @@ export type SubscriptionUnpausedsArgs = {
   skip?: InputMaybe<Scalars['Int']['input']>;
   subgraphError?: _SubgraphErrorPolicy_;
   where: InputMaybe<Unpaused_Filter>;
+};
+
+
+export type SubscriptionUpgradedArgs = {
+  block: InputMaybe<Block_Height>;
+  id: Scalars['ID']['input'];
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type SubscriptionUpgradedsArgs = {
+  block: InputMaybe<Block_Height>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  orderBy: InputMaybe<Upgraded_OrderBy>;
+  orderDirection: InputMaybe<OrderDirection>;
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  subgraphError?: _SubgraphErrorPolicy_;
+  where: InputMaybe<Upgraded_Filter>;
 };
 
 
@@ -2972,11 +3476,23 @@ export type SubscriptionWithdrawsArgs = {
   where: InputMaybe<Withdraw_Filter>;
 };
 
+export type TotalAssets = {
+  __typename?: 'TotalAssets';
+  blockNumber: Scalars['BigInt']['output'];
+  blockTimestamp: Scalars['BigInt']['output'];
+  id: Scalars['Bytes']['output'];
+  totalAssets: Scalars['BigInt']['output'];
+  vault: Scalars['Bytes']['output'];
+};
+
 export type TotalAssetsUpdated = {
   __typename?: 'TotalAssetsUpdated';
   blockNumber: Scalars['BigInt']['output'];
   blockTimestamp: Scalars['BigInt']['output'];
   id: Scalars['Bytes']['output'];
+  logIndex: Scalars['Int']['output'];
+  previousTotalAssets: Scalars['BigInt']['output'];
+  timePast: Scalars['BigInt']['output'];
   totalAssets: Scalars['BigInt']['output'];
   totalSupply: Scalars['BigInt']['output'];
   transactionHash: Scalars['Bytes']['output'];
@@ -3013,7 +3529,31 @@ export type TotalAssetsUpdated_Filter = {
   id_not: InputMaybe<Scalars['Bytes']['input']>;
   id_not_contains: InputMaybe<Scalars['Bytes']['input']>;
   id_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  logIndex: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_in: InputMaybe<Array<Scalars['Int']['input']>>;
+  logIndex_lt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_lte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not_in: InputMaybe<Array<Scalars['Int']['input']>>;
   or: InputMaybe<Array<InputMaybe<TotalAssetsUpdated_Filter>>>;
+  previousTotalAssets: InputMaybe<Scalars['BigInt']['input']>;
+  previousTotalAssets_gt: InputMaybe<Scalars['BigInt']['input']>;
+  previousTotalAssets_gte: InputMaybe<Scalars['BigInt']['input']>;
+  previousTotalAssets_in: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  previousTotalAssets_lt: InputMaybe<Scalars['BigInt']['input']>;
+  previousTotalAssets_lte: InputMaybe<Scalars['BigInt']['input']>;
+  previousTotalAssets_not: InputMaybe<Scalars['BigInt']['input']>;
+  previousTotalAssets_not_in: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  timePast: InputMaybe<Scalars['BigInt']['input']>;
+  timePast_gt: InputMaybe<Scalars['BigInt']['input']>;
+  timePast_gte: InputMaybe<Scalars['BigInt']['input']>;
+  timePast_in: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  timePast_lt: InputMaybe<Scalars['BigInt']['input']>;
+  timePast_lte: InputMaybe<Scalars['BigInt']['input']>;
+  timePast_not: InputMaybe<Scalars['BigInt']['input']>;
+  timePast_not_in: InputMaybe<Array<Scalars['BigInt']['input']>>;
   totalAssets: InputMaybe<Scalars['BigInt']['input']>;
   totalAssets_gt: InputMaybe<Scalars['BigInt']['input']>;
   totalAssets_gte: InputMaybe<Scalars['BigInt']['input']>;
@@ -3056,9 +3596,71 @@ export enum TotalAssetsUpdated_OrderBy {
   BlockNumber = 'blockNumber',
   BlockTimestamp = 'blockTimestamp',
   Id = 'id',
+  LogIndex = 'logIndex',
+  PreviousTotalAssets = 'previousTotalAssets',
+  TimePast = 'timePast',
   TotalAssets = 'totalAssets',
   TotalSupply = 'totalSupply',
   TransactionHash = 'transactionHash',
+  Vault = 'vault'
+}
+
+export type TotalAssets_Filter = {
+  /** Filter for the block changed event. */
+  _change_block: InputMaybe<BlockChangedFilter>;
+  and: InputMaybe<Array<InputMaybe<TotalAssets_Filter>>>;
+  blockNumber: InputMaybe<Scalars['BigInt']['input']>;
+  blockNumber_gt: InputMaybe<Scalars['BigInt']['input']>;
+  blockNumber_gte: InputMaybe<Scalars['BigInt']['input']>;
+  blockNumber_in: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  blockNumber_lt: InputMaybe<Scalars['BigInt']['input']>;
+  blockNumber_lte: InputMaybe<Scalars['BigInt']['input']>;
+  blockNumber_not: InputMaybe<Scalars['BigInt']['input']>;
+  blockNumber_not_in: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  blockTimestamp: InputMaybe<Scalars['BigInt']['input']>;
+  blockTimestamp_gt: InputMaybe<Scalars['BigInt']['input']>;
+  blockTimestamp_gte: InputMaybe<Scalars['BigInt']['input']>;
+  blockTimestamp_in: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  blockTimestamp_lt: InputMaybe<Scalars['BigInt']['input']>;
+  blockTimestamp_lte: InputMaybe<Scalars['BigInt']['input']>;
+  blockTimestamp_not: InputMaybe<Scalars['BigInt']['input']>;
+  blockTimestamp_not_in: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  id: InputMaybe<Scalars['Bytes']['input']>;
+  id_contains: InputMaybe<Scalars['Bytes']['input']>;
+  id_gt: InputMaybe<Scalars['Bytes']['input']>;
+  id_gte: InputMaybe<Scalars['Bytes']['input']>;
+  id_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  id_lt: InputMaybe<Scalars['Bytes']['input']>;
+  id_lte: InputMaybe<Scalars['Bytes']['input']>;
+  id_not: InputMaybe<Scalars['Bytes']['input']>;
+  id_not_contains: InputMaybe<Scalars['Bytes']['input']>;
+  id_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  or: InputMaybe<Array<InputMaybe<TotalAssets_Filter>>>;
+  totalAssets: InputMaybe<Scalars['BigInt']['input']>;
+  totalAssets_gt: InputMaybe<Scalars['BigInt']['input']>;
+  totalAssets_gte: InputMaybe<Scalars['BigInt']['input']>;
+  totalAssets_in: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  totalAssets_lt: InputMaybe<Scalars['BigInt']['input']>;
+  totalAssets_lte: InputMaybe<Scalars['BigInt']['input']>;
+  totalAssets_not: InputMaybe<Scalars['BigInt']['input']>;
+  totalAssets_not_in: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  vault: InputMaybe<Scalars['Bytes']['input']>;
+  vault_contains: InputMaybe<Scalars['Bytes']['input']>;
+  vault_gt: InputMaybe<Scalars['Bytes']['input']>;
+  vault_gte: InputMaybe<Scalars['Bytes']['input']>;
+  vault_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  vault_lt: InputMaybe<Scalars['Bytes']['input']>;
+  vault_lte: InputMaybe<Scalars['Bytes']['input']>;
+  vault_not: InputMaybe<Scalars['Bytes']['input']>;
+  vault_not_contains: InputMaybe<Scalars['Bytes']['input']>;
+  vault_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+};
+
+export enum TotalAssets_OrderBy {
+  BlockNumber = 'blockNumber',
+  BlockTimestamp = 'blockTimestamp',
+  Id = 'id',
+  TotalAssets = 'totalAssets',
   Vault = 'vault'
 }
 
@@ -3068,6 +3670,7 @@ export type Transfer = {
   blockTimestamp: Scalars['BigInt']['output'];
   from: Scalars['Bytes']['output'];
   id: Scalars['Bytes']['output'];
+  logIndex: Scalars['Int']['output'];
   to: Scalars['Bytes']['output'];
   transactionHash: Scalars['Bytes']['output'];
   value: Scalars['BigInt']['output'];
@@ -3114,6 +3717,14 @@ export type Transfer_Filter = {
   id_not: InputMaybe<Scalars['Bytes']['input']>;
   id_not_contains: InputMaybe<Scalars['Bytes']['input']>;
   id_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  logIndex: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_in: InputMaybe<Array<Scalars['Int']['input']>>;
+  logIndex_lt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_lte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not_in: InputMaybe<Array<Scalars['Int']['input']>>;
   or: InputMaybe<Array<InputMaybe<Transfer_Filter>>>;
   to: InputMaybe<Scalars['Bytes']['input']>;
   to_contains: InputMaybe<Scalars['Bytes']['input']>;
@@ -3160,6 +3771,7 @@ export enum Transfer_OrderBy {
   BlockTimestamp = 'blockTimestamp',
   From = 'from',
   Id = 'id',
+  LogIndex = 'logIndex',
   To = 'to',
   TransactionHash = 'transactionHash',
   Value = 'value',
@@ -3172,6 +3784,7 @@ export type Unpaused = {
   blockNumber: Scalars['BigInt']['output'];
   blockTimestamp: Scalars['BigInt']['output'];
   id: Scalars['Bytes']['output'];
+  logIndex: Scalars['Int']['output'];
   transactionHash: Scalars['Bytes']['output'];
   vault: Scalars['Bytes']['output'];
 };
@@ -3216,6 +3829,14 @@ export type Unpaused_Filter = {
   id_not: InputMaybe<Scalars['Bytes']['input']>;
   id_not_contains: InputMaybe<Scalars['Bytes']['input']>;
   id_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  logIndex: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_in: InputMaybe<Array<Scalars['Int']['input']>>;
+  logIndex_lt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_lte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not_in: InputMaybe<Array<Scalars['Int']['input']>>;
   or: InputMaybe<Array<InputMaybe<Unpaused_Filter>>>;
   transactionHash: InputMaybe<Scalars['Bytes']['input']>;
   transactionHash_contains: InputMaybe<Scalars['Bytes']['input']>;
@@ -3244,8 +3865,79 @@ export enum Unpaused_OrderBy {
   BlockNumber = 'blockNumber',
   BlockTimestamp = 'blockTimestamp',
   Id = 'id',
+  LogIndex = 'logIndex',
   TransactionHash = 'transactionHash',
   Vault = 'vault'
+}
+
+export type Upgraded = {
+  __typename?: 'Upgraded';
+  blockNumber: Scalars['BigInt']['output'];
+  blockTimestamp: Scalars['BigInt']['output'];
+  id: Scalars['Bytes']['output'];
+  implementation: Scalars['Bytes']['output'];
+  transactionHash: Scalars['Bytes']['output'];
+};
+
+export type Upgraded_Filter = {
+  /** Filter for the block changed event. */
+  _change_block: InputMaybe<BlockChangedFilter>;
+  and: InputMaybe<Array<InputMaybe<Upgraded_Filter>>>;
+  blockNumber: InputMaybe<Scalars['BigInt']['input']>;
+  blockNumber_gt: InputMaybe<Scalars['BigInt']['input']>;
+  blockNumber_gte: InputMaybe<Scalars['BigInt']['input']>;
+  blockNumber_in: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  blockNumber_lt: InputMaybe<Scalars['BigInt']['input']>;
+  blockNumber_lte: InputMaybe<Scalars['BigInt']['input']>;
+  blockNumber_not: InputMaybe<Scalars['BigInt']['input']>;
+  blockNumber_not_in: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  blockTimestamp: InputMaybe<Scalars['BigInt']['input']>;
+  blockTimestamp_gt: InputMaybe<Scalars['BigInt']['input']>;
+  blockTimestamp_gte: InputMaybe<Scalars['BigInt']['input']>;
+  blockTimestamp_in: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  blockTimestamp_lt: InputMaybe<Scalars['BigInt']['input']>;
+  blockTimestamp_lte: InputMaybe<Scalars['BigInt']['input']>;
+  blockTimestamp_not: InputMaybe<Scalars['BigInt']['input']>;
+  blockTimestamp_not_in: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  id: InputMaybe<Scalars['Bytes']['input']>;
+  id_contains: InputMaybe<Scalars['Bytes']['input']>;
+  id_gt: InputMaybe<Scalars['Bytes']['input']>;
+  id_gte: InputMaybe<Scalars['Bytes']['input']>;
+  id_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  id_lt: InputMaybe<Scalars['Bytes']['input']>;
+  id_lte: InputMaybe<Scalars['Bytes']['input']>;
+  id_not: InputMaybe<Scalars['Bytes']['input']>;
+  id_not_contains: InputMaybe<Scalars['Bytes']['input']>;
+  id_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  implementation: InputMaybe<Scalars['Bytes']['input']>;
+  implementation_contains: InputMaybe<Scalars['Bytes']['input']>;
+  implementation_gt: InputMaybe<Scalars['Bytes']['input']>;
+  implementation_gte: InputMaybe<Scalars['Bytes']['input']>;
+  implementation_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  implementation_lt: InputMaybe<Scalars['Bytes']['input']>;
+  implementation_lte: InputMaybe<Scalars['Bytes']['input']>;
+  implementation_not: InputMaybe<Scalars['Bytes']['input']>;
+  implementation_not_contains: InputMaybe<Scalars['Bytes']['input']>;
+  implementation_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  or: InputMaybe<Array<InputMaybe<Upgraded_Filter>>>;
+  transactionHash: InputMaybe<Scalars['Bytes']['input']>;
+  transactionHash_contains: InputMaybe<Scalars['Bytes']['input']>;
+  transactionHash_gt: InputMaybe<Scalars['Bytes']['input']>;
+  transactionHash_gte: InputMaybe<Scalars['Bytes']['input']>;
+  transactionHash_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  transactionHash_lt: InputMaybe<Scalars['Bytes']['input']>;
+  transactionHash_lte: InputMaybe<Scalars['Bytes']['input']>;
+  transactionHash_not: InputMaybe<Scalars['Bytes']['input']>;
+  transactionHash_not_contains: InputMaybe<Scalars['Bytes']['input']>;
+  transactionHash_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+};
+
+export enum Upgraded_OrderBy {
+  BlockNumber = 'blockNumber',
+  BlockTimestamp = 'blockTimestamp',
+  Id = 'id',
+  Implementation = 'implementation',
+  TransactionHash = 'transactionHash'
 }
 
 export type ValuationManagerUpdated = {
@@ -3253,6 +3945,7 @@ export type ValuationManagerUpdated = {
   blockNumber: Scalars['BigInt']['output'];
   blockTimestamp: Scalars['BigInt']['output'];
   id: Scalars['Bytes']['output'];
+  logIndex: Scalars['Int']['output'];
   newManager: Scalars['Bytes']['output'];
   oldManager: Scalars['Bytes']['output'];
   transactionHash: Scalars['Bytes']['output'];
@@ -3289,6 +3982,14 @@ export type ValuationManagerUpdated_Filter = {
   id_not: InputMaybe<Scalars['Bytes']['input']>;
   id_not_contains: InputMaybe<Scalars['Bytes']['input']>;
   id_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  logIndex: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_in: InputMaybe<Array<Scalars['Int']['input']>>;
+  logIndex_lt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_lte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not_in: InputMaybe<Array<Scalars['Int']['input']>>;
   newManager: InputMaybe<Scalars['Bytes']['input']>;
   newManager_contains: InputMaybe<Scalars['Bytes']['input']>;
   newManager_gt: InputMaybe<Scalars['Bytes']['input']>;
@@ -3336,6 +4037,7 @@ export enum ValuationManagerUpdated_OrderBy {
   BlockNumber = 'blockNumber',
   BlockTimestamp = 'blockTimestamp',
   Id = 'id',
+  LogIndex = 'logIndex',
   NewManager = 'newManager',
   OldManager = 'oldManager',
   TransactionHash = 'transactionHash',
@@ -3347,6 +4049,7 @@ export type WhitelistDisabled = {
   blockNumber: Scalars['BigInt']['output'];
   blockTimestamp: Scalars['BigInt']['output'];
   id: Scalars['Bytes']['output'];
+  logIndex: Scalars['Int']['output'];
   transactionHash: Scalars['Bytes']['output'];
   vault: Scalars['Bytes']['output'];
 };
@@ -3381,6 +4084,14 @@ export type WhitelistDisabled_Filter = {
   id_not: InputMaybe<Scalars['Bytes']['input']>;
   id_not_contains: InputMaybe<Scalars['Bytes']['input']>;
   id_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  logIndex: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_in: InputMaybe<Array<Scalars['Int']['input']>>;
+  logIndex_lt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_lte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not_in: InputMaybe<Array<Scalars['Int']['input']>>;
   or: InputMaybe<Array<InputMaybe<WhitelistDisabled_Filter>>>;
   transactionHash: InputMaybe<Scalars['Bytes']['input']>;
   transactionHash_contains: InputMaybe<Scalars['Bytes']['input']>;
@@ -3408,6 +4119,7 @@ export enum WhitelistDisabled_OrderBy {
   BlockNumber = 'blockNumber',
   BlockTimestamp = 'blockTimestamp',
   Id = 'id',
+  LogIndex = 'logIndex',
   TransactionHash = 'transactionHash',
   Vault = 'vault'
 }
@@ -3417,6 +4129,7 @@ export type WhitelistManagerUpdated = {
   blockNumber: Scalars['BigInt']['output'];
   blockTimestamp: Scalars['BigInt']['output'];
   id: Scalars['Bytes']['output'];
+  logIndex: Scalars['Int']['output'];
   newManager: Scalars['Bytes']['output'];
   oldManager: Scalars['Bytes']['output'];
   transactionHash: Scalars['Bytes']['output'];
@@ -3453,6 +4166,14 @@ export type WhitelistManagerUpdated_Filter = {
   id_not: InputMaybe<Scalars['Bytes']['input']>;
   id_not_contains: InputMaybe<Scalars['Bytes']['input']>;
   id_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  logIndex: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_in: InputMaybe<Array<Scalars['Int']['input']>>;
+  logIndex_lt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_lte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not_in: InputMaybe<Array<Scalars['Int']['input']>>;
   newManager: InputMaybe<Scalars['Bytes']['input']>;
   newManager_contains: InputMaybe<Scalars['Bytes']['input']>;
   newManager_gt: InputMaybe<Scalars['Bytes']['input']>;
@@ -3500,6 +4221,7 @@ export enum WhitelistManagerUpdated_OrderBy {
   BlockNumber = 'blockNumber',
   BlockTimestamp = 'blockTimestamp',
   Id = 'id',
+  LogIndex = 'logIndex',
   NewManager = 'newManager',
   OldManager = 'oldManager',
   TransactionHash = 'transactionHash',
@@ -3513,6 +4235,7 @@ export type WhitelistUpdated = {
   blockNumber: Scalars['BigInt']['output'];
   blockTimestamp: Scalars['BigInt']['output'];
   id: Scalars['Bytes']['output'];
+  logIndex: Scalars['Int']['output'];
   transactionHash: Scalars['Bytes']['output'];
   vault: Scalars['Bytes']['output'];
 };
@@ -3561,6 +4284,14 @@ export type WhitelistUpdated_Filter = {
   id_not: InputMaybe<Scalars['Bytes']['input']>;
   id_not_contains: InputMaybe<Scalars['Bytes']['input']>;
   id_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  logIndex: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_in: InputMaybe<Array<Scalars['Int']['input']>>;
+  logIndex_lt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_lte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not_in: InputMaybe<Array<Scalars['Int']['input']>>;
   or: InputMaybe<Array<InputMaybe<WhitelistUpdated_Filter>>>;
   transactionHash: InputMaybe<Scalars['Bytes']['input']>;
   transactionHash_contains: InputMaybe<Scalars['Bytes']['input']>;
@@ -3590,6 +4321,7 @@ export enum WhitelistUpdated_OrderBy {
   BlockNumber = 'blockNumber',
   BlockTimestamp = 'blockTimestamp',
   Id = 'id',
+  LogIndex = 'logIndex',
   TransactionHash = 'transactionHash',
   Vault = 'vault'
 }
@@ -3600,6 +4332,7 @@ export type Withdraw = {
   blockNumber: Scalars['BigInt']['output'];
   blockTimestamp: Scalars['BigInt']['output'];
   id: Scalars['Bytes']['output'];
+  logIndex: Scalars['Int']['output'];
   owner: Scalars['Bytes']['output'];
   receiver: Scalars['Bytes']['output'];
   sender: Scalars['Bytes']['output'];
@@ -3646,6 +4379,14 @@ export type Withdraw_Filter = {
   id_not: InputMaybe<Scalars['Bytes']['input']>;
   id_not_contains: InputMaybe<Scalars['Bytes']['input']>;
   id_not_in: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  logIndex: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_gte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_in: InputMaybe<Array<Scalars['Int']['input']>>;
+  logIndex_lt: InputMaybe<Scalars['Int']['input']>;
+  logIndex_lte: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not: InputMaybe<Scalars['Int']['input']>;
+  logIndex_not_in: InputMaybe<Array<Scalars['Int']['input']>>;
   or: InputMaybe<Array<InputMaybe<Withdraw_Filter>>>;
   owner: InputMaybe<Scalars['Bytes']['input']>;
   owner_contains: InputMaybe<Scalars['Bytes']['input']>;
@@ -3712,6 +4453,7 @@ export enum Withdraw_OrderBy {
   BlockNumber = 'blockNumber',
   BlockTimestamp = 'blockTimestamp',
   Id = 'id',
+  LogIndex = 'logIndex',
   Owner = 'owner',
   Receiver = 'receiver',
   Sender = 'sender',
@@ -3774,7 +4516,7 @@ export type VaultEventsQueryVariables = Exact<{
 }>;
 
 
-export type VaultEventsQuery = { __typename?: 'Query', depositRequests: Array<{ __typename?: 'DepositRequest', assets: BigIntish, blockNumber: BigIntish, blockTimestamp: BigIntish, id: `0x${string}`, owner: `0x${string}`, sender: `0x${string}`, transactionHash: `0x${string}`, controller: `0x${string}`, requestId: BigIntish, vault: `0x${string}` }>, redeemRequests: Array<{ __typename?: 'RedeemRequest', blockNumber: BigIntish, blockTimestamp: BigIntish, id: `0x${string}`, owner: `0x${string}`, sender: `0x${string}`, shares: BigIntish, transactionHash: `0x${string}`, controller: `0x${string}`, requestId: BigIntish, vault: `0x${string}` }>, settleRedeems: Array<{ __typename?: 'SettleRedeem', assetsWithdrawed: BigIntish, blockNumber: BigIntish, blockTimestamp: BigIntish, epochId: BigIntish, id: `0x${string}`, settledId: BigIntish, sharesBurned: BigIntish, totalAssets: BigIntish, totalSupply: BigIntish, transactionHash: `0x${string}`, vault: `0x${string}` }>, settleDeposits: Array<{ __typename?: 'SettleDeposit', assetsDeposited: BigIntish, blockNumber: BigIntish, blockTimestamp: BigIntish, epochId: BigIntish, id: `0x${string}`, settledId: BigIntish, sharesMinted: BigIntish, totalSupply: BigIntish, totalAssets: BigIntish, transactionHash: `0x${string}`, vault: `0x${string}` }>, totalAssetsUpdateds: Array<{ __typename?: 'TotalAssetsUpdated', transactionHash: `0x${string}`, totalAssets: BigIntish, id: `0x${string}`, blockNumber: BigIntish, blockTimestamp: BigIntish, vault: `0x${string}` }>, newTotalAssetsUpdateds: Array<{ __typename?: 'NewTotalAssetsUpdated', transactionHash: `0x${string}`, totalAssets: BigIntish, id: `0x${string}`, blockNumber: BigIntish, blockTimestamp: BigIntish, vault: `0x${string}` }>, transfers: Array<{ __typename?: 'Transfer', blockNumber: BigIntish, blockTimestamp: BigIntish, from: `0x${string}`, id: `0x${string}`, to: `0x${string}`, transactionHash: `0x${string}`, value: BigIntish, vault: `0x${string}` }>, depositRequestCanceleds: Array<{ __typename?: 'DepositRequestCanceled', blockNumber: BigIntish, blockTimestamp: BigIntish, controller: `0x${string}`, id: `0x${string}`, requestId: BigIntish, transactionHash: `0x${string}`, vault: `0x${string}` }>, deposits: Array<{ __typename?: 'Deposit', id: `0x${string}`, sender: `0x${string}`, owner: `0x${string}`, assets: BigIntish, vault: `0x${string}`, transactionHash: `0x${string}`, shares: BigIntish, blockTimestamp: BigIntish, blockNumber: BigIntish }>, referrals: Array<{ __typename?: 'Referral', id: `0x${string}`, transactionHash: `0x${string}`, assets: BigIntish, blockNumber: BigIntish, blockTimestamp: BigIntish, owner: `0x${string}`, referral: `0x${string}`, requestId: BigIntish }> };
+export type VaultEventsQuery = { __typename?: 'Query', depositRequests: Array<{ __typename?: 'DepositRequest', assets: BigIntish, blockNumber: BigIntish, blockTimestamp: BigIntish, id: `0x${string}`, owner: `0x${string}`, sender: `0x${string}`, transactionHash: `0x${string}`, logIndex: number, controller: `0x${string}`, requestId: BigIntish, vault: `0x${string}` }>, redeemRequests: Array<{ __typename?: 'RedeemRequest', blockNumber: BigIntish, blockTimestamp: BigIntish, id: `0x${string}`, owner: `0x${string}`, sender: `0x${string}`, shares: BigIntish, transactionHash: `0x${string}`, logIndex: number, controller: `0x${string}`, requestId: BigIntish, vault: `0x${string}` }>, settleRedeems: Array<{ __typename?: 'SettleRedeem', assetsWithdrawed: BigIntish, blockNumber: BigIntish, blockTimestamp: BigIntish, epochId: BigIntish, id: `0x${string}`, settledId: BigIntish, sharesBurned: BigIntish, totalAssets: BigIntish, totalSupply: BigIntish, transactionHash: `0x${string}`, logIndex: number, vault: `0x${string}` }>, settleDeposits: Array<{ __typename?: 'SettleDeposit', assetsDeposited: BigIntish, blockNumber: BigIntish, blockTimestamp: BigIntish, epochId: BigIntish, id: `0x${string}`, settledId: BigIntish, sharesMinted: BigIntish, totalSupply: BigIntish, totalAssets: BigIntish, transactionHash: `0x${string}`, logIndex: number, vault: `0x${string}` }>, totalAssetsUpdateds: Array<{ __typename?: 'TotalAssetsUpdated', transactionHash: `0x${string}`, logIndex: number, totalAssets: BigIntish, id: `0x${string}`, blockNumber: BigIntish, blockTimestamp: BigIntish, vault: `0x${string}` }>, newTotalAssetsUpdateds: Array<{ __typename?: 'NewTotalAssetsUpdated', transactionHash: `0x${string}`, logIndex: number, totalAssets: BigIntish, id: `0x${string}`, blockNumber: BigIntish, blockTimestamp: BigIntish, vault: `0x${string}` }>, transfers: Array<{ __typename?: 'Transfer', blockNumber: BigIntish, blockTimestamp: BigIntish, from: `0x${string}`, id: `0x${string}`, to: `0x${string}`, transactionHash: `0x${string}`, logIndex: number, value: BigIntish, vault: `0x${string}` }>, depositRequestCanceleds: Array<{ __typename?: 'DepositRequestCanceled', blockNumber: BigIntish, blockTimestamp: BigIntish, controller: `0x${string}`, id: `0x${string}`, requestId: BigIntish, transactionHash: `0x${string}`, logIndex: number, vault: `0x${string}` }>, deposits: Array<{ __typename?: 'Deposit', id: `0x${string}`, sender: `0x${string}`, owner: `0x${string}`, assets: BigIntish, vault: `0x${string}`, transactionHash: `0x${string}`, logIndex: number, shares: BigIntish, blockTimestamp: BigIntish, blockNumber: BigIntish }>, referrals: Array<{ __typename?: 'Referral', id: `0x${string}`, transactionHash: `0x${string}`, logIndex: number, assets: BigIntish, blockNumber: BigIntish, blockTimestamp: BigIntish, owner: `0x${string}`, referral: `0x${string}`, requestId: BigIntish }> };
 
 export type VaultTotalAssetsUpdatedQueryVariables = Exact<{
   first: Scalars['Int']['input'];
@@ -3788,5 +4530,5 @@ export type VaultTotalAssetsUpdatedQuery = { __typename?: 'Query', totalAssetsUp
 
 
 export const VaultTransfersDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"VaultTransfers"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"first"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"vaultAddress"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Bytes"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"toBlock"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"BigInt"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"skip"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"transfers"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"first"},"value":{"kind":"Variable","name":{"kind":"Name","value":"first"}}},{"kind":"Argument","name":{"kind":"Name","value":"skip"},"value":{"kind":"Variable","name":{"kind":"Name","value":"skip"}}},{"kind":"Argument","name":{"kind":"Name","value":"orderBy"},"value":{"kind":"EnumValue","value":"blockTimestamp"}},{"kind":"Argument","name":{"kind":"Name","value":"orderDirection"},"value":{"kind":"EnumValue","value":"desc"}},{"kind":"Argument","name":{"kind":"Name","value":"where"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"vault"},"value":{"kind":"Variable","name":{"kind":"Name","value":"vaultAddress"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"blockNumber_lte"},"value":{"kind":"Variable","name":{"kind":"Name","value":"toBlock"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"blockNumber"}},{"kind":"Field","name":{"kind":"Name","value":"blockTimestamp"}},{"kind":"Field","name":{"kind":"Name","value":"from"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"to"}},{"kind":"Field","name":{"kind":"Name","value":"transactionHash"}},{"kind":"Field","name":{"kind":"Name","value":"value"}},{"kind":"Field","name":{"kind":"Name","value":"vault"}}]}}]}}]} as unknown as DocumentNode<VaultTransfersQuery, VaultTransfersQueryVariables>;
-export const VaultEventsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"VaultEvents"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"first"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"vaultAddress"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Bytes"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"toBlock"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"BigInt"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"skip"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"depositRequests"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"first"},"value":{"kind":"Variable","name":{"kind":"Name","value":"first"}}},{"kind":"Argument","name":{"kind":"Name","value":"skip"},"value":{"kind":"Variable","name":{"kind":"Name","value":"skip"}}},{"kind":"Argument","name":{"kind":"Name","value":"orderBy"},"value":{"kind":"EnumValue","value":"blockTimestamp"}},{"kind":"Argument","name":{"kind":"Name","value":"orderDirection"},"value":{"kind":"EnumValue","value":"desc"}},{"kind":"Argument","name":{"kind":"Name","value":"where"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"vault"},"value":{"kind":"Variable","name":{"kind":"Name","value":"vaultAddress"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"blockNumber_lte"},"value":{"kind":"Variable","name":{"kind":"Name","value":"toBlock"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"assets"}},{"kind":"Field","name":{"kind":"Name","value":"blockNumber"}},{"kind":"Field","name":{"kind":"Name","value":"blockTimestamp"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"owner"}},{"kind":"Field","name":{"kind":"Name","value":"sender"}},{"kind":"Field","name":{"kind":"Name","value":"transactionHash"}},{"kind":"Field","name":{"kind":"Name","value":"controller"}},{"kind":"Field","name":{"kind":"Name","value":"requestId"}},{"kind":"Field","name":{"kind":"Name","value":"vault"}}]}},{"kind":"Field","name":{"kind":"Name","value":"redeemRequests"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"first"},"value":{"kind":"Variable","name":{"kind":"Name","value":"first"}}},{"kind":"Argument","name":{"kind":"Name","value":"skip"},"value":{"kind":"Variable","name":{"kind":"Name","value":"skip"}}},{"kind":"Argument","name":{"kind":"Name","value":"orderBy"},"value":{"kind":"EnumValue","value":"blockTimestamp"}},{"kind":"Argument","name":{"kind":"Name","value":"orderDirection"},"value":{"kind":"EnumValue","value":"desc"}},{"kind":"Argument","name":{"kind":"Name","value":"where"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"vault"},"value":{"kind":"Variable","name":{"kind":"Name","value":"vaultAddress"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"blockNumber_lte"},"value":{"kind":"Variable","name":{"kind":"Name","value":"toBlock"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"blockNumber"}},{"kind":"Field","name":{"kind":"Name","value":"blockTimestamp"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"owner"}},{"kind":"Field","name":{"kind":"Name","value":"sender"}},{"kind":"Field","name":{"kind":"Name","value":"shares"}},{"kind":"Field","name":{"kind":"Name","value":"transactionHash"}},{"kind":"Field","name":{"kind":"Name","value":"controller"}},{"kind":"Field","name":{"kind":"Name","value":"requestId"}},{"kind":"Field","name":{"kind":"Name","value":"vault"}}]}},{"kind":"Field","name":{"kind":"Name","value":"settleRedeems"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"first"},"value":{"kind":"Variable","name":{"kind":"Name","value":"first"}}},{"kind":"Argument","name":{"kind":"Name","value":"skip"},"value":{"kind":"Variable","name":{"kind":"Name","value":"skip"}}},{"kind":"Argument","name":{"kind":"Name","value":"orderBy"},"value":{"kind":"EnumValue","value":"blockTimestamp"}},{"kind":"Argument","name":{"kind":"Name","value":"orderDirection"},"value":{"kind":"EnumValue","value":"desc"}},{"kind":"Argument","name":{"kind":"Name","value":"where"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"vault"},"value":{"kind":"Variable","name":{"kind":"Name","value":"vaultAddress"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"blockNumber_lte"},"value":{"kind":"Variable","name":{"kind":"Name","value":"toBlock"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"assetsWithdrawed"}},{"kind":"Field","name":{"kind":"Name","value":"blockNumber"}},{"kind":"Field","name":{"kind":"Name","value":"blockTimestamp"}},{"kind":"Field","name":{"kind":"Name","value":"epochId"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"settledId"}},{"kind":"Field","name":{"kind":"Name","value":"sharesBurned"}},{"kind":"Field","name":{"kind":"Name","value":"totalAssets"}},{"kind":"Field","name":{"kind":"Name","value":"totalSupply"}},{"kind":"Field","name":{"kind":"Name","value":"transactionHash"}},{"kind":"Field","name":{"kind":"Name","value":"vault"}}]}},{"kind":"Field","name":{"kind":"Name","value":"settleDeposits"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"first"},"value":{"kind":"Variable","name":{"kind":"Name","value":"first"}}},{"kind":"Argument","name":{"kind":"Name","value":"skip"},"value":{"kind":"Variable","name":{"kind":"Name","value":"skip"}}},{"kind":"Argument","name":{"kind":"Name","value":"orderBy"},"value":{"kind":"EnumValue","value":"blockTimestamp"}},{"kind":"Argument","name":{"kind":"Name","value":"orderDirection"},"value":{"kind":"EnumValue","value":"desc"}},{"kind":"Argument","name":{"kind":"Name","value":"where"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"vault"},"value":{"kind":"Variable","name":{"kind":"Name","value":"vaultAddress"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"blockNumber_lte"},"value":{"kind":"Variable","name":{"kind":"Name","value":"toBlock"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"assetsDeposited"}},{"kind":"Field","name":{"kind":"Name","value":"blockNumber"}},{"kind":"Field","name":{"kind":"Name","value":"blockTimestamp"}},{"kind":"Field","name":{"kind":"Name","value":"epochId"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"settledId"}},{"kind":"Field","name":{"kind":"Name","value":"sharesMinted"}},{"kind":"Field","name":{"kind":"Name","value":"totalSupply"}},{"kind":"Field","name":{"kind":"Name","value":"totalAssets"}},{"kind":"Field","name":{"kind":"Name","value":"transactionHash"}},{"kind":"Field","name":{"kind":"Name","value":"vault"}}]}},{"kind":"Field","name":{"kind":"Name","value":"totalAssetsUpdateds"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"first"},"value":{"kind":"Variable","name":{"kind":"Name","value":"first"}}},{"kind":"Argument","name":{"kind":"Name","value":"skip"},"value":{"kind":"Variable","name":{"kind":"Name","value":"skip"}}},{"kind":"Argument","name":{"kind":"Name","value":"orderBy"},"value":{"kind":"EnumValue","value":"blockTimestamp"}},{"kind":"Argument","name":{"kind":"Name","value":"orderDirection"},"value":{"kind":"EnumValue","value":"desc"}},{"kind":"Argument","name":{"kind":"Name","value":"where"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"vault"},"value":{"kind":"Variable","name":{"kind":"Name","value":"vaultAddress"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"blockNumber_lte"},"value":{"kind":"Variable","name":{"kind":"Name","value":"toBlock"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"transactionHash"}},{"kind":"Field","name":{"kind":"Name","value":"totalAssets"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"blockNumber"}},{"kind":"Field","name":{"kind":"Name","value":"blockTimestamp"}},{"kind":"Field","name":{"kind":"Name","value":"vault"}}]}},{"kind":"Field","name":{"kind":"Name","value":"newTotalAssetsUpdateds"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"first"},"value":{"kind":"Variable","name":{"kind":"Name","value":"first"}}},{"kind":"Argument","name":{"kind":"Name","value":"skip"},"value":{"kind":"Variable","name":{"kind":"Name","value":"skip"}}},{"kind":"Argument","name":{"kind":"Name","value":"orderBy"},"value":{"kind":"EnumValue","value":"blockTimestamp"}},{"kind":"Argument","name":{"kind":"Name","value":"orderDirection"},"value":{"kind":"EnumValue","value":"desc"}},{"kind":"Argument","name":{"kind":"Name","value":"where"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"vault"},"value":{"kind":"Variable","name":{"kind":"Name","value":"vaultAddress"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"blockNumber_lte"},"value":{"kind":"Variable","name":{"kind":"Name","value":"toBlock"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"transactionHash"}},{"kind":"Field","name":{"kind":"Name","value":"totalAssets"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"blockNumber"}},{"kind":"Field","name":{"kind":"Name","value":"blockTimestamp"}},{"kind":"Field","name":{"kind":"Name","value":"vault"}}]}},{"kind":"Field","name":{"kind":"Name","value":"transfers"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"first"},"value":{"kind":"Variable","name":{"kind":"Name","value":"first"}}},{"kind":"Argument","name":{"kind":"Name","value":"skip"},"value":{"kind":"Variable","name":{"kind":"Name","value":"skip"}}},{"kind":"Argument","name":{"kind":"Name","value":"orderBy"},"value":{"kind":"EnumValue","value":"blockTimestamp"}},{"kind":"Argument","name":{"kind":"Name","value":"orderDirection"},"value":{"kind":"EnumValue","value":"desc"}},{"kind":"Argument","name":{"kind":"Name","value":"where"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"vault"},"value":{"kind":"Variable","name":{"kind":"Name","value":"vaultAddress"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"blockNumber_lte"},"value":{"kind":"Variable","name":{"kind":"Name","value":"toBlock"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"blockNumber"}},{"kind":"Field","name":{"kind":"Name","value":"blockTimestamp"}},{"kind":"Field","name":{"kind":"Name","value":"from"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"to"}},{"kind":"Field","name":{"kind":"Name","value":"transactionHash"}},{"kind":"Field","name":{"kind":"Name","value":"value"}},{"kind":"Field","name":{"kind":"Name","value":"vault"}}]}},{"kind":"Field","name":{"kind":"Name","value":"depositRequestCanceleds"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"first"},"value":{"kind":"Variable","name":{"kind":"Name","value":"first"}}},{"kind":"Argument","name":{"kind":"Name","value":"skip"},"value":{"kind":"Variable","name":{"kind":"Name","value":"skip"}}},{"kind":"Argument","name":{"kind":"Name","value":"orderBy"},"value":{"kind":"EnumValue","value":"blockTimestamp"}},{"kind":"Argument","name":{"kind":"Name","value":"orderDirection"},"value":{"kind":"EnumValue","value":"desc"}},{"kind":"Argument","name":{"kind":"Name","value":"where"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"vault"},"value":{"kind":"Variable","name":{"kind":"Name","value":"vaultAddress"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"blockNumber_lte"},"value":{"kind":"Variable","name":{"kind":"Name","value":"toBlock"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"blockNumber"}},{"kind":"Field","name":{"kind":"Name","value":"blockTimestamp"}},{"kind":"Field","name":{"kind":"Name","value":"controller"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"requestId"}},{"kind":"Field","name":{"kind":"Name","value":"transactionHash"}},{"kind":"Field","name":{"kind":"Name","value":"vault"}}]}},{"kind":"Field","name":{"kind":"Name","value":"deposits"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"first"},"value":{"kind":"Variable","name":{"kind":"Name","value":"first"}}},{"kind":"Argument","name":{"kind":"Name","value":"skip"},"value":{"kind":"Variable","name":{"kind":"Name","value":"skip"}}},{"kind":"Argument","name":{"kind":"Name","value":"orderBy"},"value":{"kind":"EnumValue","value":"blockTimestamp"}},{"kind":"Argument","name":{"kind":"Name","value":"orderDirection"},"value":{"kind":"EnumValue","value":"desc"}},{"kind":"Argument","name":{"kind":"Name","value":"where"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"vault"},"value":{"kind":"Variable","name":{"kind":"Name","value":"vaultAddress"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"blockNumber_lte"},"value":{"kind":"Variable","name":{"kind":"Name","value":"toBlock"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"sender"}},{"kind":"Field","name":{"kind":"Name","value":"owner"}},{"kind":"Field","name":{"kind":"Name","value":"assets"}},{"kind":"Field","name":{"kind":"Name","value":"vault"}},{"kind":"Field","name":{"kind":"Name","value":"transactionHash"}},{"kind":"Field","name":{"kind":"Name","value":"shares"}},{"kind":"Field","name":{"kind":"Name","value":"blockTimestamp"}},{"kind":"Field","name":{"kind":"Name","value":"blockNumber"}}]}},{"kind":"Field","name":{"kind":"Name","value":"referrals"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"first"},"value":{"kind":"Variable","name":{"kind":"Name","value":"first"}}},{"kind":"Argument","name":{"kind":"Name","value":"skip"},"value":{"kind":"Variable","name":{"kind":"Name","value":"skip"}}},{"kind":"Argument","name":{"kind":"Name","value":"orderBy"},"value":{"kind":"EnumValue","value":"blockTimestamp"}},{"kind":"Argument","name":{"kind":"Name","value":"orderDirection"},"value":{"kind":"EnumValue","value":"desc"}},{"kind":"Argument","name":{"kind":"Name","value":"where"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"vault"},"value":{"kind":"Variable","name":{"kind":"Name","value":"vaultAddress"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"blockNumber_lte"},"value":{"kind":"Variable","name":{"kind":"Name","value":"toBlock"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"transactionHash"}},{"kind":"Field","name":{"kind":"Name","value":"assets"}},{"kind":"Field","name":{"kind":"Name","value":"blockNumber"}},{"kind":"Field","name":{"kind":"Name","value":"blockTimestamp"}},{"kind":"Field","name":{"kind":"Name","value":"owner"}},{"kind":"Field","name":{"kind":"Name","value":"referral"}},{"kind":"Field","name":{"kind":"Name","value":"requestId"}}]}}]}}]} as unknown as DocumentNode<VaultEventsQuery, VaultEventsQueryVariables>;
+export const VaultEventsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"VaultEvents"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"first"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"vaultAddress"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Bytes"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"toBlock"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"BigInt"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"skip"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"depositRequests"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"first"},"value":{"kind":"Variable","name":{"kind":"Name","value":"first"}}},{"kind":"Argument","name":{"kind":"Name","value":"skip"},"value":{"kind":"Variable","name":{"kind":"Name","value":"skip"}}},{"kind":"Argument","name":{"kind":"Name","value":"orderBy"},"value":{"kind":"EnumValue","value":"blockTimestamp"}},{"kind":"Argument","name":{"kind":"Name","value":"orderDirection"},"value":{"kind":"EnumValue","value":"desc"}},{"kind":"Argument","name":{"kind":"Name","value":"where"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"vault"},"value":{"kind":"Variable","name":{"kind":"Name","value":"vaultAddress"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"blockNumber_lte"},"value":{"kind":"Variable","name":{"kind":"Name","value":"toBlock"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"assets"}},{"kind":"Field","name":{"kind":"Name","value":"blockNumber"}},{"kind":"Field","name":{"kind":"Name","value":"blockTimestamp"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"owner"}},{"kind":"Field","name":{"kind":"Name","value":"sender"}},{"kind":"Field","name":{"kind":"Name","value":"transactionHash"}},{"kind":"Field","name":{"kind":"Name","value":"logIndex"}},{"kind":"Field","name":{"kind":"Name","value":"controller"}},{"kind":"Field","name":{"kind":"Name","value":"requestId"}},{"kind":"Field","name":{"kind":"Name","value":"vault"}}]}},{"kind":"Field","name":{"kind":"Name","value":"redeemRequests"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"first"},"value":{"kind":"Variable","name":{"kind":"Name","value":"first"}}},{"kind":"Argument","name":{"kind":"Name","value":"skip"},"value":{"kind":"Variable","name":{"kind":"Name","value":"skip"}}},{"kind":"Argument","name":{"kind":"Name","value":"orderBy"},"value":{"kind":"EnumValue","value":"blockTimestamp"}},{"kind":"Argument","name":{"kind":"Name","value":"orderDirection"},"value":{"kind":"EnumValue","value":"desc"}},{"kind":"Argument","name":{"kind":"Name","value":"where"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"vault"},"value":{"kind":"Variable","name":{"kind":"Name","value":"vaultAddress"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"blockNumber_lte"},"value":{"kind":"Variable","name":{"kind":"Name","value":"toBlock"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"blockNumber"}},{"kind":"Field","name":{"kind":"Name","value":"blockTimestamp"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"owner"}},{"kind":"Field","name":{"kind":"Name","value":"sender"}},{"kind":"Field","name":{"kind":"Name","value":"shares"}},{"kind":"Field","name":{"kind":"Name","value":"transactionHash"}},{"kind":"Field","name":{"kind":"Name","value":"logIndex"}},{"kind":"Field","name":{"kind":"Name","value":"controller"}},{"kind":"Field","name":{"kind":"Name","value":"requestId"}},{"kind":"Field","name":{"kind":"Name","value":"vault"}}]}},{"kind":"Field","name":{"kind":"Name","value":"settleRedeems"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"first"},"value":{"kind":"Variable","name":{"kind":"Name","value":"first"}}},{"kind":"Argument","name":{"kind":"Name","value":"skip"},"value":{"kind":"Variable","name":{"kind":"Name","value":"skip"}}},{"kind":"Argument","name":{"kind":"Name","value":"orderBy"},"value":{"kind":"EnumValue","value":"blockTimestamp"}},{"kind":"Argument","name":{"kind":"Name","value":"orderDirection"},"value":{"kind":"EnumValue","value":"desc"}},{"kind":"Argument","name":{"kind":"Name","value":"where"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"vault"},"value":{"kind":"Variable","name":{"kind":"Name","value":"vaultAddress"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"blockNumber_lte"},"value":{"kind":"Variable","name":{"kind":"Name","value":"toBlock"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"assetsWithdrawed"}},{"kind":"Field","name":{"kind":"Name","value":"blockNumber"}},{"kind":"Field","name":{"kind":"Name","value":"blockTimestamp"}},{"kind":"Field","name":{"kind":"Name","value":"epochId"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"settledId"}},{"kind":"Field","name":{"kind":"Name","value":"sharesBurned"}},{"kind":"Field","name":{"kind":"Name","value":"totalAssets"}},{"kind":"Field","name":{"kind":"Name","value":"totalSupply"}},{"kind":"Field","name":{"kind":"Name","value":"transactionHash"}},{"kind":"Field","name":{"kind":"Name","value":"logIndex"}},{"kind":"Field","name":{"kind":"Name","value":"vault"}}]}},{"kind":"Field","name":{"kind":"Name","value":"settleDeposits"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"first"},"value":{"kind":"Variable","name":{"kind":"Name","value":"first"}}},{"kind":"Argument","name":{"kind":"Name","value":"skip"},"value":{"kind":"Variable","name":{"kind":"Name","value":"skip"}}},{"kind":"Argument","name":{"kind":"Name","value":"orderBy"},"value":{"kind":"EnumValue","value":"blockTimestamp"}},{"kind":"Argument","name":{"kind":"Name","value":"orderDirection"},"value":{"kind":"EnumValue","value":"desc"}},{"kind":"Argument","name":{"kind":"Name","value":"where"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"vault"},"value":{"kind":"Variable","name":{"kind":"Name","value":"vaultAddress"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"blockNumber_lte"},"value":{"kind":"Variable","name":{"kind":"Name","value":"toBlock"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"assetsDeposited"}},{"kind":"Field","name":{"kind":"Name","value":"blockNumber"}},{"kind":"Field","name":{"kind":"Name","value":"blockTimestamp"}},{"kind":"Field","name":{"kind":"Name","value":"epochId"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"settledId"}},{"kind":"Field","name":{"kind":"Name","value":"sharesMinted"}},{"kind":"Field","name":{"kind":"Name","value":"totalSupply"}},{"kind":"Field","name":{"kind":"Name","value":"totalAssets"}},{"kind":"Field","name":{"kind":"Name","value":"transactionHash"}},{"kind":"Field","name":{"kind":"Name","value":"logIndex"}},{"kind":"Field","name":{"kind":"Name","value":"vault"}}]}},{"kind":"Field","name":{"kind":"Name","value":"totalAssetsUpdateds"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"first"},"value":{"kind":"Variable","name":{"kind":"Name","value":"first"}}},{"kind":"Argument","name":{"kind":"Name","value":"skip"},"value":{"kind":"Variable","name":{"kind":"Name","value":"skip"}}},{"kind":"Argument","name":{"kind":"Name","value":"orderBy"},"value":{"kind":"EnumValue","value":"blockTimestamp"}},{"kind":"Argument","name":{"kind":"Name","value":"orderDirection"},"value":{"kind":"EnumValue","value":"desc"}},{"kind":"Argument","name":{"kind":"Name","value":"where"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"vault"},"value":{"kind":"Variable","name":{"kind":"Name","value":"vaultAddress"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"blockNumber_lte"},"value":{"kind":"Variable","name":{"kind":"Name","value":"toBlock"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"transactionHash"}},{"kind":"Field","name":{"kind":"Name","value":"logIndex"}},{"kind":"Field","name":{"kind":"Name","value":"totalAssets"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"blockNumber"}},{"kind":"Field","name":{"kind":"Name","value":"blockTimestamp"}},{"kind":"Field","name":{"kind":"Name","value":"vault"}}]}},{"kind":"Field","name":{"kind":"Name","value":"newTotalAssetsUpdateds"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"first"},"value":{"kind":"Variable","name":{"kind":"Name","value":"first"}}},{"kind":"Argument","name":{"kind":"Name","value":"skip"},"value":{"kind":"Variable","name":{"kind":"Name","value":"skip"}}},{"kind":"Argument","name":{"kind":"Name","value":"orderBy"},"value":{"kind":"EnumValue","value":"blockTimestamp"}},{"kind":"Argument","name":{"kind":"Name","value":"orderDirection"},"value":{"kind":"EnumValue","value":"desc"}},{"kind":"Argument","name":{"kind":"Name","value":"where"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"vault"},"value":{"kind":"Variable","name":{"kind":"Name","value":"vaultAddress"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"blockNumber_lte"},"value":{"kind":"Variable","name":{"kind":"Name","value":"toBlock"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"transactionHash"}},{"kind":"Field","name":{"kind":"Name","value":"logIndex"}},{"kind":"Field","name":{"kind":"Name","value":"totalAssets"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"blockNumber"}},{"kind":"Field","name":{"kind":"Name","value":"blockTimestamp"}},{"kind":"Field","name":{"kind":"Name","value":"vault"}}]}},{"kind":"Field","name":{"kind":"Name","value":"transfers"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"first"},"value":{"kind":"Variable","name":{"kind":"Name","value":"first"}}},{"kind":"Argument","name":{"kind":"Name","value":"skip"},"value":{"kind":"Variable","name":{"kind":"Name","value":"skip"}}},{"kind":"Argument","name":{"kind":"Name","value":"orderBy"},"value":{"kind":"EnumValue","value":"blockTimestamp"}},{"kind":"Argument","name":{"kind":"Name","value":"orderDirection"},"value":{"kind":"EnumValue","value":"desc"}},{"kind":"Argument","name":{"kind":"Name","value":"where"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"vault"},"value":{"kind":"Variable","name":{"kind":"Name","value":"vaultAddress"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"blockNumber_lte"},"value":{"kind":"Variable","name":{"kind":"Name","value":"toBlock"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"blockNumber"}},{"kind":"Field","name":{"kind":"Name","value":"blockTimestamp"}},{"kind":"Field","name":{"kind":"Name","value":"from"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"to"}},{"kind":"Field","name":{"kind":"Name","value":"transactionHash"}},{"kind":"Field","name":{"kind":"Name","value":"logIndex"}},{"kind":"Field","name":{"kind":"Name","value":"value"}},{"kind":"Field","name":{"kind":"Name","value":"vault"}}]}},{"kind":"Field","name":{"kind":"Name","value":"depositRequestCanceleds"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"first"},"value":{"kind":"Variable","name":{"kind":"Name","value":"first"}}},{"kind":"Argument","name":{"kind":"Name","value":"skip"},"value":{"kind":"Variable","name":{"kind":"Name","value":"skip"}}},{"kind":"Argument","name":{"kind":"Name","value":"orderBy"},"value":{"kind":"EnumValue","value":"blockTimestamp"}},{"kind":"Argument","name":{"kind":"Name","value":"orderDirection"},"value":{"kind":"EnumValue","value":"desc"}},{"kind":"Argument","name":{"kind":"Name","value":"where"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"vault"},"value":{"kind":"Variable","name":{"kind":"Name","value":"vaultAddress"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"blockNumber_lte"},"value":{"kind":"Variable","name":{"kind":"Name","value":"toBlock"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"blockNumber"}},{"kind":"Field","name":{"kind":"Name","value":"blockTimestamp"}},{"kind":"Field","name":{"kind":"Name","value":"controller"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"requestId"}},{"kind":"Field","name":{"kind":"Name","value":"transactionHash"}},{"kind":"Field","name":{"kind":"Name","value":"logIndex"}},{"kind":"Field","name":{"kind":"Name","value":"vault"}}]}},{"kind":"Field","name":{"kind":"Name","value":"deposits"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"first"},"value":{"kind":"Variable","name":{"kind":"Name","value":"first"}}},{"kind":"Argument","name":{"kind":"Name","value":"skip"},"value":{"kind":"Variable","name":{"kind":"Name","value":"skip"}}},{"kind":"Argument","name":{"kind":"Name","value":"orderBy"},"value":{"kind":"EnumValue","value":"blockTimestamp"}},{"kind":"Argument","name":{"kind":"Name","value":"orderDirection"},"value":{"kind":"EnumValue","value":"desc"}},{"kind":"Argument","name":{"kind":"Name","value":"where"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"vault"},"value":{"kind":"Variable","name":{"kind":"Name","value":"vaultAddress"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"blockNumber_lte"},"value":{"kind":"Variable","name":{"kind":"Name","value":"toBlock"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"sender"}},{"kind":"Field","name":{"kind":"Name","value":"owner"}},{"kind":"Field","name":{"kind":"Name","value":"assets"}},{"kind":"Field","name":{"kind":"Name","value":"vault"}},{"kind":"Field","name":{"kind":"Name","value":"transactionHash"}},{"kind":"Field","name":{"kind":"Name","value":"logIndex"}},{"kind":"Field","name":{"kind":"Name","value":"shares"}},{"kind":"Field","name":{"kind":"Name","value":"blockTimestamp"}},{"kind":"Field","name":{"kind":"Name","value":"blockNumber"}}]}},{"kind":"Field","name":{"kind":"Name","value":"referrals"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"first"},"value":{"kind":"Variable","name":{"kind":"Name","value":"first"}}},{"kind":"Argument","name":{"kind":"Name","value":"skip"},"value":{"kind":"Variable","name":{"kind":"Name","value":"skip"}}},{"kind":"Argument","name":{"kind":"Name","value":"orderBy"},"value":{"kind":"EnumValue","value":"blockTimestamp"}},{"kind":"Argument","name":{"kind":"Name","value":"orderDirection"},"value":{"kind":"EnumValue","value":"desc"}},{"kind":"Argument","name":{"kind":"Name","value":"where"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"vault"},"value":{"kind":"Variable","name":{"kind":"Name","value":"vaultAddress"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"blockNumber_lte"},"value":{"kind":"Variable","name":{"kind":"Name","value":"toBlock"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"transactionHash"}},{"kind":"Field","name":{"kind":"Name","value":"logIndex"}},{"kind":"Field","name":{"kind":"Name","value":"assets"}},{"kind":"Field","name":{"kind":"Name","value":"blockNumber"}},{"kind":"Field","name":{"kind":"Name","value":"blockTimestamp"}},{"kind":"Field","name":{"kind":"Name","value":"owner"}},{"kind":"Field","name":{"kind":"Name","value":"referral"}},{"kind":"Field","name":{"kind":"Name","value":"requestId"}}]}}]}}]} as unknown as DocumentNode<VaultEventsQuery, VaultEventsQueryVariables>;
 export const VaultTotalAssetsUpdatedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"VaultTotalAssetsUpdated"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"first"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"vaultAddress"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Bytes"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"toBlock"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"BigInt"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"skip"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalAssetsUpdateds"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"first"},"value":{"kind":"Variable","name":{"kind":"Name","value":"first"}}},{"kind":"Argument","name":{"kind":"Name","value":"skip"},"value":{"kind":"Variable","name":{"kind":"Name","value":"skip"}}},{"kind":"Argument","name":{"kind":"Name","value":"orderBy"},"value":{"kind":"EnumValue","value":"blockTimestamp"}},{"kind":"Argument","name":{"kind":"Name","value":"orderDirection"},"value":{"kind":"EnumValue","value":"desc"}},{"kind":"Argument","name":{"kind":"Name","value":"where"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"vault"},"value":{"kind":"Variable","name":{"kind":"Name","value":"vaultAddress"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"blockNumber_lte"},"value":{"kind":"Variable","name":{"kind":"Name","value":"toBlock"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"transactionHash"}},{"kind":"Field","name":{"kind":"Name","value":"totalAssets"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"blockNumber"}},{"kind":"Field","name":{"kind":"Name","value":"blockTimestamp"}},{"kind":"Field","name":{"kind":"Name","value":"vault"}}]}}]}}]} as unknown as DocumentNode<VaultTotalAssetsUpdatedQuery, VaultTotalAssetsUpdatedQueryVariables>;

@@ -10,6 +10,7 @@ export interface DealEvent {
   referral: Address;
   blockNumber: number;
   blockTimestamp: number;
+  logIndex: number;
 }
 
 export type EventsArray = ReturnType<typeof preprocessEvents>;
@@ -39,7 +40,6 @@ export function preprocessEvents({
     shares: BigInt(e.shares),
     __typename: "Deposit",
   }));
-
   // Add __typename to depositRequestCanceleds
   events.depositRequestCanceleds = events.depositRequestCanceleds.map((e) => ({
     ...e,
@@ -125,6 +125,7 @@ export function preprocessEvents({
     feeRebateRate: e.feeRebateRate,
     feeRewardRate: 0,
     assets: 0n,
+    logIndex: 0,
     id: "0x",
     requestId: 0,
     transactionHash: "0x",
@@ -163,7 +164,11 @@ export function preprocessEvents({
     ...events.transfers,
     ...referrals,
     ...dealsParsed,
-  ].sort((a, b) => Number(a.blockNumber) - Number(b.blockNumber));
+  ].sort(
+    (a, b) => Number(a.blockNumber) - Number(b.blockNumber)
+    // &&
+    // Number(a.logIndex) - Number(b.logIndex)
+  );
   return a;
 }
 

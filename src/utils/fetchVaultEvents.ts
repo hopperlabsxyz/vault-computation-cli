@@ -5,7 +5,7 @@ import { graphql } from "gql";
 
 import type { Address } from "viem";
 
-export async function fetchVaultEvents({
+async function _fetchVaultEvents({
   chainId,
   vaultAddress,
   toBlock,
@@ -18,12 +18,88 @@ export async function fetchVaultEvents({
   skip: number;
   first: number;
 }): Promise<VaultEventsQuery> {
-  return request(SUBGRAPHS[chainId], query, {
+  return request(SUBGRAPHS[chainId]!, query, {
     first,
     vaultAddress,
     toBlock: toBlock.toString(),
     skip,
   });
+}
+
+export async function fetchVaultEvents({
+  chainId,
+  vaultAddress,
+  toBlock,
+  skip,
+  first,
+}: {
+  chainId: number;
+  vaultAddress: Address;
+  toBlock: bigint;
+  skip?: number;
+  first?: number;
+}): Promise<VaultEventsQuery> {
+  const events: VaultEventsQuery = {
+    depositRequestCanceleds: [],
+    deposits: [],
+    newTotalAssetsUpdateds: [],
+    referrals: [],
+    settleDeposits: [],
+    settleRedeems: [],
+    totalAssetsUpdateds: [],
+    transfers: [],
+    depositRequests: [],
+    redeemRequests: [],
+  };
+  let hasMore = true;
+  if (!skip) {
+    skip = 0;
+  }
+  if (!first) {
+    first = 1000;
+  }
+  while (hasMore) {
+    const newEvents = await _fetchVaultEvents({
+      chainId,
+      vaultAddress,
+      toBlock,
+      skip,
+      first,
+    });
+
+    events.depositRequests.push(...newEvents.depositRequests);
+    events.deposits.push(...newEvents.deposits);
+    events.depositRequestCanceleds.push(...newEvents.depositRequestCanceleds);
+    events.settleDeposits.push(...newEvents.settleDeposits);
+
+    events.redeemRequests.push(...newEvents.redeemRequests);
+    events.settleRedeems.push(...newEvents.settleRedeems);
+
+    events.newTotalAssetsUpdateds.push(...newEvents.newTotalAssetsUpdateds);
+    events.totalAssetsUpdateds.push(...newEvents.totalAssetsUpdateds);
+
+    events.transfers.push(...newEvents.transfers);
+    events.referrals.push(...newEvents.referrals);
+
+    if (vaultEventsQueryLength(newEvents) < first) {
+      hasMore = false;
+    }
+    skip += first;
+  }
+  return events;
+}
+
+function vaultEventsQueryLength(query: VaultEventsQuery): number {
+  return (
+    query.depositRequestCanceleds.length +
+    query.deposits.length +
+    query.newTotalAssetsUpdateds.length +
+    query.referrals.length +
+    query.settleDeposits.length +
+    query.settleRedeems.length +
+    query.totalAssetsUpdateds.length +
+    query.transfers.length
+  );
 }
 
 export const query = graphql(`
@@ -47,6 +123,7 @@ export const query = graphql(`
       owner
       sender
       transactionHash
+      logIndex
       controller
       requestId
       vault
@@ -65,6 +142,7 @@ export const query = graphql(`
       sender
       shares
       transactionHash
+      logIndex
       controller
       requestId
       vault
@@ -86,6 +164,7 @@ export const query = graphql(`
       totalAssets
       totalSupply
       transactionHash
+      logIndex
       vault
     }
     settleDeposits(
@@ -105,6 +184,7 @@ export const query = graphql(`
       totalSupply
       totalAssets
       transactionHash
+      logIndex
       vault
     }
     totalAssetsUpdateds(
@@ -115,6 +195,7 @@ export const query = graphql(`
       where: { vault: $vaultAddress, blockNumber_lte: $toBlock }
     ) {
       transactionHash
+      logIndex
       totalAssets
       id
       blockNumber
@@ -129,6 +210,7 @@ export const query = graphql(`
       where: { vault: $vaultAddress, blockNumber_lte: $toBlock }
     ) {
       transactionHash
+      logIndex
       totalAssets
       id
       blockNumber
@@ -148,6 +230,7 @@ export const query = graphql(`
       id
       to
       transactionHash
+      logIndex
       value
       vault
     }
@@ -164,6 +247,7 @@ export const query = graphql(`
       id
       requestId
       transactionHash
+      logIndex
       vault
     }
     deposits(
@@ -179,6 +263,7 @@ export const query = graphql(`
       assets
       vault
       transactionHash
+      logIndex
       shares
       blockTimestamp
       blockNumber
@@ -192,6 +277,7 @@ export const query = graphql(`
     ) {
       id
       transactionHash
+      logIndex
       assets
       blockNumber
       blockTimestamp
