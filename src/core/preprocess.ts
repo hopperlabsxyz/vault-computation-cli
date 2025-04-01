@@ -164,11 +164,13 @@ export function preprocessEvents({
     ...events.transfers,
     ...referrals,
     ...dealsParsed,
-  ].sort(
-    (a, b) => Number(a.blockNumber) - Number(b.blockNumber)
-    // &&
-    // Number(a.logIndex) - Number(b.logIndex)
-  );
+  ].sort((a, b) => {
+    if (a.blockNumber < b.blockNumber) return -1;
+    if (a.blockNumber > b.blockNumber) return 1;
+    if (a.logIndex < b.logIndex) return -1;
+    if (a.logIndex > b.logIndex) return 1;
+    return 0;
+  });
   return a;
 }
 
