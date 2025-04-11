@@ -1,7 +1,6 @@
 import { fetchVault } from "utils/fetchVault";
-import { formatUnits, type Address } from "viem";
-import type { ReferralCustom, Vault } from "types/Vault";
-import { preprocessEvents, type DealEvent } from "./preProcess";
+import { formatUnits } from "viem";
+import type { ReferralCustom } from "types/Vault";
 import type {
   Deposit,
   DepositRequest,
@@ -14,6 +13,8 @@ import type {
 } from "gql/graphql";
 import { State } from "./state";
 import { sanityChecks } from "./sanityChecks";
+import type { DealEvent, ProcessEventParams, ProcessVaultParams, ProcessVaultReturn } from "./types";
+import { preprocessEvents } from "./preProcess";
 
 export async function processVault({
   vault,
@@ -23,15 +24,7 @@ export async function processVault({
   fromBlock,
   feeRewardRate,
   feeRebateRate,
-}: {
-  vault: Vault;
-  readable: boolean;
-  deals: Record<Address, number>;
-  fromBlock: number;
-  toBlock: number;
-  feeRebateRate: number;
-  feeRewardRate: number;
-}): Promise<ProcessVaultReturn> {
+}: ProcessVaultParams): Promise<ProcessVaultReturn> {
   console.log(`Loading vault ${vault.address} on chain ${vault.chainId}`);
 
   const vaultData = await fetchVault({ ...vault, toBlock });
@@ -91,11 +84,7 @@ export function processEvent({
   state,
   event,
   fromBlock,
-}: {
-  state: State;
-  event: { __typename: string; blockNumber: bigint };
-  fromBlock: number;
-}) {
+}: ProcessEventParams) {
   if (event.__typename === "TotalAssetsUpdated") {
     state.handleTotalAssetsUpdated(event as TotalAssetsUpdated);
   } else if (event.__typename === "NewTotalAssetsUpdated") {
@@ -126,18 +115,4 @@ export function processEvent({
   } else {
     throw new Error(`Unknown event ${event.__typename} : ${event}`);
   }
-}
-
-export interface ProcessVaultReturn {
-  chainId: number;
-  address: Address;
-  pricePerShare: number;
-  data: Record<
-    Address,
-    {
-      balance: number;
-      fees: number;
-      cashback: number;
-    }
-  >;
 }

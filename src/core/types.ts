@@ -1,6 +1,8 @@
 import type { VaultEventsQuery } from "gql/graphql";
 import type { Address } from "viem";
 import type { preprocessEvents } from "./preProcess";
+import type { State } from "./state";
+import type { Vault } from "types/Vault";
 
 export interface DealEvent {
   feeRebateRate: number;
@@ -48,4 +50,35 @@ export interface PreProcessingParams {
   addresses: VaultAddrresses;
   referral?: ReferralRate;
   deals?: Deals;
+}
+
+
+export interface ProcessEventParams {
+  state: State;
+  event: { __typename: string; blockNumber: bigint };
+  fromBlock: number;
+}
+
+export interface ProcessVaultParams {
+  vault: Vault;
+  readable: boolean;
+  deals: Record<Address, number>;
+  fromBlock: number;
+  toBlock: number;
+  feeRebateRate: number;
+  feeRewardRate: number;
+}
+
+export interface ProcessVaultReturn {
+  chainId: number;
+  address: Address;
+  pricePerShare: number;
+  data: Record<
+    Address,
+    {
+      balance: number;
+      fees: number;
+      cashback: number;
+    }
+  >;
 }
