@@ -1,19 +1,8 @@
 import { fetchVault } from "utils/fetchVault";
 import { formatUnits } from "viem";
-import type { ReferralCustom } from "types/Vault";
-import type {
-  Deposit,
-  DepositRequest,
-  DepositRequestCanceled,
-  RedeemRequest,
-  SettleDeposit,
-  SettleRedeem,
-  TotalAssetsUpdated,
-  Transfer,
-} from "gql/graphql";
 import { State } from "./state";
 import { sanityChecks } from "./sanityChecks";
-import type { DealEvent, ProcessEventParams, ProcessVaultParams, ProcessVaultReturn } from "./types";
+import type { ProcessVaultParams, ProcessVaultReturn } from "./types";
 import { preprocessEvents } from "./preProcess";
 
 export async function processVault({
@@ -50,8 +39,7 @@ export async function processVault({
   if (events.length == 1000)
     throw new Error("you need to handle more than 1000 events");
   for (let i = 0; i < events.length; i++) {
-    processEvent({
-      state,
+    state.processEvent({
       event: events[i] as { __typename: string; blockNumber: bigint },
       fromBlock,
     });
@@ -80,39 +68,3 @@ export async function processVault({
   };
 }
 
-export function processEvent({
-  state,
-  event,
-  fromBlock,
-}: ProcessEventParams) {
-  if (event.__typename === "TotalAssetsUpdated") {
-    state.handleTotalAssetsUpdated(event as TotalAssetsUpdated);
-  } else if (event.__typename === "NewTotalAssetsUpdated") {
-    state.handleNewTotalAssetsUpdated();
-  } else if (event.__typename === "Deposit") {
-    state.handleDeposit(event as Deposit);
-  } else if (event.__typename === "DepositRequest") {
-    state.depositRequest(event as DepositRequest);
-  } else if (event.__typename === "DepositRequestCanceled") {
-    state.handleDepositRequestCanceled(event as DepositRequestCanceled);
-  } else if (event.__typename === "RedeemRequest") {
-    state.redeemRequest(event as RedeemRequest);
-  } else if (event.__typename === "SettleDeposit") {
-    state.handleSettleDeposit(event as SettleDeposit);
-  } else if (event.__typename === "SettleRedeem") {
-    state.handleSettleRedeem(event as SettleRedeem);
-  } else if (event.__typename === "FeeTransfer") {
-    state.handleFeeTransfer(
-      event as Transfer,
-      BigInt(fromBlock) <= event.blockNumber
-    );
-  } else if (event.__typename === "Transfer") {
-    state.handleTransfer(event as Transfer);
-  } else if (event.__typename === "Referral") {
-    state.handleReferral(event as ReferralCustom);
-  } else if (event.__typename === "Deal") {
-    state.handleDeal(event as any as DealEvent); // TODO: fix any
-  } else {
-    throw new Error(`Unknown event ${event.__typename} : ${event}`);
-  }
-}

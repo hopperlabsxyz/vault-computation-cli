@@ -1,7 +1,5 @@
 import type { VaultEventsQuery } from "gql/graphql";
 import type { Address } from "viem";
-import type { preprocessEvents } from "./preProcess";
-import type { State } from "./state";
 import type { Vault } from "types/Vault";
 
 export interface DealEvent {
@@ -30,8 +28,6 @@ export interface ReferralEvent {
   referral: `0x${string}`;
 }
 
-export type EventsArray = ReturnType<typeof preprocessEvents>;
-
 export interface ReferralRate {
   feeRebateRate: number;
   feeRewardRate: number;
@@ -54,7 +50,6 @@ export interface PreProcessingParams {
 
 
 export interface ProcessEventParams {
-  state: State;
   event: { __typename: string; blockNumber: bigint };
   fromBlock: number;
 }
