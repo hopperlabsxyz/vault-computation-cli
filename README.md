@@ -64,9 +64,7 @@ RPC_URL_42161=https://arb-mainnet.g.alchemy.com/v2/your-api-key
 RPC_URL_43114=https://api.avax.network/ext/bc/C/rpc
 ```
 
-## Usage
-
-### Claimable deposits addresses
+## Claimable deposits addresses
 
 Find addresses on a vault that have claimable deposits.
 
@@ -85,8 +83,34 @@ bun run find-claimable-controllers 1:0x07ed467acd4ffd13023046968b0859781cb90d9b 
 
 ```
 
+### Output
 
-### Compute Fees
+The command returns a list of addresses — these are the controller (user) addresses that still have unclaimed shares in the specified vault.  
+
+#### Example Output
+
+```text
+[
+  "0xAbC123...def",
+  "0x456DeF...789",
+  "0x789abc...123"
+]
+```
+
+#### Usage Example in Smart Contract Interaction
+
+This list can be used directly as input to the Vault smart contract function:
+
+```solidity
+claimSharesOnBehalf(address[] controllers)
+```
+
+You can pass this list of addresses as an argument to `claimSharesOnBehalf()` in order to trigger the claiming process on behalf of these users.
+
+Make sure the caller has permission to claim on behalf of these addresses.
+
+
+## Compute Fees
 
 Calculate fees for a specific vault within a block range:
 
@@ -115,7 +139,7 @@ bun run compute 1:0x07ed467acd4ffd13023046968b0859781cb90d9b --from-block 100000
 bun run compute 1:0x07ed467acd4ffd13023046968b0859781cb90d9b --from-block 1000000 --to-block 2000000 -d deals.csv --fee-rebate-rate 1000 --fee-reward-rate 2000
 ```
 
-### Find Blocks
+## Find Blocks
 
 Find blocks containing nav updates and fee receiver transfers:
 
@@ -168,7 +192,7 @@ chainId,vault,ownerAddress,dealPercentage
 If you put chainId 0 and vault 0x0 for a deal, it is considered as a wildcard and the tool will use it for all chains.
 Any other value will be used for the specific chain.
 
-## Project Structure
+# Project Structure
 
 ```
 src/
