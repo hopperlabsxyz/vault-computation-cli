@@ -66,6 +66,26 @@ RPC_URL_43114=https://api.avax.network/ext/bc/C/rpc
 
 ## Usage
 
+### Claimable deposits addresses
+
+Find addresses on a vault that have claimable deposits.
+
+```bash
+bun run find-claimable-controllers <chainId>:<vaultAddress> --from-block <number> [options]
+```
+
+Examples:
+
+```bash
+# Basic usage looks since vault inception block
+bun run find-claimable-controllers 1:0x07ed467acd4ffd13023046968b0859781cb90d9b
+
+# Using from block
+bun run find-claimable-controllers 1:0x07ed467acd4ffd13023046968b0859781cb90d9b --from-block 1000000
+
+```
+
+
 ### Compute Fees
 
 Calculate fees for a specific vault within a block range:
