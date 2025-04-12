@@ -1,38 +1,13 @@
-import type { Transfer, VaultEventsQuery } from "gql/graphql";
+import type { Transfer } from "gql/graphql";
 import { type Address } from "viem";
-
-export interface DealEvent {
-  feeRebateRate: number;
-  feeRewardRate: number;
-  vault: "0x";
-  __typename: "Deal";
-  owner: Address;
-  referral: Address;
-  blockNumber: number;
-  blockTimestamp: number;
-  logIndex: number;
-}
-
-export type EventsArray = ReturnType<typeof preprocessEvents>;
+import type { DealEvent, PreProcessingParams, ReferralEvent } from "./types";
 
 export function preprocessEvents({
   events,
   referral,
   addresses,
   deals,
-}: {
-  events: VaultEventsQuery;
-  addresses: {
-    feeReceiver: Address;
-    silo: Address;
-    vault: Address;
-  };
-  referral: {
-    feeRebateRate: number;
-    feeRewardRate: number;
-  };
-  deals: Record<Address, number>;
-}) {
+}: PreProcessingParams) {
   // Add __typename to deposits and convert relevant fields to BigInt
   events.deposits = events.deposits.map((e) => ({
     ...e,
@@ -94,44 +69,54 @@ export function preprocessEvents({
     __typename: "NewTotalAssetsUpdated",
   }));
 
-  // Add __typename to referrals and we inject the parameters of the referral
-  const referrals = events.referrals
-    .map((e) => ({
+  let referrals: ReferralEvent[] = []
+  if (referral) {
+    // Add __typename to referrals and we inject the parameters of the referral
+    referrals = events.referrals
+      .map((e) => ({
+        ...e,
+        feeRewardRate: referral.feeRewardRate,
+        feeRebateRate: referral.feeRebateRate,
+        assets: BigInt(e.assets),
+        blockNumber: Number(e.blockNumber),
+        blockTimestamp: Number(e.blockTimestamp),
+        requestId: BigInt(e.requestId),
+        __typename: "Referral",
+      }) satisfies ReferralEvent)
+      .filter((r) => r.owner !== r.referral);
+  }
+
+  let dealsParsed: DealEvent[] = []
+  if (deals) {
+    // Add __typename to deals and we inject the parameters of the deals
+    // An otc deal is a deal on the fee rebate exclusively
+    // thus referral is the user and the feeRewardRate is 0
+    const dealsArray = Object.entries(deals).map((deal) => {
+      return {
+        owner: deal[0] as Address,
+        referral: deal[0] as Address,
+        feeRebateRate: deal[1],
+        feeRewardRate: 0,
+      };
+    });
+
+    // We create fake events for the deals to be able to process them like the other events
+    // we give them a block number 0 and a timestamp 0 so that they are processed first
+    dealsParsed = dealsArray.map((e) => ({
       ...e,
-      feeRewardRate: referral.feeRewardRate,
-      feeRebateRate: referral.feeRebateRate,
-      __typename: "Referral",
-    }))
-    .filter((r) => r.owner !== r.referral);
-
-  // Add __typename to deals and we inject the parameters of the deals
-  // An otc deal is a deal on the fee rebate exclusively
-  // thus referral is the user and the feeRewardRate is 0
-  const dealsArray = Object.entries(deals).map((deal) => {
-    return {
-      owner: deal[0] as Address,
-      referral: deal[0] as Address,
-      feeRebateRate: deal[1],
+      blockNumber: 0,
+      blockTimestamp: 0,
+      feeRebateRate: e.feeRebateRate,
       feeRewardRate: 0,
-    };
-  });
-
-  // We create fake events for the deals to be able to process them like the other events
-  // we give them a block number 0 and a timestamp 0 so that they are processed first
-  const dealsParsed: DealEvent[] = dealsArray.map((e) => ({
-    ...e,
-    blockNumber: 0,
-    blockTimestamp: 0,
-    feeRebateRate: e.feeRebateRate,
-    feeRewardRate: 0,
-    assets: 0n,
-    logIndex: 0,
-    id: "0x",
-    requestId: 0,
-    transactionHash: "0x",
-    vault: "0x",
-    __typename: "Deal",
-  }));
+      assets: 0n,
+      logIndex: 0,
+      id: "0x",
+      requestId: 0,
+      transactionHash: "0x",
+      vault: "0x",
+      __typename: "Deal",
+    }));
+  }
 
   // Add __typename to feeTransfers and convert relevant fields to BigInt
   // we filter the transfers to only get the ones to the fee receiver

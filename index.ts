@@ -1,6 +1,7 @@
 import { Command } from "@commander-js/extra-typings";
 import { setBlocksCommand } from "cli/find-blocks";
 import { setComputeCommand } from "cli/compute";
+import { setControllersCommand } from "cli/find-claimable-controllers";
 
 export const computationProgram = new Command();
 
@@ -11,5 +12,6 @@ computationProgram
 
 setBlocksCommand(computationProgram);
 setComputeCommand(computationProgram);
+setControllersCommand(computationProgram)
 
 computationProgram.parse();

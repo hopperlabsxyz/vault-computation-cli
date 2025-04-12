@@ -12,8 +12,8 @@ import type {
 
 import { erc20Abi, type Address } from "viem";
 import type { ReferralConfig, ReferralCustom } from "types/Vault";
-import type { DealEvent } from "./preProcess";
 import { publicClient } from "lib/publicClient";
+import type { DealEvent, ProcessEventParams } from "./types";
 
 export class State {
   public totalSupply = 0n;
@@ -376,5 +376,42 @@ export class State {
     }
 
     return copiedAccounts;
+  }
+
+
+  public processEvent({
+    event,
+    fromBlock,
+  }: ProcessEventParams) {
+    if (event.__typename === "TotalAssetsUpdated") {
+      this.handleTotalAssetsUpdated(event as TotalAssetsUpdated);
+    } else if (event.__typename === "NewTotalAssetsUpdated") {
+      this.handleNewTotalAssetsUpdated();
+    } else if (event.__typename === "Deposit") {
+      this.handleDeposit(event as Deposit);
+    } else if (event.__typename === "DepositRequest") {
+      this.depositRequest(event as DepositRequest);
+    } else if (event.__typename === "DepositRequestCanceled") {
+      this.handleDepositRequestCanceled(event as DepositRequestCanceled);
+    } else if (event.__typename === "RedeemRequest") {
+      this.redeemRequest(event as RedeemRequest);
+    } else if (event.__typename === "SettleDeposit") {
+      this.handleSettleDeposit(event as SettleDeposit);
+    } else if (event.__typename === "SettleRedeem") {
+      this.handleSettleRedeem(event as SettleRedeem);
+    } else if (event.__typename === "FeeTransfer") {
+      this.handleFeeTransfer(
+        event as Transfer,
+        BigInt(fromBlock) <= event.blockNumber
+      );
+    } else if (event.__typename === "Transfer") {
+      this.handleTransfer(event as Transfer);
+    } else if (event.__typename === "Referral") {
+      this.handleReferral(event as ReferralCustom);
+    } else if (event.__typename === "Deal") {
+      this.handleDeal(event as any as DealEvent); // TODO: fix any
+    } else {
+      throw new Error(`Unknown event ${event.__typename} : ${event}`);
+    }
   }
 }
