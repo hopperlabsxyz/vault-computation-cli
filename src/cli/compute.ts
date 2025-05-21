@@ -13,11 +13,11 @@ export function setComputeCommand(command: Command) {
     )
     .argument("chainId:VaultAddress")
     .requiredOption(
-      "--from-block <number>",
+      "-f, --from-block <number>",
       "Starting block number for fee computation (exclusive). Use 'find-blocks' command to find the appropriate block number"
     )
     .requiredOption(
-      "--to-block <number>",
+      "-t, --to-block <number>",
       "Ending block number for fee computation (inclusive). Use 'find-blocks' command to find the appropriate block number"
     )
     .option("-r, --readable", "Format the output in a human-readable format")
@@ -43,11 +43,11 @@ export function setComputeCommand(command: Command) {
       "after",
       `
 Examples:
-  $ pnpm compute 1:0x07ed467acd4ffd13023046968b0859781cb90d9b                    # Compute for all lifetime
-  $ pnpm compute 1:0x07ed467acd4ffd13023046968b0859781cb90d9b -r -o fees.csv    # With readable output and CSV export
-  $ pnpm compute 1:0x07ed467acd4ffd13023046968b0859781cb90d9b -l 2000000 -o fees.csv  # From beginning until block 2000000
-  $ pnpm compute 1:0x07ed467acd4ffd13023046968b0859781cb90d9b -d dealsExample.csv -o fees.csv  # With OTC deals
-  $ pnpm compute 1:0x07ed467acd4ffd13023046968b0859781cb90d9b -f 1000000 -l 2000000 -r -o fees.csv -d dealsExample.csv  # All parameters
+  $ bun compute 1:0x07ed467acd4ffd13023046968b0859781cb90d9b  ## Compute for all lifetime
+  $ bun compute 1:0x07ed467acd4ffd13023046968b0859781cb90d9b -r -o fees.csv  ## With readable output and CSV export
+  $ bun compute 1:0x07ed467acd4ffd13023046968b0859781cb90d9b -l 2000000 -o fees.csv  ## From beginning until block 2000000
+  $ bun compute 1:0x07ed467acd4ffd13023046968b0859781cb90d9b -d dealsExample.csv -o fees.csv  ## With OTC deals
+  $ bun compute 1:0x07ed467acd4ffd13023046968b0859781cb90d9b -f 1000000 -l 2000000 -r -o fees.csv -d dealsExample.csv  ## All parameters
     `
     )
     .action(async (args, options) => {

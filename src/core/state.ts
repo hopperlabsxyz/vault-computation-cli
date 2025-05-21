@@ -1,4 +1,4 @@
-import { BPS_DIVIDER } from "../constants";
+import { BPS_DIVIDER, YEAR_IN_SECONDS } from "../constants";
 import type {
   Deposit,
   DepositRequest,
@@ -14,10 +14,13 @@ import { erc20Abi, type Address } from "viem";
 import type { ReferralConfig, ReferralCustom } from "types/Vault";
 import type { DealEvent } from "./preProcess";
 import { publicClient } from "lib/publicClient";
+import { convertToShares } from "utils/convertTo";
 
 export class State {
   public totalSupply = 0n;
   public totalAssets = 0n;
+  public lastTotalAssetsUpdateTimestamp = 0;
+  public maxSharesForFees = 0n;
   public decimals: bigint;
   public feeReceiver: Address;
 
@@ -75,7 +78,24 @@ export class State {
   }
 
   public handleTotalAssetsUpdated(event: TotalAssetsUpdated) {
+    //
     this.totalAssets = event.totalAssets;
+    // compute 4% of annual fees value in shares
+    // handle this.lastTotalAssetsUpdateTimestamp == 0
+    const timepast =
+      this.lastTotalAssetsUpdateTimestamp - Number(event.blockTimestamp);
+    const ratioOverAYear = Number(timepast) / YEAR_IN_SECONDS;
+    const percentToDeposit = 0.04 / ratioOverAYear;
+
+    const assetsToDeposits = percentToDeposit * Number(this.totalAssets);
+    const sharesToMint = convertToShares({
+      assets: BigInt(assetsToDeposits),
+      totalAssets: this.totalAssets - BigInt(assetsToDeposits),
+      totalSupply: this.totalSupply,
+    });
+    this.maxSharesForFees = sharesToMint;
+
+    this.lastTotalAssetsUpdateTimestamp = event.blockTimestamp;
   }
 
   public handleNewTotalAssetsUpdated() {
@@ -186,10 +206,16 @@ export class State {
 
   public handleFeeTransfer(event: Transfer, distributeFees: boolean) {
     const totalFees = BigInt(event.value);
+
+    const baseFees = Math.min(Number(totalFees), Number(this.maxSharesForFees));
+    const extraFees = event.value - baseFees;
+
+    console.debug({ baseFees, extraFees });
     this.accumulatedFees += totalFees;
     let feePerUser: Record<Address, bigint> = {};
 
     // we compute how much fees they paid for this epoch
+    // we emulated the rounding system of openzeppelin by adding 0 or 1
     if (distributeFees) {
       for (const [address, { balance }] of Object.entries(this.accounts)) {
         feePerUser[address as Address] =
