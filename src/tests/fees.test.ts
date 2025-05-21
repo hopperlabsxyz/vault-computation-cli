@@ -1,11 +1,9 @@
 import { expect, test } from "bun:test";
 import { preprocessEvents } from "core/preProcess";
-import { processEvent } from "core/processVault";
 import { sanityChecks } from "core/sanityChecks";
 import { State } from "core/state";
-import { publicClient } from "lib/publicClient";
 import { fetchVault } from "utils/fetchVault";
-import { formatUnits, maxUint256 } from "viem";
+import { maxUint256 } from "viem";
 
 test("check total fees are consistent all attributed fees", async () => {
   const address = "0x07ed467acD4ffd13023046968b0859781cb90D9B";
@@ -37,8 +35,7 @@ test("check total fees are consistent all attributed fees", async () => {
   for (let i = 0; i < events.length; i++) {
     const currentBlock: BigInt = events[i].blockNumber;
     const nextBlock = events[i + 1] ? events[i + 1].blockNumber : maxUint256;
-    processEvent({
-      state,
+    state.processEvent({
       event: events[i] as { __typename: string; blockNumber: bigint },
       fromBlock,
     });

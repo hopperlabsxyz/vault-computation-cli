@@ -4,6 +4,9 @@ import { erc20Abi, type Address } from "viem";
 import type { VaultEventsQuery } from "gql/graphql";
 import { fetchVaultEvents } from "utils/fetchVaultEvents";
 
+const siloStorageSlot =
+  "0x5c74d456014b1c0eb4368d944667a568313858a3029a650ff0cb7b56f8b57a08" as `0x${string}`;
+
 export interface FetchVaultReturn {
   fees: {
     managementRate: number;
@@ -50,10 +53,9 @@ export async function fetchVault({
       abi: LagoonVaultAbi,
       functionName: "getRolesStorage",
     }),
-    client.readContract({
-      address,
-      abi: LagoonVaultAbi,
-      functionName: "pendingSilo",
+    await client.getStorageAt({
+      address: address,
+      slot: siloStorageSlot,
     }),
     fetchVaultEvents({
       chainId,

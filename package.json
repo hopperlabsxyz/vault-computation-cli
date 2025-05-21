@@ -8,7 +8,9 @@
   "main": "index.js",
   "scripts": {
     "compute": "bun index.ts compute",
+    "usual-fee": "bun index.ts usualfee",
     "find-blocks": "bun index.ts find-blocks",
+    "find-claimable-controllers": "bun index.ts find-claimable-controllers",
     "generate": "bunx --bun graphql-codegen --config graphql-codegen-cli/fetch-schema.ts"
   },
   "keywords": [],

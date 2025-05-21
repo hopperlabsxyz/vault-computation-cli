@@ -1,12 +1,13 @@
 import { expect, test } from "bun:test";
-import { preprocessEvents, type EventsArray } from "core/preProcess";
-import { processEvent } from "core/processVault";
+import { preprocessEvents } from "core/preprocess";
 import { sanityChecks } from "core/sanityChecks";
 import { State } from "core/state";
 import { totalBalanceOf } from "core/vault";
 import { publicClient } from "lib/publicClient";
 import { fetchVault, type FetchVaultReturn } from "utils/fetchVault";
 import { formatUnits, maxUint256, type Address, type PublicClient } from "viem";
+
+export type EventsArray = ReturnType<typeof preprocessEvents>;
 
 test(
   "check balance match real data after each block",
@@ -49,8 +50,7 @@ test(
     for (let i = 0; i < events.length; i++) {
       const currentBlock: BigInt = events[i].blockNumber;
       const nextBlock = events[i + 1] ? events[i + 1].blockNumber : maxUint256;
-      processEvent({
-        state,
+      state.processEvent({
         event: events[i] as { __typename: string; blockNumber: bigint },
         fromBlock,
       });
@@ -63,7 +63,7 @@ test(
           const balance = account.balance;
 
           const realTotal = historicBalance[currentBlock.toString()][user];
-
+          console.log(user);
           expect(Number(formatUnits(balance, vaultData.decimals))).toBeCloseTo(
             Number(formatUnits(realTotal, vaultData.decimals)),
             vaultData.decimals - 1
@@ -92,8 +92,7 @@ function getFinalState({
   });
 
   for (let i = 0; i < events.length; i++) {
-    processEvent({
-      state,
+    state.processEvent({
       event: events[i] as { __typename: string; blockNumber: bigint },
       fromBlock,
     });

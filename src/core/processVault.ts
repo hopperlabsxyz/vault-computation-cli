@@ -1,19 +1,9 @@
 import { fetchVault } from "utils/fetchVault";
-import { formatUnits, type Address } from "viem";
-import type { ReferralCustom, Vault } from "types/Vault";
-import { preprocessEvents, type DealEvent } from "./preProcess";
-import type {
-  Deposit,
-  DepositRequest,
-  DepositRequestCanceled,
-  RedeemRequest,
-  SettleDeposit,
-  SettleRedeem,
-  TotalAssetsUpdated,
-  Transfer,
-} from "gql/graphql";
+import { formatUnits } from "viem";
 import { State } from "./state";
 import { sanityChecks } from "./sanityChecks";
+import type { ProcessVaultParams, ProcessVaultReturn } from "./types";
+import { preprocessEvents } from "./preprocess";
 
 export async function processVault({
   vault,
@@ -23,15 +13,7 @@ export async function processVault({
   fromBlock,
   feeRewardRate,
   feeRebateRate,
-}: {
-  vault: Vault;
-  readable: boolean;
-  deals: Record<Address, number>;
-  fromBlock: number;
-  toBlock: number;
-  feeRebateRate: number;
-  feeRewardRate: number;
-}): Promise<ProcessVaultReturn> {
+}: ProcessVaultParams): Promise<ProcessVaultReturn> {
   console.log(`Loading vault ${vault.address} on chain ${vault.chainId}`);
 
   const vaultData = await fetchVault({ ...vault, toBlock });
@@ -57,8 +39,7 @@ export async function processVault({
   if (events.length == 1000)
     throw new Error("you need to handle more than 1000 events");
   for (let i = 0; i < events.length; i++) {
-    processEvent({
-      state,
+    state.processEvent({
       event: events[i] as { __typename: string; blockNumber: bigint },
       fromBlock,
     });
@@ -70,6 +51,7 @@ export async function processVault({
   const result = state.getAccountsDeepCopy();
   const sharesDecimals = readable ? vaultData.decimals : 0;
   const assetDecimals = readable ? vaultData.asset.decimals : 0;
+  console.log(state.accumulatedFees);
   return {
     chainId: vault.chainId,
     address: vault.address,
@@ -84,60 +66,9 @@ export async function processVault({
         },
       ])
     ),
+    periodFees: state.periodFees,
   };
 }
 
-export function processEvent({
-  state,
-  event,
-  fromBlock,
-}: {
-  state: State;
-  event: { __typename: string; blockNumber: bigint };
-  fromBlock: number;
-}) {
-  if (event.__typename === "TotalAssetsUpdated") {
-    state.handleTotalAssetsUpdated(event as TotalAssetsUpdated);
-  } else if (event.__typename === "NewTotalAssetsUpdated") {
-    state.handleNewTotalAssetsUpdated();
-  } else if (event.__typename === "Deposit") {
-    state.handleDeposit(event as Deposit);
-  } else if (event.__typename === "DepositRequest") {
-    state.depositRequest(event as DepositRequest);
-  } else if (event.__typename === "DepositRequestCanceled") {
-    state.handleDepositRequestCanceled(event as DepositRequestCanceled);
-  } else if (event.__typename === "RedeemRequest") {
-    state.redeemRequest(event as RedeemRequest);
-  } else if (event.__typename === "SettleDeposit") {
-    state.handleSettleDeposit(event as SettleDeposit);
-  } else if (event.__typename === "SettleRedeem") {
-    state.handleSettleRedeem(event as SettleRedeem);
-  } else if (event.__typename === "FeeTransfer") {
-    state.handleFeeTransfer(
-      event as Transfer,
-      BigInt(fromBlock) <= event.blockNumber
-    );
-  } else if (event.__typename === "Transfer") {
-    state.handleTransfer(event as Transfer);
-  } else if (event.__typename === "Referral") {
-    state.handleReferral(event as ReferralCustom);
-  } else if (event.__typename === "Deal") {
-    state.handleDeal(event as any as DealEvent); // TODO: fix any
-  } else {
-    throw new Error(`Unknown event ${event.__typename} : ${event}`);
-  }
-}
-
-export interface ProcessVaultReturn {
-  chainId: number;
-  address: Address;
-  pricePerShare: number;
-  data: Record<
-    Address,
-    {
-      balance: number;
-      fees: number;
-      cashback: number;
-    }
-  >;
-}
+10352450794100633568434n;
+9774130392289756446194n;
