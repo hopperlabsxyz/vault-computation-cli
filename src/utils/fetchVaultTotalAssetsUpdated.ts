@@ -18,7 +18,9 @@ export async function fetchVaultTotalAssetsUpdated({
   skip: number;
   first: number;
 }): Promise<VaultTotalAssetsUpdatedQuery> {
-  return request(SUBGRAPHS[chainId], query, {
+  const url = SUBGRAPHS[chainId];
+  if (!url) throw new Error("Vault undefined");
+  return request(url, query, {
     first,
     vaultAddress: address,
     toBlock: toBlock.toString(),

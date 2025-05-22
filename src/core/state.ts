@@ -8,24 +8,33 @@ import type {
   SettleRedeem,
   TotalAssetsUpdated,
   Transfer,
+  RatesUpdated,
+  FeeReceiverUpdated,
 } from "gql/graphql";
 
 import { erc20Abi, type Address } from "viem";
 import type { ReferralConfig, ReferralCustom } from "types/Vault";
 import { publicClient } from "lib/publicClient";
 import { convertToShares } from "utils/convertTo";
-import type { DealEvent, PeriodFees, ProcessEventParams } from "./types";
-import { max, min } from "utils/math";
+import type { DealEvent, PeriodFees, ProcessEventParams, Rates } from "./types";
 
 export class State {
   public totalSupply = 0n;
   public totalAssets = 0n;
   public lastTotalAssetsUpdateTimestamp = 0;
-  public maxSharesForFees = 0n;
+  public nextManagementFees = 0n;
   public decimals: bigint;
   public feeReceiver: Address;
-  public accumulatedBaseFees = 0n;
-  public accumulatedExtraFees = 0n;
+
+  public rates: Rates;
+
+  public oldRates: Rates = {
+    management: 0,
+    performance: 0,
+  };
+
+  public newRatesTimestamp = 0;
+  public cooldown = 0;
 
   public periodFees: PeriodFees = [];
 
@@ -50,9 +59,13 @@ export class State {
   constructor({
     feeReceiver,
     decimals,
+    cooldown,
+    rates,
   }: {
     feeReceiver: Address;
     decimals: bigint;
+    cooldown: number;
+    rates: Rates;
   }) {
     this.feeReceiver = feeReceiver;
     this.decimals = decimals;
@@ -60,6 +73,11 @@ export class State {
       balance: 0n,
       fees: 0n,
       cashback: 0n,
+    };
+    this.cooldown = cooldown;
+    this.rates = {
+      management: rates.management / Number(BPS_DIVIDER),
+      performance: rates.performance / Number(BPS_DIVIDER),
     };
   }
 
@@ -92,7 +110,8 @@ export class State {
       const timepast =
         Number(event.blockTimestamp) - this.lastTotalAssetsUpdateTimestamp;
       const ratioOverAYear = YEAR_IN_SECONDS / Number(timepast);
-      const percentToDeposit = 0.04 / ratioOverAYear;
+      const percentToDeposit =
+        this.feeRates(event.blockNumber).management / ratioOverAYear;
 
       const assetsToDeposits = Math.trunc(
         percentToDeposit * Number(this.totalAssets)
@@ -102,12 +121,13 @@ export class State {
         totalAssets: this.totalAssets - BigInt(assetsToDeposits),
         totalSupply: this.totalSupply,
       });
-      this.maxSharesForFees = sharesToMint;
+      this.nextManagementFees = sharesToMint;
     }
+
     this.periodFees.push({
-      baseFees: 0n,
+      managementFees: "0",
       blockNumber: Number(event.blockNumber),
-      extraFees: 0n,
+      performanceFees: "0",
       period: this.periodFees.length,
     });
     this.lastTotalAssetsUpdateTimestamp = event.blockTimestamp;
@@ -219,42 +239,28 @@ export class State {
     };
   }
 
-  public handleFeeTransfer(event: Transfer, distributeFees: boolean) {
-    const totalFees = BigInt(event.value);
-
-    let feePerUser: Record<Address, bigint> = {};
-
-    // we compute how much fees they paid for this epoch
-    // we emulated the rounding system of openzeppelin by adding 0 or 1
-    if (distributeFees) {
-      this.accumulatedFees += totalFees;
-      for (const [address, { balance }] of Object.entries(this.accounts)) {
-        feePerUser[address as Address] =
-          (balance * totalFees) / this.totalSupply + this.alternateZeroOne();
-      }
-      // then we increment the total of fees they paid
-      for (const [address, fees] of Object.entries(feePerUser)) {
-        this.accounts[address as Address].fees += fees;
-      }
-
-      // for Usual we need to compute the amount of fees considered as the base fee: 4% and the rest
-      const baseFees = min(totalFees, this.maxSharesForFees);
-      this.accumulatedBaseFees += BigInt(baseFees);
-      const extraFees = max(event.value - BigInt(baseFees), 0n);
-      this.accumulatedExtraFees += extraFees;
-      const periodLength = this.periodFees.length;
-      const lastPeriod = this.periodFees[periodLength - 1];
-      lastPeriod.baseFees = baseFees;
-      lastPeriod.extraFees = extraFees;
-    }
-
-    // we can also update the feeReceiver balance
-    // we must do this after everything
-    this.accounts[this.feeReceiver].balance += BigInt(event.value);
-    this.totalSupply += BigInt(event.value);
+  public handleFeeReceiverUpdateds(event: FeeReceiverUpdated) {
+    this.feeReceiver = event.newReceiver;
   }
 
-  public handleTransfer(event: Transfer) {
+  public handleRatesUpdateds(event: RatesUpdated) {
+    this.newRatesTimestamp = event.blockTimestamp + this.cooldown;
+
+    const currentRates = this.rates;
+    this.rates = {
+      management: event.newRate_managementRate / Number(BPS_DIVIDER),
+      performance: event.newRate_performanceRate / Number(BPS_DIVIDER),
+    };
+
+    this.oldRates = currentRates;
+  }
+
+  public feeRates(blockTimestamp: number) {
+    if (this.newRatesTimestamp <= blockTimestamp) return this.rates;
+    return this.oldRates;
+  }
+
+  public handleTransfer(event: Transfer, distributeFees: boolean) {
     // we initiate the accounts if it is not
     if (!this.accounts[event.from])
       this.accounts[event.from] = {
@@ -276,6 +282,40 @@ export class State {
 
     // we increment the balance of the receiver
     this.accounts[event.to].balance += BigInt(event.value);
+
+    if (this.feeReceiver.toLowerCase() == event.to.toLowerCase()) {
+      this.handleFeeTransfer(event, distributeFees);
+    }
+  }
+
+  private handleFeeTransfer(event: Transfer, distributeFees: boolean) {
+    const totalFees = BigInt(event.value);
+
+    let feePerUser: Record<Address, bigint> = {};
+
+    // we compute how much fees they paid for this epoch
+    // we emulated the rounding system of openzeppelin by adding 0 or 1
+    if (distributeFees) {
+      this.accumulatedFees += totalFees;
+      for (const [address, { balance }] of Object.entries(this.accounts)) {
+        feePerUser[address as Address] =
+          (balance * totalFees) / this.totalSupply + this.alternateZeroOne();
+      }
+      // then we increment the total of fees they paid
+      for (const [address, fees] of Object.entries(feePerUser)) {
+        this.accounts[address as Address].fees += fees;
+      }
+
+      const periodLength = this.periodFees.length;
+      const lastPeriod = this.periodFees[periodLength - 1];
+      lastPeriod.managementFees = this.nextManagementFees.toString();
+      lastPeriod.performanceFees = (
+        totalFees - this.nextManagementFees
+      ).toString();
+    }
+
+    // we must increase the totalSupply after computation
+    this.totalSupply += BigInt(event.value);
   }
 
   public handleReferral(event: ReferralCustom) {
@@ -442,17 +482,19 @@ export class State {
       this.handleSettleDeposit(event as SettleDeposit);
     } else if (event.__typename === "SettleRedeem") {
       this.handleSettleRedeem(event as SettleRedeem);
-    } else if (event.__typename === "FeeTransfer") {
-      this.handleFeeTransfer(
+    } else if (event.__typename === "Transfer") {
+      this.handleTransfer(
         event as Transfer,
         BigInt(fromBlock) <= event.blockNumber
       );
-    } else if (event.__typename === "Transfer") {
-      this.handleTransfer(event as Transfer);
     } else if (event.__typename === "Referral") {
       this.handleReferral(event as ReferralCustom);
     } else if (event.__typename === "Deal") {
       this.handleDeal(event as any as DealEvent); // TODO: fix any
+    } else if (event.__typename === "FeeReceiverUpdated") {
+      this.handleFeeReceiverUpdateds(event as FeeReceiverUpdated);
+    } else if (event.__typename === "RatesUpdated") {
+      this.handleRatesUpdateds(event as RatesUpdated);
     } else {
       throw new Error(`Unknown event ${event.__typename} : ${event}`);
     }

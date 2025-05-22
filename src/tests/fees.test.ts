@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { preprocessEvents } from "core/preProcess";
+import { preprocessEvents } from "core/preprocess";
 import { sanityChecks } from "core/sanityChecks";
 import { State } from "core/state";
 import { fetchVault } from "utils/fetchVault";
@@ -10,12 +10,11 @@ test("check total fees are consistent all attributed fees", async () => {
   const chainId = 1;
   const fromBlock = 21142252;
   const toBlock = 22011758;
-  const vaultData = await fetchVault({ address, chainId, toBlock });
+  const vaultData = await fetchVault({ address, chainId, toBlock, fromBlock });
   sanityChecks({ events: vaultData.events, fromBlock, toBlock });
   let events = preprocessEvents({
     events: vaultData.events,
     addresses: {
-      feeReceiver: vaultData.feesReceiver,
       silo: vaultData.silo,
       vault: address,
     },

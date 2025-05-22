@@ -16,13 +16,12 @@ export async function processVault({
 }: ProcessVaultParams): Promise<ProcessVaultReturn> {
   console.log(`Loading vault ${vault.address} on chain ${vault.chainId}`);
 
-  const vaultData = await fetchVault({ ...vault, toBlock });
+  const vaultData = await fetchVault({ ...vault, toBlock, fromBlock });
   sanityChecks({ events: vaultData.events, fromBlock, toBlock });
 
   let events = preprocessEvents({
     events: vaultData.events,
     addresses: {
-      feeReceiver: vaultData.feesReceiver,
       silo: vaultData.silo,
       vault: vault.address,
     },
@@ -35,6 +34,7 @@ export async function processVault({
   const state = new State({
     feeReceiver: vaultData.feesReceiver,
     decimals: BigInt(vaultData.decimals),
+    rates: undefined, // todo: fix
   });
   if (events.length == 1000)
     throw new Error("you need to handle more than 1000 events");
@@ -52,9 +52,11 @@ export async function processVault({
   const sharesDecimals = readable ? vaultData.decimals : 0;
   const assetDecimals = readable ? vaultData.asset.decimals : 0;
   console.log(state.accumulatedFees);
+
   return {
     chainId: vault.chainId,
     address: vault.address,
+    decimals: Number(state.decimals),
     pricePerShare: Number(formatUnits(state.pricePerShare(), assetDecimals)),
     data: Object.fromEntries(
       Object.entries(result).map(([address, values]) => [
@@ -69,6 +71,3 @@ export async function processVault({
     periodFees: state.periodFees,
   };
 }
-
-10352450794100633568434n;
-9774130392289756446194n;

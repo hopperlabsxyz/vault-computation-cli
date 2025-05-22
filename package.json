@@ -4,11 +4,11 @@
   "engines": {
     "bun": ">=1.0.0"
   },
-  "description": "Compute fees for a specific vault within a block range",
+  "description": "Obtain various data regarding a vault.",
   "main": "index.js",
   "scripts": {
-    "compute": "bun index.ts compute",
-    "usual-fee": "bun index.ts usualfee",
+    "user-fee": "bun index.ts user-fee",
+    "period-fee": "bun index.ts period-fee",
     "find-blocks": "bun index.ts find-blocks",
     "find-claimable-controllers": "bun index.ts find-claimable-controllers",
     "generate": "bunx --bun graphql-codegen --config graphql-codegen-cli/fetch-schema.ts"

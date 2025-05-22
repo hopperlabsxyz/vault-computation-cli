@@ -5,9 +5,9 @@ import { parseArguments } from "utils/parseArguments";
 import type { Address } from "viem";
 import type { Command } from "@commander-js/extra-typings";
 
-export function setComputeCommand(command: Command) {
+export function setUserFeeCommand(command: Command) {
   command
-    .command("compute")
+    .command("user-fee")
     .description(
       "Calculate and generate fee reports for a specified vault, including referral rewards and rebates"
     )
@@ -48,11 +48,7 @@ export function setComputeCommand(command: Command) {
       "after",
       `
 Examples:
-  $ bun compute 1:0x07ed467acd4ffd13023046968b0859781cb90d9b  ## Compute for all lifetime
-  $ bun compute 1:0x07ed467acd4ffd13023046968b0859781cb90d9b -r -o fees.csv  ## With readable output and CSV export
-  $ bun compute 1:0x07ed467acd4ffd13023046968b0859781cb90d9b -l 2000000 -o fees.csv  ## From beginning until block 2000000
-  $ bun compute 1:0x07ed467acd4ffd13023046968b0859781cb90d9b -d dealsExample.csv -o fees.csv  ## With OTC deals
-  $ bun compute 1:0x07ed467acd4ffd13023046968b0859781cb90d9b -f 1000000 -l 2000000 -r -o fees.csv -d dealsExample.csv  ## All parameters
+  $ bun user-fee 1:0x07ed467acd4ffd13023046968b0859781cb90d9b -f 1000000 -l 2000000 -r -o -d dealsExample.csv  ## All parameters
     `
     )
     .action(async (args, options) => {

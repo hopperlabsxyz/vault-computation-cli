@@ -1,8 +1,8 @@
 import { Command } from "@commander-js/extra-typings";
 import { setBlocksCommand } from "cli/find-blocks";
-import { setComputeCommand } from "cli/compute";
+import { setUserFeeCommand } from "cli/user-fee";
 import { setControllersCommand } from "cli/find-claimable-controllers";
-import { setUsualFeeCommand } from "cli/usual-fee";
+import { setPeriodFeeCommand } from "cli/period-fee";
 
 export const computationProgram = new Command();
 
@@ -12,8 +12,8 @@ computationProgram
   .version("0.0.1");
 
 setBlocksCommand(computationProgram);
-setComputeCommand(computationProgram);
+setUserFeeCommand(computationProgram);
 setControllersCommand(computationProgram);
-setUsualFeeCommand(computationProgram);
+setPeriodFeeCommand(computationProgram);
 
 computationProgram.parse();

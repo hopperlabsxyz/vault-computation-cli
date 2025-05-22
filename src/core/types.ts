@@ -34,7 +34,6 @@ export interface ReferralRate {
 }
 
 export interface VaultAddrresses {
-  feeReceiver: Address;
   silo: Address;
   vault: Address;
 }
@@ -66,6 +65,7 @@ export interface ProcessVaultParams {
 export interface ProcessVaultReturn {
   chainId: number;
   address: Address;
+  decimals: number;
   pricePerShare: number;
   data: Record<
     Address,
@@ -79,8 +79,13 @@ export interface ProcessVaultReturn {
 }
 
 export type PeriodFees = Array<{
-  baseFees: bigint;
-  extraFees: bigint;
+  managementFees: string;
+  performanceFees: string;
   blockNumber: number;
   period: number;
 }>;
+
+export type Rates = {
+  management: number;
+  performance: number;
+};
