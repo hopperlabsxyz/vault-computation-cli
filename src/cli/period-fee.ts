@@ -29,7 +29,7 @@ export function setPeriodFeeCommand(command: Command) {
       "Will save the result in output/period-fee in a file with following format: <chainId>-<vaultAddress>-<from-block>-<to-block>.csv"
     )
     .option(
-      "--noprint",
+      "--silent",
       "This will prevent the printing of the output in stdout",
       false
     )
@@ -62,12 +62,12 @@ Example:
         },
         options.readable
       );
-      let total = 0n;
-      result.periodFees.forEach((fees) => {
-        total += BigInt(fees.managementFees) + BigInt(fees.performanceFees);
-      });
+      // let total = 0n;
+      // result.periodFees.forEach((fees) => {
+      //   total += BigInt(fees.managementFees) + BigInt(fees.performanceFees);
+      // });
 
-      console.log(total);
+      // console.log(total);
 
       if (options.output) {
         try {
@@ -82,7 +82,7 @@ Example:
           console.log(csv);
         }
       }
-      if (!options.noprint) {
+      if (!options.silent) {
         console.log(csv);
       }
     });

@@ -1,6 +1,5 @@
 import { processVault } from "core/processVault";
 import { mergeDeals, parseDeals, type AllDeals } from "parsing/parseDeals";
-import { convertToCSV } from "utils/convertToCSV";
 import { parseArguments } from "utils/parseArguments";
 import type { Address } from "viem";
 import type { Command } from "@commander-js/extra-typings";
@@ -26,7 +25,7 @@ export function setUserFeeCommand(command: Command) {
       "Will save the result in output/user-fee in a file with following format: <chainId>-<vaultAddress>-<from-block>-<to-block>.csv"
     )
     .option(
-      "--noprint",
+      "--silent",
       "This will prevent the printing of the output on standoutput",
       false
     )
@@ -87,8 +86,34 @@ Example:
           console.log("CSV content:");
           console.log(csv);
         }
-      } else if (options.noprint == false) {
+      } else if (options.silent == false) {
         console.log(csv);
       }
     });
 }
+
+const convertToCSV = (
+  vaults: {
+    chainId: number;
+    address: string;
+    pricePerShare: number;
+    data: Record<string, { balance: number; fees: number; cashback: number }>;
+  }[],
+  options: { displayCashback: boolean }
+) => {
+  const csvRows = [
+    `chainId,vault,wallet,balance,fees,pricePerShare${
+      options.displayCashback ? ",cashback" : ""
+    }`, // CSV header
+    ...vaults.flatMap((vault) =>
+      Object.entries(vault.data).map(
+        ([address, { balance, fees, cashback }]) =>
+          `${vault.chainId},${vault.address},${address},${balance},${fees},${
+            vault.pricePerShare
+          }${options.displayCashback ? `, ${cashback}` : ""}`
+      )
+    ),
+  ];
+
+  return csvRows.join("\n");
+};

@@ -50,7 +50,6 @@ export async function processVault({
   const result = state.getAccountsDeepCopy();
   const sharesDecimals = readable ? vaultData.decimals : 0;
   const assetDecimals = readable ? vaultData.asset.decimals : 0;
-  console.log(state.accumulatedFees);
 
   return {
     chainId: vault.chainId,
