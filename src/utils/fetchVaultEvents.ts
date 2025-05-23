@@ -30,14 +30,14 @@ export async function fetchVaultEvents({
   chainId,
   vaultAddress,
   toBlock,
-  skip,
-  first,
+  skip = 0,
+  first = 1000,
 }: {
   chainId: number;
   vaultAddress: Address;
   toBlock: bigint;
-  skip?: number;
-  first?: number;
+  skip: number;
+  first: number;
 }): Promise<VaultEventsQuery> {
   const events: VaultEventsQuery = {
     depositRequestCanceleds: [],
@@ -54,12 +54,6 @@ export async function fetchVaultEvents({
     ratesUpdateds: [],
   };
   let hasMore = true;
-  if (!skip) {
-    skip = 0;
-  }
-  if (!first) {
-    first = 1000;
-  }
   while (hasMore) {
     const newEvents = await _fetchVaultEvents({
       chainId,
