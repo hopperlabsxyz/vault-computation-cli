@@ -2,7 +2,7 @@ import { parseArguments } from "utils/parseArguments";
 import { publicClient } from "lib/publicClient";
 import type { Command } from "@commander-js/extra-typings";
 import { fetchVault } from "utils/fetchVault";
-import { preprocessEvents } from "core/preProcess";
+import { preprocessEvents } from "core/preprocess";
 import type { DepositRequest, DepositRequestCanceled } from "gql/graphql";
 import type { Address } from "viem";
 
@@ -31,38 +31,43 @@ Examples:
         await client.getBlock({ blockTag: "latest" })
       ).number.toString();
 
-
-      const vaultData = await fetchVault({ ...vault, toBlock: Number(toBlock) });
+      const vaultData = await fetchVault({
+        ...vault,
+        toBlock: Number(toBlock),
+        fromBlock: Number(toBlock),
+      });
 
       let events = preprocessEvents({
         events: vaultData.events,
         addresses: {
-          feeReceiver: vaultData.feesReceiver,
           silo: vaultData.silo,
           vault: vault.address,
-        }
-      })
-        .filter((e) => e.__typename === 'DepositRequest' || e.__typename === 'DepositRequestCanceled' || e.__typename === 'TotalAssetsUpdated') as (DepositRequest | DepositRequestCanceled)[];
+        },
+      }).filter(
+        (e) =>
+          e.__typename === "DepositRequest" ||
+          e.__typename === "DepositRequestCanceled" ||
+          e.__typename === "TotalAssetsUpdated"
+      ) as (DepositRequest | DepositRequestCanceled)[];
 
       if (options.fromBlock) {
-        const fromBlock = Number(options.fromBlock)
-        events = events.filter((e) => e.blockNumber >= fromBlock)
+        const fromBlock = Number(options.fromBlock);
+        events = events.filter((e) => e.blockNumber >= fromBlock);
       }
 
       const controllersIntention = events.reduce((map, event) => {
-        const controller = (event as DepositRequest | DepositRequestCanceled).controller
+        const controller = (event as DepositRequest | DepositRequestCanceled)
+          .controller;
         if (controller) {
-          map[controller] = event.__typename === 'DepositRequest';
+          map[controller] = event.__typename === "DepositRequest";
         }
-        return map
-      }, {} as Record<Address, boolean>)
-
-
+        return map;
+      }, {} as Record<Address, boolean>);
 
       const controllers = Object.entries(controllersIntention)
         .filter(([, value]) => value)
         .map(([address]) => address);
 
-      console.log(controllers);
+      console.log("[" + controllers.map((c) => '"' + c + '"').join(", ") + "]");
     });
 }

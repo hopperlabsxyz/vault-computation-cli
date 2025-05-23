@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { preprocessEvents } from "core/preProcess";
+import { preprocessEvents } from "core/preprocess";
 import { sanityChecks } from "core/sanityChecks";
 import { State } from "core/state";
 import { fetchVault } from "utils/fetchVault";
@@ -10,12 +10,11 @@ test("check total fees are consistent all attributed fees", async () => {
   const chainId = 1;
   const fromBlock = 21142252;
   const toBlock = 22011758;
-  const vaultData = await fetchVault({ address, chainId, toBlock });
+  const vaultData = await fetchVault({ address, chainId, toBlock, fromBlock });
   sanityChecks({ events: vaultData.events, fromBlock, toBlock });
   let events = preprocessEvents({
     events: vaultData.events,
     addresses: {
-      feeReceiver: vaultData.feesReceiver,
       silo: vaultData.silo,
       vault: address,
     },
@@ -28,9 +27,9 @@ test("check total fees are consistent all attributed fees", async () => {
   const state = new State({
     feeReceiver: vaultData.feesReceiver,
     decimals: BigInt(vaultData.decimals),
+    cooldown: vaultData.cooldown,
+    rates: vaultData.rates.rates,
   });
-  if (events.length == 1000)
-    throw new Error("you need to handle more than 1000 events");
 
   for (let i = 0; i < events.length; i++) {
     const currentBlock: BigInt = events[i].blockNumber;

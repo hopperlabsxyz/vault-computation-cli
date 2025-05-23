@@ -3,7 +3,7 @@ import { formatUnits } from "viem";
 import { State } from "./state";
 import { sanityChecks } from "./sanityChecks";
 import type { ProcessVaultParams, ProcessVaultReturn } from "./types";
-import { preprocessEvents } from "./preProcess";
+import { preprocessEvents } from "./preprocess";
 
 export async function processVault({
   vault,
@@ -16,13 +16,12 @@ export async function processVault({
 }: ProcessVaultParams): Promise<ProcessVaultReturn> {
   console.log(`Loading vault ${vault.address} on chain ${vault.chainId}`);
 
-  const vaultData = await fetchVault({ ...vault, toBlock });
+  const vaultData = await fetchVault({ ...vault, toBlock, fromBlock });
   sanityChecks({ events: vaultData.events, fromBlock, toBlock });
 
   let events = preprocessEvents({
     events: vaultData.events,
     addresses: {
-      feeReceiver: vaultData.feesReceiver,
       silo: vaultData.silo,
       vault: vault.address,
     },
@@ -35,9 +34,9 @@ export async function processVault({
   const state = new State({
     feeReceiver: vaultData.feesReceiver,
     decimals: BigInt(vaultData.decimals),
+    rates: vaultData.rates.rates,
+    cooldown: vaultData.cooldown,
   });
-  if (events.length == 1000)
-    throw new Error("you need to handle more than 1000 events");
   for (let i = 0; i < events.length; i++) {
     state.processEvent({
       event: events[i] as { __typename: string; blockNumber: bigint },
@@ -51,9 +50,12 @@ export async function processVault({
   const result = state.getAccountsDeepCopy();
   const sharesDecimals = readable ? vaultData.decimals : 0;
   const assetDecimals = readable ? vaultData.asset.decimals : 0;
+  console.log(state.accumulatedFees);
+
   return {
     chainId: vault.chainId,
     address: vault.address,
+    decimals: Number(state.decimals),
     pricePerShare: Number(formatUnits(state.pricePerShare(), assetDecimals)),
     data: Object.fromEntries(
       Object.entries(result).map(([address, values]) => [
@@ -65,6 +67,6 @@ export async function processVault({
         },
       ])
     ),
+    periodFees: state.periodFees,
   };
 }
-

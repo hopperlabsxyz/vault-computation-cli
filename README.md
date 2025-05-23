@@ -85,7 +85,7 @@ bun run find-claimable-controllers 1:0x07ed467acd4ffd13023046968b0859781cb90d9b 
 
 ### Output
 
-The command returns a list of addresses — these are the controller (user) addresses that still have unclaimed shares in the specified vault.  
+The command returns a list of addresses — these are the controller (user) addresses that still have unclaimed shares in the specified vault.
 
 #### Example Output
 
@@ -109,7 +109,6 @@ You can pass this list of addresses as an argument to `claimSharesOnBehalf()` in
 
 Make sure the caller has permission to claim on behalf of these addresses.
 
-
 ## Compute Fees
 
 Calculate fees for a specific vault within a block range:
@@ -130,13 +129,13 @@ Examples:
 
 ```bash
 # Basic usage with block range
-bun run compute 1:0x07ed467acd4ffd13023046968b0859781cb90d9b --from-block 1000000 --to-block 2000000
+bun run user-fee 1:0x07ed467acd4ffd13023046968b0859781cb90d9b --from-block 1000000 --to-block 2000000
 
 # With readable output and CSV export
-bun run compute 1:0x07ed467acd4ffd13023046968b0859781cb90d9b --from-block 1000000 --to-block 2000000 -r -o fees.csv
+bun run user-fee 1:0x07ed467acd4ffd13023046968b0859781cb90d9b --from-block 1000000 --to-block 2000000 -r -o fees.csv
 
 # With OTC deals and custom fee rates
-bun run compute 1:0x07ed467acd4ffd13023046968b0859781cb90d9b --from-block 1000000 --to-block 2000000 -d deals.csv --fee-rebate-rate 1000 --fee-reward-rate 2000
+bun run user-fee 1:0x07ed467acd4ffd13023046968b0859781cb90d9b --from-block 1000000 --to-block 2000000 -d deals.csv --fee-rebate-rate 1000 --fee-reward-rate 2000
 ```
 
 ## Find Blocks

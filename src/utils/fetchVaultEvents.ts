@@ -50,6 +50,8 @@ export async function fetchVaultEvents({
     transfers: [],
     depositRequests: [],
     redeemRequests: [],
+    feeReceiverUpdateds: [],
+    ratesUpdateds: [],
   };
   let hasMore = true;
   if (!skip) {
@@ -81,6 +83,10 @@ export async function fetchVaultEvents({
     events.transfers.push(...newEvents.transfers);
     events.referrals.push(...newEvents.referrals);
 
+    events.feeReceiverUpdateds.push(...newEvents.feeReceiverUpdateds);
+
+    events.ratesUpdateds.push(...newEvents.ratesUpdateds);
+
     if (vaultEventsQueryLength(newEvents) < first) {
       hasMore = false;
     }
@@ -98,7 +104,9 @@ function vaultEventsQueryLength(query: VaultEventsQuery): number {
     query.settleDeposits.length +
     query.settleRedeems.length +
     query.totalAssetsUpdateds.length +
-    query.transfers.length
+    query.transfers.length +
+    query.ratesUpdateds.length +
+    query.feeReceiverUpdateds.length
   );
 }
 
@@ -284,6 +292,37 @@ export const query = graphql(`
       owner
       referral
       requestId
+    }
+    feeReceiverUpdateds(
+      first: $first
+      skip: $skip
+      orderBy: blockTimestamp
+      orderDirection: desc
+      where: { vault: $vaultAddress, blockNumber_lte: $toBlock }
+    ) {
+      id
+      transactionHash
+      logIndex
+      blockNumber
+      blockTimestamp
+      oldReceiver
+      newReceiver
+    }
+    ratesUpdateds(
+      first: $first
+      skip: $skip
+      orderBy: blockTimestamp
+      orderDirection: desc
+      where: { vault: $vaultAddress, blockNumber_lte: $toBlock }
+    ) {
+      id
+      transactionHash
+      logIndex
+      blockNumber
+      blockTimestamp
+      newRate_managementRate
+      newRate_performanceRate
+      timestamp
     }
   }
 `);

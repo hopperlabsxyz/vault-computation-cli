@@ -1,4 +1,4 @@
-import { BPS_DIVIDER } from "../constants";
+import { BPS_DIVIDER, YEAR_IN_SECONDS } from "../constants";
 import type {
   Deposit,
   DepositRequest,
@@ -8,18 +8,36 @@ import type {
   SettleRedeem,
   TotalAssetsUpdated,
   Transfer,
+  RatesUpdated,
+  FeeReceiverUpdated,
 } from "gql/graphql";
 
-import { erc20Abi, type Address } from "viem";
+import { erc20Abi, zeroAddress, type Address } from "viem";
 import type { ReferralConfig, ReferralCustom } from "types/Vault";
 import { publicClient } from "lib/publicClient";
-import type { DealEvent, ProcessEventParams } from "./types";
+import { convertToShares } from "utils/convertTo";
+import type { DealEvent, PeriodFees, ProcessEventParams, Rates } from "./types";
 
 export class State {
   public totalSupply = 0n;
   public totalAssets = 0n;
+  public lastTotalAssetsUpdateTimestamp = 0;
+  public nextManagementFees = 0n;
   public decimals: bigint;
   public feeReceiver: Address;
+  // public address: Address;
+
+  // Do not use those value directly, rely on the feeRates function
+  private rates: Rates;
+  private oldRates: Rates = {
+    management: 0,
+    performance: 0,
+  };
+
+  public newRatesTimestamp = 0;
+  public cooldown = 0;
+
+  public periodFees: PeriodFees = [];
 
   public prePendingDeposits: Record<Address, bigint | undefined> = {};
   public prePendingRedeems: Record<Address, bigint | undefined> = {};
@@ -42,9 +60,13 @@ export class State {
   constructor({
     feeReceiver,
     decimals,
+    cooldown,
+    rates,
   }: {
     feeReceiver: Address;
     decimals: bigint;
+    cooldown: number;
+    rates: Rates;
   }) {
     this.feeReceiver = feeReceiver;
     this.decimals = decimals;
@@ -52,6 +74,12 @@ export class State {
       balance: 0n,
       fees: 0n,
       cashback: 0n,
+    };
+
+    this.cooldown = cooldown;
+    this.rates = {
+      management: rates.management / Number(BPS_DIVIDER),
+      performance: rates.performance / Number(BPS_DIVIDER),
     };
   }
 
@@ -75,7 +103,37 @@ export class State {
   }
 
   public handleTotalAssetsUpdated(event: TotalAssetsUpdated) {
+    //
     this.totalAssets = event.totalAssets;
+
+    // this is for usual computation
+    // compute 4% of annual fees value in shares
+    if (this.lastTotalAssetsUpdateTimestamp != 0) {
+      const timepast =
+        Number(event.blockTimestamp) - this.lastTotalAssetsUpdateTimestamp;
+      const ratioOverAYear = YEAR_IN_SECONDS / Number(timepast);
+      const percentToDeposit =
+        this.feeRates(event.blockNumber).management / ratioOverAYear;
+
+      const assetsToDeposits = Math.trunc(
+        percentToDeposit * Number(this.totalAssets)
+      );
+
+      // this is to compute the repartition between management and performance fees
+      this.nextManagementFees = convertToShares({
+        assets: BigInt(assetsToDeposits),
+        totalAssets: this.totalAssets - BigInt(assetsToDeposits),
+        totalSupply: this.totalSupply,
+      });
+    }
+
+    this.periodFees.push({
+      managementFees: "0",
+      blockNumber: Number(event.blockNumber),
+      performanceFees: "0",
+      period: this.periodFees.length,
+    });
+    this.lastTotalAssetsUpdateTimestamp = event.blockTimestamp;
   }
 
   public handleNewTotalAssetsUpdated() {
@@ -175,7 +233,7 @@ export class State {
     this.pendingRedeems = {};
   }
 
-  private createAlternateFunction() {
+  private createAlternateFunction(): () => bigint {
     let lastValue = 1n; // Commence à 1 pour que le premier appel retourne 0
 
     return function alternateZeroOne(): bigint {
@@ -184,30 +242,28 @@ export class State {
     };
   }
 
-  public handleFeeTransfer(event: Transfer, distributeFees: boolean) {
-    const totalFees = BigInt(event.value);
-    this.accumulatedFees += totalFees;
-    let feePerUser: Record<Address, bigint> = {};
-
-    // we compute how much fees they paid for this epoch
-    if (distributeFees) {
-      for (const [address, { balance }] of Object.entries(this.accounts)) {
-        feePerUser[address as Address] =
-          (balance * totalFees) / this.totalSupply + this.alternateZeroOne();
-      }
-      // then we increment the total of fees they paid
-      for (const [address, fees] of Object.entries(feePerUser)) {
-        this.accounts[address as Address].fees += fees;
-      }
-    }
-
-    // we can also update the feeReceiver balance
-    // we must do this after everything
-    this.accounts[this.feeReceiver].balance += BigInt(event.value);
-    this.totalSupply += BigInt(event.value);
+  public handleFeeReceiverUpdateds(event: FeeReceiverUpdated) {
+    this.feeReceiver = event.newReceiver;
   }
 
-  public handleTransfer(event: Transfer) {
+  public handleRatesUpdateds(event: RatesUpdated) {
+    this.newRatesTimestamp = event.blockTimestamp + this.cooldown;
+
+    const currentRates = this.rates;
+    this.rates = {
+      management: event.newRate_managementRate / Number(BPS_DIVIDER),
+      performance: event.newRate_performanceRate / Number(BPS_DIVIDER),
+    };
+
+    this.oldRates = currentRates;
+  }
+
+  public feeRates(blockTimestamp: number) {
+    if (this.newRatesTimestamp <= blockTimestamp) return this.rates;
+    return this.oldRates;
+  }
+
+  public handleTransfer(event: Transfer, distributeFees: boolean) {
     // we initiate the accounts if it is not
     if (!this.accounts[event.from])
       this.accounts[event.from] = {
@@ -223,12 +279,47 @@ export class State {
         cashback: 0n,
       };
 
+    // this is a fee transfer
+    if (
+      this.feeReceiver.toLowerCase() == event.to.toLowerCase() &&
+      event.from == zeroAddress
+    ) {
+      this.handleFeeTransfer(event, distributeFees);
+    }
+    // console.log({ feeReceiver: this.feeReceiver });
     // we decrement the balance of the sender
-    this.accounts[event.from].balance -= BigInt(event.value);
+    if (event.from == zeroAddress)
+      this.totalSupply += BigInt(event.value); // mint
+    else this.accounts[event.from].balance -= BigInt(event.value); // transfer
     // we initiate the accounts if it is not
 
+    if (event.to == zeroAddress)
+      this.totalSupply -= BigInt(event.value); // burn
     // we increment the balance of the receiver
-    this.accounts[event.to].balance += BigInt(event.value);
+    else this.accounts[event.to].balance += BigInt(event.value); //transfer
+  }
+
+  private handleFeeTransfer(event: Transfer, distributeFees: boolean) {
+    const totalFees = BigInt(event.value);
+
+    // we compute how much fees they paid for this epoch
+    // we emulated the rounding system of openzeppelin by adding 0 or 1
+    if (distributeFees) {
+      // let checkTotal = 0n;
+      this.accumulatedFees += totalFees;
+      for (const [address, { balance }] of Object.entries(this.accounts)) {
+        this.accounts[address as Address].fees +=
+          (balance * totalFees) / this.totalSupply + this.alternateZeroOne();
+      }
+      const periodLength = this.periodFees.length;
+      const lastPeriod = this.periodFees[periodLength - 1];
+      lastPeriod.managementFees = this.nextManagementFees.toString();
+      lastPeriod.performanceFees = (
+        totalFees - this.nextManagementFees
+      ).toString();
+    }
+
+    // we must increase the totalSupply after computation
   }
 
   public handleReferral(event: ReferralCustom) {
@@ -300,6 +391,14 @@ export class State {
     return this.accounts[user].balance;
   }
 
+  public accumulatedBalances(): bigint {
+    let tt = 0n;
+    for (const [_, { balance }] of Object.entries(this.accounts)) {
+      tt += balance;
+    }
+    return tt;
+  }
+
   public users(): Address[] {
     const _users: Address[] = [];
     for (const [address, _] of Object.entries(this.accounts)) {
@@ -324,7 +423,7 @@ export class State {
   }
 
   public async rightTotalSupply(
-    blockNumber: number,
+    blockNumber: bigint,
     address: Address
   ): Promise<bigint> {
     const client = publicClient[1];
@@ -339,21 +438,19 @@ export class State {
 
   // DEBUG //
   public async testSupply(
-    blockNumber: number,
+    blockNumber: bigint,
     address: Address
   ): Promise<bigint> {
     const acc = this.accumulatedSupply();
     if (this.totalSupply + 100n < acc || this.totalSupply - 100n > acc) {
-      console.error(this.totalSupply, acc);
-      console.error("this.totalSupply   ", "acc");
+      console.error({ error: "Error", totalSupply: this.totalSupply, acc });
 
       console.error(
         "Good value",
         await this.rightTotalSupply(blockNumber, address)
       );
       throw "mismatch in totalsupply";
-    }
-    console.error(" ");
+    } else console.log("Supply is good");
     return acc;
   }
 
@@ -378,11 +475,7 @@ export class State {
     return copiedAccounts;
   }
 
-
-  public processEvent({
-    event,
-    fromBlock,
-  }: ProcessEventParams) {
+  public processEvent({ event, fromBlock }: ProcessEventParams) {
     if (event.__typename === "TotalAssetsUpdated") {
       this.handleTotalAssetsUpdated(event as TotalAssetsUpdated);
     } else if (event.__typename === "NewTotalAssetsUpdated") {
@@ -399,17 +492,19 @@ export class State {
       this.handleSettleDeposit(event as SettleDeposit);
     } else if (event.__typename === "SettleRedeem") {
       this.handleSettleRedeem(event as SettleRedeem);
-    } else if (event.__typename === "FeeTransfer") {
-      this.handleFeeTransfer(
-        event as Transfer,
-        BigInt(fromBlock) <= event.blockNumber
-      );
     } else if (event.__typename === "Transfer") {
-      this.handleTransfer(event as Transfer);
+      this.handleTransfer(
+        event as Transfer,
+        BigInt(fromBlock) < event.blockNumber
+      );
     } else if (event.__typename === "Referral") {
       this.handleReferral(event as ReferralCustom);
     } else if (event.__typename === "Deal") {
       this.handleDeal(event as any as DealEvent); // TODO: fix any
+    } else if (event.__typename === "FeeReceiverUpdated") {
+      this.handleFeeReceiverUpdateds(event as FeeReceiverUpdated);
+    } else if (event.__typename === "RatesUpdated") {
+      this.handleRatesUpdateds(event as RatesUpdated);
     } else {
       throw new Error(`Unknown event ${event.__typename} : ${event}`);
     }

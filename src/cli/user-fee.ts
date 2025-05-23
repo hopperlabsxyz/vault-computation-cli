@@ -5,25 +5,30 @@ import { parseArguments } from "utils/parseArguments";
 import type { Address } from "viem";
 import type { Command } from "@commander-js/extra-typings";
 
-export function setComputeCommand(command: Command) {
+export function setUserFeeCommand(command: Command) {
   command
-    .command("compute")
+    .command("user-fee")
     .description(
       "Calculate and generate fee reports for a specified vault, including referral rewards and rebates"
     )
     .argument("chainId:VaultAddress")
     .requiredOption(
-      "--from-block <number>",
+      "-f, --from-block <number>",
       "Starting block number for fee computation (exclusive). Use 'find-blocks' command to find the appropriate block number"
     )
     .requiredOption(
-      "--to-block <number>",
+      "-t, --to-block <number>",
       "Ending block number for fee computation (inclusive). Use 'find-blocks' command to find the appropriate block number"
     )
     .option("-r, --readable", "Format the output in a human-readable format")
     .option(
       "-o, --output",
       "Will save the result in a file with following format: <chainId>-<vaultAddress>-<from-block>-<to-block>.csv"
+    )
+    .option(
+      "--noprint",
+      "This will prevent the printing of the output on standoutput",
+      false
     )
     .option(
       "-d, --deals <string>",
@@ -43,11 +48,7 @@ export function setComputeCommand(command: Command) {
       "after",
       `
 Examples:
-  $ pnpm compute 1:0x07ed467acd4ffd13023046968b0859781cb90d9b                    # Compute for all lifetime
-  $ pnpm compute 1:0x07ed467acd4ffd13023046968b0859781cb90d9b -r -o fees.csv    # With readable output and CSV export
-  $ pnpm compute 1:0x07ed467acd4ffd13023046968b0859781cb90d9b -l 2000000 -o fees.csv  # From beginning until block 2000000
-  $ pnpm compute 1:0x07ed467acd4ffd13023046968b0859781cb90d9b -d dealsExample.csv -o fees.csv  # With OTC deals
-  $ pnpm compute 1:0x07ed467acd4ffd13023046968b0859781cb90d9b -f 1000000 -l 2000000 -r -o fees.csv -d dealsExample.csv  # All parameters
+  $ bun user-fee 1:0x07ed467acd4ffd13023046968b0859781cb90d9b -f 1000000 -l 2000000 -r -o -d dealsExample.csv  ## All parameters
     `
     )
     .action(async (args, options) => {
@@ -55,12 +56,11 @@ Examples:
 
       let deals: AllDeals = {};
       if (options.deals) deals = await parseDeals(options.deals);
-      let vaultDeals: Record<Address, number> = {};
 
+      let vaultDeals: Record<Address, number> = {};
       if (deals[vault.chainId])
         vaultDeals =
           deals[vault.chainId][vault.address.toLowerCase() as Address] || {};
-
       vaultDeals = mergeDeals(deals[0]?.["0x0"] || {}, vaultDeals);
 
       const result = await processVault({
@@ -78,7 +78,7 @@ Examples:
       if (options.output) {
         try {
           const file = Bun.file(
-            `${vault.chainId}-${vault.address}-${options.fromBlock}-${options.toBlock}.csv`
+            `./output/user-fee/${vault.chainId}-${vault.address}-${options.fromBlock}-${options.toBlock}.csv`
           );
           await file.write(csv);
           console.log(`CSV report written to: ${file.name}`);
@@ -87,7 +87,7 @@ Examples:
           console.log("CSV content:");
           console.log(csv);
         }
-      } else {
+      } else if (options.noprint == false) {
         console.log(csv);
       }
     });

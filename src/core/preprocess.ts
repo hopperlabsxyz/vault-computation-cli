@@ -1,6 +1,11 @@
 import type { Transfer } from "gql/graphql";
 import { type Address } from "viem";
-import type { DealEvent, PreProcessingParams, ReferralEvent } from "./types";
+import type {
+  DealEvent,
+  PreProcessingParams,
+  ReferralEvent,
+  VaultAddrresses,
+} from "./types";
 
 export function preprocessEvents({
   events,
@@ -69,24 +74,39 @@ export function preprocessEvents({
     __typename: "NewTotalAssetsUpdated",
   }));
 
-  let referrals: ReferralEvent[] = []
+  // Add __typename to RatesUpdates
+  events.ratesUpdateds = events.ratesUpdateds.map((e) => ({
+    ...e,
+    __typename: "RatesUpdated",
+  }));
+
+  // Add __typename to RatesUpdates
+  events.feeReceiverUpdateds = events.feeReceiverUpdateds.map((e) => ({
+    ...e,
+    __typename: "FeeReceiverUpdated",
+  }));
+
+  let referrals: ReferralEvent[] = [];
   if (referral) {
     // Add __typename to referrals and we inject the parameters of the referral
     referrals = events.referrals
-      .map((e) => ({
-        ...e,
-        feeRewardRate: referral.feeRewardRate,
-        feeRebateRate: referral.feeRebateRate,
-        assets: BigInt(e.assets),
-        blockNumber: Number(e.blockNumber),
-        blockTimestamp: Number(e.blockTimestamp),
-        requestId: BigInt(e.requestId),
-        __typename: "Referral",
-      }) satisfies ReferralEvent)
+      .map(
+        (e) =>
+          ({
+            ...e,
+            feeRewardRate: referral.feeRewardRate,
+            feeRebateRate: referral.feeRebateRate,
+            assets: BigInt(e.assets),
+            blockNumber: Number(e.blockNumber),
+            blockTimestamp: Number(e.blockTimestamp),
+            requestId: BigInt(e.requestId),
+            __typename: "Referral",
+          } satisfies ReferralEvent)
+      )
       .filter((r) => r.owner !== r.referral);
   }
 
-  let dealsParsed: DealEvent[] = []
+  let dealsParsed: DealEvent[] = [];
   if (deals) {
     // Add __typename to deals and we inject the parameters of the deals
     // An otc deal is a deal on the fee rebate exclusively
@@ -118,16 +138,6 @@ export function preprocessEvents({
     }));
   }
 
-  // Add __typename to feeTransfers and convert relevant fields to BigInt
-  // we filter the transfers to only get the ones to the fee receiver
-  const feeTransfers = events.transfers
-    .filter((t) => t.to.toLowerCase() === addresses.feeReceiver.toLowerCase())
-    .map((e) => ({
-      ...e,
-      value: BigInt(e.value),
-      __typename: "FeeTransfer",
-    }));
-
   // Add __typename to transfers, filter ignored addresses, and convert relevant fields to BigInt
   events.transfers = filterTransfers(events.transfers, addresses).map((e) => ({
     ...e,
@@ -143,10 +153,11 @@ export function preprocessEvents({
     ...events.redeemRequests,
     ...events.deposits,
     ...events.totalAssetsUpdateds,
-    ...feeTransfers,
     ...events.settleDeposits,
     ...events.settleRedeems,
     ...events.transfers,
+    ...events.ratesUpdateds,
+    ...events.feeReceiverUpdateds,
     ...referrals,
     ...dealsParsed,
   ].sort((a, b) => {
@@ -161,20 +172,15 @@ export function preprocessEvents({
 
 function filterTransfers(
   transfers: Transfer[],
-  addresses: {
-    feeReceiver: Address;
-    silo: Address;
-    vault: Address;
-  }
+  addresses: VaultAddrresses
 ): Transfer[] {
   return transfers.filter(
     (t) =>
-      t.to.toLowerCase() !== addresses.feeReceiver.toLowerCase() &&
-      // we ignore all transfers from and to the vault because those we be handled when we settleDeposit
-      t.to.toLowerCase() !== addresses.silo.toLowerCase() &&
-      t.from.toLowerCase() !== addresses.silo.toLowerCase() &&
-      // we ignore all transfers from and to the vault because those we be handled when we settleDeposit
-      t.to.toLowerCase() !== addresses.vault.toLowerCase() &&
-      t.from.toLowerCase() !== addresses.vault.toLowerCase()
+      // we ignore all transfers from and to the silo because those will be handled when we settleDeposit
+      t.to.toLowerCase() != addresses.silo.toLowerCase() &&
+      t.from.toLowerCase() != addresses.silo.toLowerCase() &&
+      // we ignore all transfers from and to the vault because those will be handled when we settleDeposit
+      t.to.toLowerCase() != addresses.vault.toLowerCase() &&
+      t.from.toLowerCase() != addresses.vault.toLowerCase()
   );
 }
