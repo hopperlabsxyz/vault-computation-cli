@@ -8,7 +8,7 @@ export function setPeriodFeeCommand(command: Command) {
   command
     .command("period-fee")
     .description(
-      "Calculate and generate fee reports for a specified vault, including referral rewards and rebates"
+      "Calculate and generate fee reports for a specific between 2 updates of totalAssets (period)."
     )
     .argument("chainId:VaultAddress")
     .requiredOption(
@@ -26,18 +26,18 @@ export function setPeriodFeeCommand(command: Command) {
     )
     .option(
       "-o, --output",
-      "Will save the result in a file with following format: <chainId>-<vaultAddress>-<from-block>-<to-block>.csv"
+      "Will save the result in output/period-fee in a file with following format: <chainId>-<vaultAddress>-<from-block>-<to-block>.csv"
     )
     .option(
       "--noprint",
-      "This will prevent the printing of the output on standoutput",
+      "This will prevent the printing of the output in stdout",
       false
     )
     .addHelpText(
       "after",
       `
-Examples:
-  $ bun period-fee 1:0x07ed467acd4ffd13023046968b0859781cb90d9b -f 1000000 -l 2000000 -r  ## All parameters
+Example:
+  $ bun period-fee 1:0x07ed467acd4ffd13023046968b0859781cb90d9b -f 1000000 -l 2000000 -r 
     `
     )
     .action(async (args, options) => {

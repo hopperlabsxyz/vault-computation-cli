@@ -50,6 +50,7 @@ export const query = graphql(`
       from
       id
       to
+      logIndex
       transactionHash
       value
       vault

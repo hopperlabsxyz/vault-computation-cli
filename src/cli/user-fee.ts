@@ -9,7 +9,7 @@ export function setUserFeeCommand(command: Command) {
   command
     .command("user-fee")
     .description(
-      "Calculate and generate fee reports for a specified vault, including referral rewards and rebates"
+      "Calculate and generate fee reports for a specified vault, including referral rewards and rebates for all users"
     )
     .argument("chainId:VaultAddress")
     .requiredOption(
@@ -23,7 +23,7 @@ export function setUserFeeCommand(command: Command) {
     .option("-r, --readable", "Format the output in a human-readable format")
     .option(
       "-o, --output",
-      "Will save the result in a file with following format: <chainId>-<vaultAddress>-<from-block>-<to-block>.csv"
+      "Will save the result in output/user-fee in a file with following format: <chainId>-<vaultAddress>-<from-block>-<to-block>.csv"
     )
     .option(
       "--noprint",
@@ -47,8 +47,8 @@ export function setUserFeeCommand(command: Command) {
     .addHelpText(
       "after",
       `
-Examples:
-  $ bun user-fee 1:0x07ed467acd4ffd13023046968b0859781cb90d9b -f 1000000 -l 2000000 -r -o -d dealsExample.csv  ## All parameters
+Example:
+  $ bun user-fee 1:0x07ed467acd4ffd13023046968b0859781cb90d9b -f 1000000 -l 2000000 -r -o -d dealsExample.csv
     `
     )
     .action(async (args, options) => {
