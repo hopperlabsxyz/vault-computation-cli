@@ -2,6 +2,7 @@ import { expect, test } from "bun:test";
 import { preprocessEvents } from "core/preprocess";
 import { sanityChecks } from "core/sanityChecks";
 import { State } from "core/state";
+import type { Rates } from "core/types";
 import { totalBalanceOf } from "core/vault";
 import { publicClient } from "lib/publicClient";
 import { fetchVault, type FetchVaultReturn } from "utils/fetchVault";
@@ -16,13 +17,17 @@ test(
     const chainId = 1;
     const fromBlock = 21142252;
     const toBlock = 22011758;
-    const vaultData = await fetchVault({ address, chainId, toBlock });
+    const vaultData = await fetchVault({
+      address,
+      chainId,
+      toBlock,
+      fromBlock,
+    });
     sanityChecks({ events: vaultData.events, fromBlock, toBlock });
     const client = publicClient[chainId];
     let events = preprocessEvents({
       events: vaultData.events,
       addresses: {
-        feeReceiver: vaultData.feesReceiver,
         silo: vaultData.silo,
         vault: address,
       },
@@ -35,9 +40,9 @@ test(
     const state = new State({
       feeReceiver: vaultData.feesReceiver,
       decimals: BigInt(vaultData.decimals),
+      cooldown: Number(vaultData.cooldown),
+      rates: vaultData.rates.rates,
     });
-    if (events.length == 1000)
-      throw new Error("you need to handle more than 1000 events");
 
     const historicBalance = await getHistoricBalances({
       events,
@@ -60,10 +65,10 @@ test(
         for (const [user, account] of Object.entries(
           state.getAccountsDeepCopy()
         )) {
+          if (user.toLowerCase() == state.feeReceiver.toLowerCase()) continue;
           const balance = account.balance;
 
           const realTotal = historicBalance[currentBlock.toString()][user];
-          console.log(user);
           expect(Number(formatUnits(balance, vaultData.decimals))).toBeCloseTo(
             Number(formatUnits(realTotal, vaultData.decimals)),
             vaultData.decimals - 1
@@ -80,15 +85,21 @@ function getFinalState({
   feeReceiver,
   decimals,
   fromBlock,
+  cooldown,
+  rates,
 }: {
   events: EventsArray;
   feeReceiver: Address;
   decimals: number;
   fromBlock: number;
+  cooldown: number;
+  rates: Rates;
 }): State {
   const state = new State({
     feeReceiver: feeReceiver,
     decimals: BigInt(decimals),
+    cooldown,
+    rates,
   });
 
   for (let i = 0; i < events.length; i++) {
@@ -130,6 +141,8 @@ async function getHistoricBalances({
     events,
     feeReceiver: vaultData.feesReceiver,
     fromBlock,
+    cooldown: vaultData.cooldown,
+    rates: vaultData.rates.rates,
   });
 
   const uniqueUsers = finalState.users();

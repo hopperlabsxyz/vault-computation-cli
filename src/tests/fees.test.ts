@@ -27,9 +27,9 @@ test("check total fees are consistent all attributed fees", async () => {
   const state = new State({
     feeReceiver: vaultData.feesReceiver,
     decimals: BigInt(vaultData.decimals),
+    cooldown: vaultData.cooldown,
+    rates: vaultData.rates.rates,
   });
-  if (events.length == 1000)
-    throw new Error("you need to handle more than 1000 events");
 
   for (let i = 0; i < events.length; i++) {
     const currentBlock: BigInt = events[i].blockNumber;

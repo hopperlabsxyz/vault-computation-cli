@@ -12,7 +12,7 @@ import type {
   FeeReceiverUpdated,
 } from "gql/graphql";
 
-import { erc20Abi, type Address } from "viem";
+import { erc20Abi, zeroAddress, type Address } from "viem";
 import type { ReferralConfig, ReferralCustom } from "types/Vault";
 import { publicClient } from "lib/publicClient";
 import { convertToShares } from "utils/convertTo";
@@ -25,10 +25,11 @@ export class State {
   public nextManagementFees = 0n;
   public decimals: bigint;
   public feeReceiver: Address;
+  // public address: Address;
 
-  public rates: Rates;
-
-  public oldRates: Rates = {
+  // Do not use those value directly, rely on the feeRates function
+  private rates: Rates;
+  private oldRates: Rates = {
     management: 0,
     performance: 0,
   };
@@ -74,6 +75,7 @@ export class State {
       fees: 0n,
       cashback: 0n,
     };
+
     this.cooldown = cooldown;
     this.rates = {
       management: rates.management / Number(BPS_DIVIDER),
@@ -116,12 +118,13 @@ export class State {
       const assetsToDeposits = Math.trunc(
         percentToDeposit * Number(this.totalAssets)
       );
-      const sharesToMint = convertToShares({
+
+      // this is to compute the repartition between management and performance fees
+      this.nextManagementFees = convertToShares({
         assets: BigInt(assetsToDeposits),
         totalAssets: this.totalAssets - BigInt(assetsToDeposits),
         totalSupply: this.totalSupply,
       });
-      this.nextManagementFees = sharesToMint;
     }
 
     this.periodFees.push({
@@ -230,7 +233,7 @@ export class State {
     this.pendingRedeems = {};
   }
 
-  private createAlternateFunction() {
+  private createAlternateFunction(): () => bigint {
     let lastValue = 1n; // Commence à 1 pour que le premier appel retourne 0
 
     return function alternateZeroOne(): bigint {
@@ -276,36 +279,38 @@ export class State {
         cashback: 0n,
       };
 
-    // we decrement the balance of the sender
-    this.accounts[event.from].balance -= BigInt(event.value);
-    // we initiate the accounts if it is not
-
-    // we increment the balance of the receiver
-    this.accounts[event.to].balance += BigInt(event.value);
-
-    if (this.feeReceiver.toLowerCase() == event.to.toLowerCase()) {
+    // this is a fee transfer
+    if (
+      this.feeReceiver.toLowerCase() == event.to.toLowerCase() &&
+      event.from == zeroAddress
+    ) {
       this.handleFeeTransfer(event, distributeFees);
     }
+    // console.log({ feeReceiver: this.feeReceiver });
+    // we decrement the balance of the sender
+    if (event.from == zeroAddress)
+      this.totalSupply += BigInt(event.value); // mint
+    else this.accounts[event.from].balance -= BigInt(event.value); // transfer
+    // we initiate the accounts if it is not
+
+    if (event.to == zeroAddress)
+      this.totalSupply -= BigInt(event.value); // burn
+    // we increment the balance of the receiver
+    else this.accounts[event.to].balance += BigInt(event.value); //transfer
   }
 
   private handleFeeTransfer(event: Transfer, distributeFees: boolean) {
     const totalFees = BigInt(event.value);
 
-    let feePerUser: Record<Address, bigint> = {};
-
     // we compute how much fees they paid for this epoch
     // we emulated the rounding system of openzeppelin by adding 0 or 1
     if (distributeFees) {
+      // let checkTotal = 0n;
       this.accumulatedFees += totalFees;
       for (const [address, { balance }] of Object.entries(this.accounts)) {
-        feePerUser[address as Address] =
+        this.accounts[address as Address].fees +=
           (balance * totalFees) / this.totalSupply + this.alternateZeroOne();
       }
-      // then we increment the total of fees they paid
-      for (const [address, fees] of Object.entries(feePerUser)) {
-        this.accounts[address as Address].fees += fees;
-      }
-
       const periodLength = this.periodFees.length;
       const lastPeriod = this.periodFees[periodLength - 1];
       lastPeriod.managementFees = this.nextManagementFees.toString();
@@ -315,7 +320,6 @@ export class State {
     }
 
     // we must increase the totalSupply after computation
-    this.totalSupply += BigInt(event.value);
   }
 
   public handleReferral(event: ReferralCustom) {
@@ -387,6 +391,14 @@ export class State {
     return this.accounts[user].balance;
   }
 
+  public accumulatedBalances(): bigint {
+    let tt = 0n;
+    for (const [_, { balance }] of Object.entries(this.accounts)) {
+      tt += balance;
+    }
+    return tt;
+  }
+
   public users(): Address[] {
     const _users: Address[] = [];
     for (const [address, _] of Object.entries(this.accounts)) {
@@ -411,7 +423,7 @@ export class State {
   }
 
   public async rightTotalSupply(
-    blockNumber: number,
+    blockNumber: bigint,
     address: Address
   ): Promise<bigint> {
     const client = publicClient[1];
@@ -426,21 +438,19 @@ export class State {
 
   // DEBUG //
   public async testSupply(
-    blockNumber: number,
+    blockNumber: bigint,
     address: Address
   ): Promise<bigint> {
     const acc = this.accumulatedSupply();
     if (this.totalSupply + 100n < acc || this.totalSupply - 100n > acc) {
-      console.error(this.totalSupply, acc);
-      console.error("this.totalSupply   ", "acc");
+      console.error({ error: "Error", totalSupply: this.totalSupply, acc });
 
       console.error(
         "Good value",
         await this.rightTotalSupply(blockNumber, address)
       );
       throw "mismatch in totalsupply";
-    }
-    console.error(" ");
+    } else console.log("Supply is good");
     return acc;
   }
 
@@ -485,7 +495,7 @@ export class State {
     } else if (event.__typename === "Transfer") {
       this.handleTransfer(
         event as Transfer,
-        BigInt(fromBlock) <= event.blockNumber
+        BigInt(fromBlock) < event.blockNumber
       );
     } else if (event.__typename === "Referral") {
       this.handleReferral(event as ReferralCustom);

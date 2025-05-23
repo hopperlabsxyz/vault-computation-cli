@@ -4,6 +4,8 @@ import { erc20Abi, type Address } from "viem";
 import type { VaultEventsQuery } from "gql/graphql";
 import { fetchVaultEvents } from "utils/fetchVaultEvents";
 import { fetchFeeCooldown } from "./fetchFeeCooldown";
+import { fetchFeeRates } from "./fetchFeeRates";
+import type { Rates } from "core/types";
 
 const siloStorageSlot =
   "0x5c74d456014b1c0eb4368d944667a568313858a3029a650ff0cb7b56f8b57a08" as `0x${string}`;
@@ -20,6 +22,11 @@ export interface FetchVaultReturn {
   asset: {
     address: Address;
     decimals: number;
+  };
+  cooldown: number;
+  rates: {
+    rates: Rates;
+    oldRates: Rates;
   };
 }
 
@@ -40,7 +47,7 @@ export async function fetchVault({
     throw new Error(`Missing client for chaindId : ${chainId}`);
   }
 
-  const [fees, decimals, roles, silo, events, asset, cooldown] =
+  const [fees, decimals, roles, silo, events, asset, cooldown, feeRates] =
     await Promise.all([
       client.readContract({
         address,
@@ -77,6 +84,11 @@ export async function fetchVault({
         blockNumber: BigInt(fromBlock),
         vaultAddress: address,
       }),
+      fetchFeeRates({
+        client,
+        blockNumber: BigInt(fromBlock),
+        vaultAddress: address,
+      }),
     ]);
   const assetDecimals = await client.readContract({
     address: asset,
@@ -88,11 +100,13 @@ export async function fetchVault({
     fees,
     decimals,
     feesReceiver: roles.feeReceiver,
-    silo,
+    silo: ("0x" + BigInt(silo).toString(16)) as Address,
     events,
     asset: {
       address: asset,
       decimals: assetDecimals,
     },
+    rates: feeRates,
+    cooldown: Number(cooldown),
   };
 }

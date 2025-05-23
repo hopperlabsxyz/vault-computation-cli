@@ -176,11 +176,11 @@ function filterTransfers(
 ): Transfer[] {
   return transfers.filter(
     (t) =>
+      // we ignore all transfers from and to the silo because those will be handled when we settleDeposit
+      t.to.toLowerCase() != addresses.silo.toLowerCase() &&
+      t.from.toLowerCase() != addresses.silo.toLowerCase() &&
       // we ignore all transfers from and to the vault because those will be handled when we settleDeposit
-      t.to.toLowerCase() !== addresses.silo.toLowerCase() &&
-      t.from.toLowerCase() !== addresses.silo.toLowerCase() &&
-      // we ignore all transfers from and to the vault because those will be handled when we settleDeposit
-      t.to.toLowerCase() !== addresses.vault.toLowerCase() &&
-      t.from.toLowerCase() !== addresses.vault.toLowerCase()
+      t.to.toLowerCase() != addresses.vault.toLowerCase() &&
+      t.from.toLowerCase() != addresses.vault.toLowerCase()
   );
 }

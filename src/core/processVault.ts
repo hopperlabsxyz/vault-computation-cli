@@ -34,10 +34,9 @@ export async function processVault({
   const state = new State({
     feeReceiver: vaultData.feesReceiver,
     decimals: BigInt(vaultData.decimals),
-    rates: undefined, // todo: fix
+    rates: vaultData.rates.rates,
+    cooldown: vaultData.cooldown,
   });
-  if (events.length == 1000)
-    throw new Error("you need to handle more than 1000 events");
   for (let i = 0; i < events.length; i++) {
     state.processEvent({
       event: events[i] as { __typename: string; blockNumber: bigint },

@@ -37,7 +37,7 @@ export function setPeriodFeeCommand(command: Command) {
       "after",
       `
 Examples:
-  $ bun period-fees 1:0x07ed467acd4ffd13023046968b0859781cb90d9b -f 1000000 -l 2000000 -r  ## All parameters
+  $ bun period-fee 1:0x07ed467acd4ffd13023046968b0859781cb90d9b -f 1000000 -l 2000000 -r  ## All parameters
     `
     )
     .action(async (args, options) => {
@@ -62,11 +62,17 @@ Examples:
         },
         options.readable
       );
+      let total = 0n;
+      result.periodFees.forEach((fees) => {
+        total += BigInt(fees.managementFees) + BigInt(fees.performanceFees);
+      });
+
+      console.log(total);
 
       if (options.output) {
         try {
           const file = Bun.file(
-            `period-fees-${vault.chainId}-${vault.address}-${options.fromBlock}-${options.toBlock}.csv`
+            `./output/period-fee/${vault.chainId}-${vault.address}-${options.fromBlock}-${options.toBlock}.csv`
           );
           await file.write(csv);
           console.log(`CSV report written to: ${file.name}`);
@@ -91,7 +97,7 @@ export function convertToCSVPeriodFees(
   },
   readable: boolean
 ) {
-  const header = `chainId,vault,period, blockNumber, managementFees,performanceFees`; // CSV header
+  const header = `chainId,vault,period,blockNumber,managementFees,performanceFees`; // CSV header
   const csvRows = vault.periodFees.map(
     ({ managementFees, performanceFees, period, blockNumber }) => {
       if (readable) {

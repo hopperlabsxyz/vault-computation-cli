@@ -73,14 +73,12 @@ Examples:
         vault,
       });
 
-      console.log();
-
       const csv = convertToCSV([result], { displayCashback: true });
 
       if (options.output) {
         try {
           const file = Bun.file(
-            `${vault.chainId}-${vault.address}-${options.fromBlock}-${options.toBlock}.csv`
+            `./output/user-fee/${vault.chainId}-${vault.address}-${options.fromBlock}-${options.toBlock}.csv`
           );
           await file.write(csv);
           console.log(`CSV report written to: ${file.name}`);

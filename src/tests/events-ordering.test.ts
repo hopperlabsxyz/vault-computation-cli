@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { preprocessEvents } from "core/preProcess";
+import { preprocessEvents } from "core/preprocess";
 import { sanityChecks } from "core/sanityChecks";
 import { fetchVault } from "utils/fetchVault";
 
@@ -12,13 +12,13 @@ test("events of same blocknumber must have growing logIndex", async () => {
     address,
     chainId,
     toBlock,
+    fromBlock,
   });
   sanityChecks({ events: vault.events, fromBlock, toBlock });
 
   let events = preprocessEvents({
     events: vault.events,
     addresses: {
-      feeReceiver: vault.feesReceiver,
       silo: vault.silo,
       vault: address,
     },
