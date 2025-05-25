@@ -11,8 +11,9 @@ export function max<T>(a: T, b: T) {
 /**
  * Standard math utilities missing in JavaScript.
  */
-type Rounding = (typeof Math.Rounding)[keyof typeof Math.Rounding];
-export class Math {
+export type Rounding =
+  (typeof SolidityMath.Rounding)[keyof typeof SolidityMath.Rounding];
+export class SolidityMath {
   /**
    * Muldiv operation overflow error.
    */
@@ -120,3 +121,5 @@ export class Math {
     return rounding % 2 === 1;
   }
 }
+
+// export const solMath = new SolidityMath();

@@ -17,6 +17,7 @@ import type { ReferralConfig, ReferralCustom } from "types/Vault";
 import { publicClient } from "lib/publicClient";
 import { convertToShares } from "utils/convertTo";
 import type { DealEvent, PeriodFees, ProcessEventParams, Rates } from "./types";
+import { SolidityMath } from "utils/math";
 
 export class State {
   public totalSupply = 0n;
@@ -207,8 +208,13 @@ export class State {
       }
 
       // we increase it's balance (like if he claimed his shares)
-      this.accounts[address as Address].balance +=
-        (userRequest! * sharesMinted) / assetsDeposited;
+      this.accounts[address as Address].balance += SolidityMath.mulDivRounding(
+        userRequest!,
+        sharesMinted,
+        assetsDeposited,
+        SolidityMath.Rounding.Floor
+      );
+      // (userRequest! * sharesMinted) / assetsDeposited;
       // we don't update total supply because it will naturally be updated via the transfer
     }
     this.pendingDeposits = {};
