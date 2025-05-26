@@ -25,6 +25,8 @@ export interface FetchVaultReturn {
     rates: Rates;
     oldRates: Rates;
   };
+  totalSupply: bigint
+  totalAssets: bigint
 }
 
 // @dev: fetch onchain data for a vault at a certain block number
@@ -44,7 +46,7 @@ export async function fetchVault({
     throw new Error(`Missing client for chaindId : ${chainId}`);
   }
 
-  const [fees, decimals, roles, silo, asset, cooldown, feeRates] =
+  const [fees, decimals, roles, silo, asset, cooldown, feeRates, totalSupply, totalAssets] =
     await Promise.all([
       client.readContract({
         address,
@@ -85,6 +87,18 @@ export async function fetchVault({
         blockNumber: block,
         vaultAddress: address,
       }),
+      client.readContract({
+        address,
+        abi: LagoonVaultAbi,
+        functionName: "totalSupply",
+        blockNumber: block
+      }),
+      client.readContract({
+        address,
+        abi: LagoonVaultAbi,
+        functionName: "totalAssets",
+        blockNumber: block
+      }),
     ]);
   const assetDecimals = await client.readContract({
     address: asset,
@@ -103,5 +117,7 @@ export async function fetchVault({
     },
     rates: feeRates,
     cooldown: Number(cooldown),
+    totalSupply,
+    totalAssets
   };
 }

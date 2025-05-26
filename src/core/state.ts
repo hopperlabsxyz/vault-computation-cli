@@ -15,7 +15,7 @@ import type {
 import { erc20Abi, zeroAddress, type Address } from "viem";
 import type { ReferralConfig, ReferralCustom } from "types/Vault";
 import { publicClient } from "lib/publicClient";
-import { convertToShares } from "utils/convertTo";
+import { convertBigIntToNumber, convertToAssets, convertToShares } from "utils/convertTo";
 import type { DealEvent, PeriodFees, ProcessEventParams, Rates } from "./types";
 
 export class State {
@@ -134,7 +134,8 @@ export class State {
       period: this.periodFees.length,
       timestamp: Number(event.blockTimestamp),
       managementRate: Number(event.vaultState.rates.rates.management),
-      performanceRate: Number(event.vaultState.rates.rates.performance)
+      performanceRate: Number(event.vaultState.rates.rates.performance),
+      pricePerShare: convertBigIntToNumber(this.pricePerShare(), Number(this.decimals))
     });
     this.lastTotalAssetsUpdateTimestamp = event.blockTimestamp;
   }
@@ -338,7 +339,10 @@ export class State {
   }
 
   public pricePerShare(): bigint {
-    return (this.totalAssets * 10n ** this.decimals) / this.totalSupply;
+    if (this.totalSupply === 0n) {
+      return 10n ** this.decimals
+    }
+    return ((this.totalAssets + 1n) * 10n ** this.decimals) / (this.totalSupply + 1n);
   }
 
   public handleDeal(deal: DealEvent) {

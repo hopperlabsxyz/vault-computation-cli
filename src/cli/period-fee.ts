@@ -98,14 +98,14 @@ export function convertToCSVPeriodFees(
   },
   readable: boolean
 ) {
-  const header = `chainId,vault,period,blockNumber,managementFees,performanceFees,timestamp,managementRate,performanceRate`; // CSV header
+  const header = `chainId,vault,period,blockNumber,managementFees,performanceFees,timestamp,managementRate,performanceRate,pricePerShare`; // CSV header
   const csvRows = vault.periodFees.map(
-    ({ managementFees, performanceFees, period, blockNumber, timestamp, managementRate, performanceRate }) => {
+    ({ managementFees, performanceFees, period, blockNumber, timestamp, managementRate, performanceRate, pricePerShare }) => {
       if (readable) {
         managementFees = formatUnits(BigInt(managementFees), vault.decimals);
         performanceFees = formatUnits(BigInt(performanceFees), vault.decimals);
       }
-      return `${vault.chainId},${vault.address},${period},${blockNumber},${managementFees},${performanceFees},${timestamp},${managementRate},${performanceRate}`;
+      return `${vault.chainId},${vault.address},${period},${blockNumber},${managementFees},${performanceFees},${timestamp},${managementRate},${performanceRate},${pricePerShare}`;
     }
   );
 

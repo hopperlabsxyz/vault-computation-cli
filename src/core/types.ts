@@ -90,6 +90,7 @@ export type PeriodFees = Array<{
   timestamp: number;
   managementRate: number;
   performanceRate: number;
+  pricePerShare: number;
 }>;
 
 export type Rates = {
