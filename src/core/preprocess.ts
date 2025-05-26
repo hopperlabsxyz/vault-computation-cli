@@ -6,8 +6,10 @@ import type {
   ReferralEvent,
   VaultAddrresses,
 } from "./types";
+import { fetchVault } from "utils/fetchVault";
 
-export function preprocessEvents({
+export async function preprocessEvents({
+  chainId,
   events,
   referral,
   addresses,
@@ -61,10 +63,18 @@ export function preprocessEvents({
   }));
 
   // Add __typename to totalAssetsUpdateds and convert relevant fields to BigInt
-  events.totalAssetsUpdateds = events.totalAssetsUpdateds.map((e) => ({
-    ...e,
-    totalAssets: BigInt(e.totalAssets),
-    __typename: "TotalAssetsUpdated",
+  events.totalAssetsUpdateds = await Promise.all(events.totalAssetsUpdateds.map(async (e) => {
+    const vaultState = await fetchVault({
+      address: e.vault,
+      chainId: chainId,
+      block: e.blockNumber
+    })
+    return ({
+      ...e,
+      totalAssets: BigInt(e.totalAssets),
+      __typename: "TotalAssetsUpdated",
+      vaultState
+    })
   }));
 
   // Add __typename to newTotalAssetsUpdateds and convert relevant fields to BigInt
@@ -92,16 +102,16 @@ export function preprocessEvents({
     referrals = events.referrals
       .map(
         (e) =>
-          ({
-            ...e,
-            feeRewardRate: referral.feeRewardRate,
-            feeRebateRate: referral.feeRebateRate,
-            assets: BigInt(e.assets),
-            blockNumber: Number(e.blockNumber),
-            blockTimestamp: Number(e.blockTimestamp),
-            requestId: BigInt(e.requestId),
-            __typename: "Referral",
-          } satisfies ReferralEvent)
+        ({
+          ...e,
+          feeRewardRate: referral.feeRewardRate,
+          feeRebateRate: referral.feeRebateRate,
+          assets: BigInt(e.assets),
+          blockNumber: Number(e.blockNumber),
+          blockTimestamp: Number(e.blockTimestamp),
+          requestId: BigInt(e.requestId),
+          __typename: "Referral",
+        } satisfies ReferralEvent)
       )
       .filter((r) => r.owner !== r.referral);
   }

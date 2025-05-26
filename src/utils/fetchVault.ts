@@ -1,8 +1,6 @@
 import { LagoonVaultAbi } from "abis/VaultABI";
 import { publicClient } from "../lib/publicClient";
 import { erc20Abi, type Address } from "viem";
-import type { VaultEventsQuery } from "gql/graphql";
-import { fetchVaultEvents } from "utils/fetchVaultEvents";
 import { fetchFeeCooldown } from "./fetchFeeCooldown";
 import { fetchFeeRates } from "./fetchFeeRates";
 import type { Rates } from "core/types";
@@ -18,7 +16,6 @@ export interface FetchVaultReturn {
   decimals: number;
   feesReceiver: Address;
   silo: Address;
-  events: VaultEventsQuery;
   asset: {
     address: Address;
     decimals: number;
@@ -30,16 +27,16 @@ export interface FetchVaultReturn {
   };
 }
 
+// @dev: fetch onchain data for a vault at a certain block number
+// We can easily fetch vault state for a given event thanks to this function
 export async function fetchVault({
   chainId,
   address,
-  toBlock,
-  fromBlock,
+  block
 }: {
   chainId: number;
   address: Address;
-  toBlock: number;
-  fromBlock: number;
+  block: number;
 }): Promise<FetchVaultReturn> {
   const client = publicClient[chainId];
 
@@ -47,7 +44,7 @@ export async function fetchVault({
     throw new Error(`Missing client for chaindId : ${chainId}`);
   }
 
-  const [fees, decimals, roles, silo, events, asset, cooldown, feeRates] =
+  const [fees, decimals, roles, silo, asset, cooldown, feeRates] =
     await Promise.all([
       client.readContract({
         address,
@@ -63,17 +60,12 @@ export async function fetchVault({
         address,
         abi: LagoonVaultAbi,
         functionName: "getRolesStorage",
-        blockNumber: BigInt(fromBlock),
+        blockNumber: BigInt(block), // Why? @guidupont
       }),
       client.getStorageAt({
         address: address,
         slot: siloStorageSlot,
       }) as Promise<Address>,
-      fetchVaultEvents({
-        chainId,
-        vaultAddress: address,
-        toBlock: BigInt(toBlock),
-      }),
       client.readContract({
         address,
         abi: LagoonVaultAbi,
@@ -81,12 +73,12 @@ export async function fetchVault({
       }),
       fetchFeeCooldown({
         client,
-        blockNumber: BigInt(fromBlock),
+        blockNumber: BigInt(block),
         vaultAddress: address,
       }),
       fetchFeeRates({
         client,
-        blockNumber: BigInt(fromBlock),
+        blockNumber: BigInt(block),
         vaultAddress: address,
       }),
     ]);
@@ -101,7 +93,6 @@ export async function fetchVault({
     decimals,
     feesReceiver: roles.feeReceiver,
     silo: ("0x" + BigInt(silo).toString(16)) as Address,
-    events,
     asset: {
       address: asset,
       decimals: assetDecimals,

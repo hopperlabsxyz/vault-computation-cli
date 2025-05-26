@@ -132,6 +132,9 @@ export class State {
       blockNumber: Number(event.blockNumber),
       performanceFees: "0",
       period: this.periodFees.length,
+      timestamp: Number(event.blockTimestamp),
+      managementRate: Number(event.vaultState.rates.rates.management),
+      performanceRate: Number(event.vaultState.rates.rates.performance)
     });
     this.lastTotalAssetsUpdateTimestamp = event.blockTimestamp;
   }

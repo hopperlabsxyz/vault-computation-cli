@@ -102,14 +102,12 @@ const convertToCSV = (
   options: { displayCashback: boolean }
 ) => {
   const csvRows = [
-    `chainId,vault,wallet,balance,fees,pricePerShare${
-      options.displayCashback ? ",cashback" : ""
+    `chainId,vault,wallet,balance,fees,pricePerShare${options.displayCashback ? ",cashback" : ""
     }`, // CSV header
     ...vaults.flatMap((vault) =>
       Object.entries(vault.data).map(
         ([address, { balance, fees, cashback }]) =>
-          `${vault.chainId},${vault.address},${address},${balance},${fees},${
-            vault.pricePerShare
+          `${vault.chainId},${vault.address},${address},${balance},${fees},${vault.pricePerShare
           }${options.displayCashback ? `, ${cashback}` : ""}`
       )
     ),

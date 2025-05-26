@@ -1,6 +1,7 @@
 import type { VaultEventsQuery } from "gql/graphql";
 import type { Address } from "viem";
 import type { Vault } from "types/Vault";
+import type { FetchVaultReturn } from "utils/fetchVault";
 
 export interface DealEvent {
   feeRebateRate: number;
@@ -33,14 +34,17 @@ export interface ReferralRate {
   feeRewardRate: number;
 }
 
+export type Deals = Record<Address, number>;
+
 export interface VaultAddrresses {
   silo: Address;
   vault: Address;
 }
 
-export type Deals = Record<Address, number>;
+// const a: VaultEventsWithState = {} as VaultEventsWithState
 
 export interface PreProcessingParams {
+  chainId: number;
   events: VaultEventsQuery;
   addresses: VaultAddrresses;
   referral?: ReferralRate;
@@ -83,6 +87,9 @@ export type PeriodFees = Array<{
   performanceFees: string;
   blockNumber: number;
   period: number;
+  timestamp: number;
+  managementRate: number;
+  performanceRate: number;
 }>;
 
 export type Rates = {
