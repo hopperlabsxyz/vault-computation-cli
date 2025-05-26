@@ -36,7 +36,7 @@ export async function fetchVault({
 }: {
   chainId: number;
   address: Address;
-  block: number;
+  block: bigint;
 }): Promise<FetchVaultReturn> {
   const client = publicClient[chainId];
 
@@ -50,38 +50,43 @@ export async function fetchVault({
         address,
         abi: LagoonVaultAbi,
         functionName: "feeRates",
+        blockNumber: block
       }),
       client.readContract({
         address,
         abi: LagoonVaultAbi,
         functionName: "decimals",
+        blockNumber: block
       }),
       client.readContract({
         address,
         abi: LagoonVaultAbi,
         functionName: "getRolesStorage",
-        blockNumber: BigInt(block), // Why? @guidupont
+        blockNumber: block,
       }),
       client.getStorageAt({
         address: address,
         slot: siloStorageSlot,
+        blockNumber: block
       }) as Promise<Address>,
       client.readContract({
         address,
         abi: LagoonVaultAbi,
         functionName: "asset",
+        blockNumber: block
       }),
       fetchFeeCooldown({
         client,
-        blockNumber: BigInt(block),
+        blockNumber: block,
         vaultAddress: address,
       }),
       fetchFeeRates({
         client,
-        blockNumber: BigInt(block),
+        blockNumber: block,
         vaultAddress: address,
       }),
     ]);
+  console.log(feeRates)
   const assetDecimals = await client.readContract({
     address: asset,
     abi: erc20Abi,

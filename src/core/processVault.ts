@@ -18,7 +18,7 @@ export async function processVault({
 }: ProcessVaultParams): Promise<ProcessVaultReturn> {
   console.log(`Loading vault ${vault.address} on chain ${vault.chainId}`);
 
-  const vaultData = await fetchVault({ ...vault, block: toBlock });
+  const vaultData = await fetchVault({ ...vault, block: BigInt(toBlock) });
 
   const vaultEvents = await fetchVaultEvents({ chainId: vault.chainId, vaultAddress: vault.address, toBlock: BigInt(toBlock) })
 

@@ -34,7 +34,7 @@ Examples:
 
       const vaultData = await fetchVault({
         ...vault,
-        block: Number(toBlock),
+        block: BigInt(toBlock),
       });
       const vaultEvents = await fetchVaultEvents({
         chainId: vault.chainId,
