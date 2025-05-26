@@ -86,7 +86,6 @@ export async function fetchVault({
         vaultAddress: address,
       }),
     ]);
-  console.log(feeRates)
   const assetDecimals = await client.readContract({
     address: asset,
     abi: erc20Abi,

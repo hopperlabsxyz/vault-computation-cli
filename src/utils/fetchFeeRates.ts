@@ -20,7 +20,7 @@ export async function fetchFeeRates({
     slot: (
       BigInt(FeeManagerStorageSlot) + feeRateOffset
     ).toString() as `0x${string}`,
-    blockNumber: 22544382n,
+    blockNumber,
   });
   if (slotData == undefined)
     throw new Error(
