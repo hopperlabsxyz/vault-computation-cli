@@ -103,6 +103,7 @@ export class State {
   }
 
   public handleTotalAssetsUpdated(event: TotalAssetsUpdated) {
+    const pps = this.pricePerShare()
     //
     this.totalAssets = event.totalAssets;
 
@@ -133,9 +134,9 @@ export class State {
       performanceFees: "0",
       period: this.periodFees.length,
       timestamp: Number(event.blockTimestamp),
-      managementRate: Number(event.vaultState.rates.rates.management),
-      performanceRate: Number(event.vaultState.rates.rates.performance),
-      pricePerShare: convertBigIntToNumber(this.pricePerShare(), Number(this.decimals))
+      managementRate: this.rates.management,
+      performanceRate: this.rates.performance,
+      pricePerShare: convertBigIntToNumber(pps, Number(this.decimals))
     });
     this.lastTotalAssetsUpdateTimestamp = event.blockTimestamp;
   }
