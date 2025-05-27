@@ -107,7 +107,6 @@ export class State {
   }
 
   public handleTotalAssetsUpdated(event: TotalAssetsUpdated) {
-    const pps = this.pricePerShare()
     //
     this.totalAssets = event.totalAssets;
 
@@ -140,7 +139,7 @@ export class State {
       timestamp: Number(event.blockTimestamp),
       managementRate: this.rates.management,
       performanceRate: this.rates.performance,
-      pricePerShare: convertBigIntToNumber(pps, Number(this.asset.decimals))
+      pricePerShare: convertBigIntToNumber(this.pricePerShare(), Number(this.asset.decimals))
     });
     this.lastTotalAssetsUpdateTimestamp = event.blockTimestamp;
   }
@@ -228,6 +227,9 @@ export class State {
       }
     }
     this.preReferrals = {};
+    const periodLength = this.periodFees.length;
+    const lastPeriod = this.periodFees[periodLength - 1];
+    lastPeriod.pricePerShare = convertBigIntToNumber(this.pricePerShare(), Number(this.asset.decimals))
   }
 
   public handleSettleRedeem(event: SettleRedeem) {
@@ -240,6 +242,9 @@ export class State {
       }
     }
     this.pendingRedeems = {};
+    const periodLength = this.periodFees.length;
+    const lastPeriod = this.periodFees[periodLength - 1];
+    lastPeriod.pricePerShare = convertBigIntToNumber(this.pricePerShare(), Number(this.asset.decimals))
   }
 
   private createAlternateFunction(): () => bigint {
