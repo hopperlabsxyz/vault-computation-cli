@@ -29,6 +29,7 @@ export class State {
 
   // Do not use those value directly, rely on the feeRates function
   private rates: Rates;
+  private asset: { address: Address, decimals: number };
   private oldRates: Rates = {
     management: 0,
     performance: 0,
@@ -62,9 +63,11 @@ export class State {
     decimals,
     cooldown,
     rates,
+    asset
   }: {
     feeReceiver: Address;
     decimals: bigint;
+    asset: { address: Address, decimals: number };
     cooldown: number;
     rates: Rates;
   }) {
@@ -81,6 +84,7 @@ export class State {
       management: rates.management / Number(BPS_DIVIDER),
       performance: rates.performance / Number(BPS_DIVIDER),
     };
+    this.asset = asset;
   }
 
   public depositRequest(event: DepositRequest) {
@@ -136,7 +140,7 @@ export class State {
       timestamp: Number(event.blockTimestamp),
       managementRate: this.rates.management,
       performanceRate: this.rates.performance,
-      pricePerShare: convertBigIntToNumber(pps, Number(this.decimals))
+      pricePerShare: convertBigIntToNumber(pps, Number(this.asset.decimals))
     });
     this.lastTotalAssetsUpdateTimestamp = event.blockTimestamp;
   }
@@ -340,9 +344,6 @@ export class State {
   }
 
   public pricePerShare(): bigint {
-    if (this.totalSupply === 0n) {
-      return 10n ** this.decimals
-    }
     return ((this.totalAssets + 1n) * 10n ** this.decimals) / (this.totalSupply + 1n);
   }
 

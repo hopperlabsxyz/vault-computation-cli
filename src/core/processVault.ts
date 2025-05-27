@@ -40,6 +40,7 @@ export async function processVault({
   const state = new State({
     feeReceiver: vaultData.feesReceiver,
     decimals: BigInt(vaultData.decimals),
+    asset: vaultData.asset,
     rates: vaultData.rates.rates,
     cooldown: vaultData.cooldown,
   });
