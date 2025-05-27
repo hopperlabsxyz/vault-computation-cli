@@ -344,7 +344,8 @@ export class State {
   }
 
   public pricePerShare(): bigint {
-    return ((this.totalAssets + 1n) * 10n ** this.decimals) / (this.totalSupply + 1n);
+    const decimalsOffset = this.decimals - BigInt(this.asset.decimals)
+    return ((this.totalAssets + 1n) * 10n ** this.decimals) / (this.totalSupply + 10n ** decimalsOffset);
   }
 
   public handleDeal(deal: DealEvent) {
