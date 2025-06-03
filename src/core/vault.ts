@@ -25,7 +25,7 @@ import type {
   Rates,
 } from "./types";
 import { SolidityMath } from "utils/math";
-import { PointTracker } from "./PointTracker";
+import { PointTracker } from "./pointTracker";
 
 export class Vault {
   public totalSupply = 0n;
@@ -55,6 +55,8 @@ export class Vault {
   public pendingDeposits: Record<Address, bigint | undefined> = {};
   public pendingRedeems: Record<Address, bigint | undefined> = {};
 
+  // We need a 2 step referral system here in case a user cancel his deposits.
+  // In this case the referral is voided.
   public preReferrals: Record<Address, ReferralConfig | undefined> = {}; // first address is referee, second is referrer
   public referrals: Record<Address, ReferralConfig | undefined> = {};
 

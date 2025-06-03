@@ -3,7 +3,7 @@ import { mergeDeals, parseDeals, type AllDeals } from "parsing/parseDeals";
 import { parseArguments } from "utils/parseArguments";
 import type { Address } from "viem";
 import type { Command } from "@commander-js/extra-typings";
-import type { Point } from "core/types";
+import type { Deals, Point } from "core/types";
 import { parsePoints } from "parsing/parsePoints";
 
 export function setUserFeeCommand(command: Command) {
@@ -62,14 +62,16 @@ Example:
 
       let deals: AllDeals = {};
       let points: Point[] = [];
-      if (options.deals) deals = await parseDeals(options.deals);
-      if (options.points) points = await parsePoints(options.points);
 
-      let vaultDeals: Record<Address, number> = {};
+      // prepare deals object
+      if (options.deals) deals = await parseDeals(options.deals);
+      let vaultDeals: Deals = {};
       if (deals[vault.chainId])
         vaultDeals =
           deals[vault.chainId][vault.address.toLowerCase() as Address] || {};
       vaultDeals = mergeDeals(deals[0]?.["0x0"] || {}, vaultDeals);
+
+      if (options.points) points = await parsePoints(options.points);
 
       const result = await processVault({
         fromBlock: Number(options!.fromBlock!),

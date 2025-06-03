@@ -160,7 +160,6 @@ export function preprocessEvents({
     if (a.logIndex > b.logIndex) return 1;
     return 0;
   });
-  console.log(sorted.filter((e) => events.__typename == ("Point" as any)));
   return sorted;
 }
 
@@ -187,8 +186,8 @@ function parseDeals(deals: Deals): DealEvent[] {
     return {
       owner: deal[0] as Address,
       referral: deal[0] as Address,
-      feeRebateRate: deal[1],
-      feeRewardRate: 0,
+      feeRebateRate: deal[1].feeRebateRate,
+      feeRewardRate: deal[1].feeRewardRate,
     };
   });
 

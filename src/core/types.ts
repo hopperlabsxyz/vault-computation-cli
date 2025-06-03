@@ -50,7 +50,7 @@ export interface VaultAddrresses {
   vault: Address;
 }
 
-export type Deals = Record<Address, number>;
+export type Deals = Record<Address, ReferralRate>;
 
 export interface PreProcessingParams {
   events: VaultEventsQuery;
@@ -68,7 +68,7 @@ export interface ProcessEventParams {
 export interface ProcessVaultParams {
   vault: Vault;
   readable: boolean;
-  deals: Record<Address, number>;
+  deals: Record<Address, ReferralRate>;
   points?: Point[];
   fromBlock: number;
   toBlock: number;
