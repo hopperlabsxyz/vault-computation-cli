@@ -1,7 +1,6 @@
 import type { VaultEventsQuery } from "gql/graphql";
 import type { Address } from "viem";
 import type { Vault } from "types/Vault";
-import type { FetchVaultReturn } from "utils/fetchVault";
 
 export interface DealEvent {
   feeRebateRate: number;
@@ -41,10 +40,7 @@ export interface VaultAddrresses {
   vault: Address;
 }
 
-// const a: VaultEventsWithState = {} as VaultEventsWithState
-
 export interface PreProcessingParams {
-  chainId: number;
   events: VaultEventsQuery;
   addresses: VaultAddrresses;
   referral?: ReferralRate;

@@ -3885,7 +3885,6 @@ export type TotalAssetsUpdated = {
   totalSupply: Scalars['BigInt']['output'];
   transactionHash: Scalars['Bytes']['output'];
   vault: Scalars['Bytes']['output'];
-  vaultState: FetchVaultReturn;
 };
 
 export type TotalAssetsUpdated_Filter = {

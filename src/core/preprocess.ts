@@ -6,10 +6,8 @@ import type {
   ReferralEvent,
   VaultAddrresses,
 } from "./types";
-import { fetchVault } from "utils/fetchVault";
 
-export async function preprocessEvents({
-  chainId,
+export function preprocessEvents({
   events,
   referral,
   addresses,
@@ -63,18 +61,11 @@ export async function preprocessEvents({
   }));
 
   // Add __typename to totalAssetsUpdateds and convert relevant fields to BigInt
-  events.totalAssetsUpdateds = await Promise.all(events.totalAssetsUpdateds.map(async (e) => {
-    const vaultState = await fetchVault({
-      address: e.vault,
-      chainId: chainId,
-      block: e.blockNumber
-    })
-    return ({
-      ...e,
-      totalAssets: BigInt(e.totalAssets),
-      __typename: "TotalAssetsUpdated",
-      vaultState
-    })
+  events.totalAssetsUpdateds = events.totalAssetsUpdateds.map((e) =>
+  ({
+    ...e,
+    totalAssets: BigInt(e.totalAssets),
+    __typename: "TotalAssetsUpdated",
   }));
 
   // Add __typename to newTotalAssetsUpdateds and convert relevant fields to BigInt

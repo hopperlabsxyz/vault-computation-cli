@@ -24,8 +24,7 @@ export async function processVault({
 
   sanityChecks({ events: vaultEvents, fromBlock, toBlock });
 
-  let events = await preprocessEvents({
-    chainId: vault.chainId,
+  let events = preprocessEvents({
     events: vaultEvents,
     addresses: {
       silo: vaultData.silo,
