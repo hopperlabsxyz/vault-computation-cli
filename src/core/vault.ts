@@ -17,6 +17,7 @@ import type { ReferralConfig, ReferralCustom } from "types/Vault";
 import { publicClient } from "lib/publicClient";
 import { convertToShares } from "utils/convertTo";
 import type {
+  Account,
   DealEvent,
   PeriodFees,
   PointEvent,
@@ -57,15 +58,7 @@ export class Vault {
   public preReferrals: Record<Address, ReferralConfig | undefined> = {}; // first address is referee, second is referrer
   public referrals: Record<Address, ReferralConfig | undefined> = {};
 
-  private accounts: Record<
-    Address,
-    {
-      balance: bigint;
-      cashback: bigint;
-      fees: bigint;
-      points: Record<string, bigint>;
-    }
-  > = {};
+  private accounts: Record<Address, Account> = {};
   private alternateZeroOne = this.createAlternateFunction();
 
   // DEBUG //
@@ -372,7 +365,7 @@ export class Vault {
 
   protected handlePoint(point: PointEvent) {
     const scalingFactor = 10000n;
-    const diff = this.pointTracker.addPoint({
+    const diff = this.pointTracker.registerPoint({
       amount: point.amount,
       name: point.name,
       timestamp: point.blockTimestamp,
@@ -381,15 +374,22 @@ export class Vault {
     accountsArray.forEach((user) => {
       const address = user[0] as Address;
       const userBalance = user[1].balance;
-      if (this.totalSupply == 0n || !this.totalSupply)
-        console.log(this.totalSupply, scalingFactor, this.totalSupply);
-      // const userPart = (userBalance * scalingFactor) / this.totalSupply;
-      // const points = this.accounts[address].points;
+      if (this.totalSupply == 0n || !this.totalSupply) {
+        throw new Error(
+          `Totalsupply is 0, ${point.name} point distribution is not possible at ${point.blockTimestamp}`
+        );
+      }
 
-      // if (points[point.name] === undefined) points[point.name] = 0n;
+      const userPart = (userBalance * scalingFactor) / this.totalSupply;
+      const points = this.accounts[address].points;
 
-      // points[point.name] += (userPart * BigInt(diff)) / scalingFactor;
+      if (points[point.name] === undefined) points[point.name] = 0n;
+      points[point.name] += (userPart * BigInt(diff)) / scalingFactor;
     });
+  }
+
+  public pointNames(): string[] {
+    return this.pointTracker.pointNames();
   }
 
   public rebate() {
@@ -501,14 +501,8 @@ export class Vault {
     return acc;
   }
 
-  public getAccountsDeepCopy(): Record<
-    Address,
-    { balance: bigint; cashback: bigint; fees: bigint }
-  > {
-    const copiedAccounts: Record<
-      Address,
-      { balance: bigint; cashback: bigint; fees: bigint }
-    > = {};
+  public getAccountsDeepCopy(): Record<Address, Account> {
+    const copiedAccounts: Record<Address, Account> = {};
 
     // Iterate through each account and copy its properties
     for (const [address, account] of Object.entries(this.accounts)) {
@@ -516,6 +510,7 @@ export class Vault {
         balance: account.balance,
         cashback: account.cashback,
         fees: account.fees,
+        points: account.points,
       };
     }
 

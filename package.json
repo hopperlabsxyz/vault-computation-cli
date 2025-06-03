@@ -7,6 +7,7 @@
   "description": "Obtain various data regarding a vault.",
   "main": "index.js",
   "scripts": {
+    "help": "bun run index.ts help",
     "user-fee": "bun index.ts user-fee",
     "period-fee": "bun index.ts period-fee",
     "find-blocks": "bun index.ts find-blocks",

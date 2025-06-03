@@ -81,12 +81,14 @@ export interface ProcessVaultReturn {
   address: Address;
   decimals: number;
   pricePerShare: number;
+  pointNames: string[];
   data: Record<
     Address,
     {
       balance: number;
-      fees: number;
       cashback: number;
+      fees: number;
+      points: Record<string, bigint>;
     }
   >;
   periodFees: PeriodFees;
@@ -102,4 +104,11 @@ export type PeriodFees = Array<{
 export type Rates = {
   management: number;
   performance: number;
+};
+
+export type Account = {
+  balance: bigint;
+  cashback: bigint;
+  fees: bigint;
+  points: Record<string, bigint>;
 };

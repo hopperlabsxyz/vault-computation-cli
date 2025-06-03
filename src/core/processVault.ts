@@ -1,6 +1,6 @@
 import { fetchVault } from "utils/fetchVault";
 import { formatUnits } from "viem";
-import { Vault } from "./Vault";
+import { Vault } from "./vault";
 import { sanityChecks } from "./sanityChecks";
 import type { ProcessVaultParams, ProcessVaultReturn } from "./types";
 import { preprocessEvents } from "./preprocess";
@@ -33,6 +33,7 @@ export async function processVault({
     points,
     deals,
   });
+
   const state = new Vault({
     feeReceiver: vaultData.feesReceiver,
     decimals: BigInt(vaultData.decimals),
@@ -57,7 +58,9 @@ export async function processVault({
     chainId: vault.chainId,
     address: vault.address,
     decimals: Number(state.decimals),
+    pointNames: state.pointNames(),
     pricePerShare: Number(formatUnits(state.pricePerShare(), assetDecimals)),
+    periodFees: state.periodFees,
     data: Object.fromEntries(
       Object.entries(result).map(([address, values]) => [
         address,
@@ -65,9 +68,9 @@ export async function processVault({
           balance: Number(formatUnits(values.balance, sharesDecimals)),
           fees: Number(formatUnits(values.fees, sharesDecimals)),
           cashback: Number(formatUnits(values.cashback, sharesDecimals)),
+          points: values.points,
         },
       ])
     ),
-    periodFees: state.periodFees,
   };
 }

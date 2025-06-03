@@ -44,7 +44,7 @@ Examples:
           points = interpolateEveryX(
             tempPoints[0],
             tempPoints[1],
-            600,
+            2592000,
             fileName
           );
         }

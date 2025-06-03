@@ -89,6 +89,7 @@ export function preprocessEvents({
     __typename: "FeeReceiverUpdated",
   }));
 
+  // Add offchain points events
   const pointsEvents: PointEvent[] =
     points?.map((p) => ({
       __typename: "Point",
@@ -97,8 +98,8 @@ export function preprocessEvents({
       blockTimestamp: p.timestamp,
       logIndex: -1,
       vault: addresses.vault,
+      name: p.name,
     })) || [];
-  console.log(points?.length);
 
   let referrals: ReferralEvent[] = [];
   if (referral) {

@@ -27,7 +27,7 @@ export class PointTracker {
    * @returns The difference between the new point's amount and the previous point's amount.
    *          If this is the first point for this name, returns the full amount.
    */
-  public addPoint(point: Point): number {
+  public registerPoint(point: Point): number {
     let previousAmount = 0;
     const lastPoint = this.lastPoint(point.name);
     if (lastPoint) {
@@ -35,7 +35,7 @@ export class PointTracker {
     } else this.points[point.name] = [];
 
     this.pushPoint(point);
-    return point.amount - previousAmount;
+    return Number((point.amount - previousAmount).toFixed(0));
   }
 
   /**
@@ -62,5 +62,9 @@ export class PointTracker {
     const len: number | undefined = this.points[name]?.length;
     if (len) return this.points[name][len - 1];
     return undefined;
+  }
+
+  public pointNames(): string[] {
+    return Object.keys(this.points);
   }
 }

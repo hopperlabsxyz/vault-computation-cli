@@ -82,8 +82,10 @@ Example:
         points,
       });
 
-      const csv = convertToCSV([result], { displayCashback: true });
-
+      const csv = convertToCSV(result);
+      if (options.silent == false) {
+        console.log(csv);
+      }
       if (options.output) {
         try {
           const file = Bun.file(
@@ -96,34 +98,55 @@ Example:
           console.log("CSV content:");
           console.log(csv);
         }
-      } else if (options.silent == false) {
-        console.log(csv);
       }
     });
 }
 
-const convertToCSV = (
-  vaults: {
-    chainId: number;
-    address: string;
-    pricePerShare: number;
-    data: Record<string, { balance: number; fees: number; cashback: number }>;
-  }[],
-  options: { displayCashback: boolean }
-) => {
+function convertToCSV(vault: {
+  chainId: number;
+  address: string;
+  pricePerShare: number;
+  pointNames: string[];
+  data: Record<
+    string,
+    {
+      balance: number;
+      fees: number;
+      cashback: number;
+      points: Record<string, bigint>;
+    }
+  >;
+}) {
+  const pointNamesString = vault.pointNames.reduce(
+    (prev, cur) => `${prev},${cur}`,
+    ""
+  );
   const csvRows = [
-    `chainId,vault,wallet,balance,fees,pricePerShare${
-      options.displayCashback ? ",cashback" : ""
-    }`, // CSV header
-    ...vaults.flatMap((vault) =>
-      Object.entries(vault.data).map(
-        ([address, { balance, fees, cashback }]) =>
-          `${vault.chainId},${vault.address},${address},${balance},${fees},${
-            vault.pricePerShare
-          }${options.displayCashback ? `, ${cashback}` : ""}`
-      )
+    `chainId,vault,wallet,balance,fees,pricePerShare,cashback${pointNamesString}`, // CSV header
+    ...Object.entries(vault.data).map(
+      ([address, { balance, fees, cashback, points }]) => {
+        if (
+          address.toLowerCase() ==
+          "0x1558b78560b88c75e9c95bbb9fda732f1e79f465".toLowerCase()
+        )
+          console.log(points);
+        let str = `${vault.chainId},${vault.address},${address},${balance},${fees}`;
+        str += `,${vault.pricePerShare},${cashback}`;
+        str += pointsToCsv(points, vault.pointNames);
+        return str;
+      }
     ),
   ];
-
   return csvRows.join("\n");
-};
+}
+
+function pointsToCsv(
+  points: Record<string, bigint>,
+  pointsName: string[]
+): string {
+  const a = pointsName.reduce((prev, cur) => {
+    const value = points[cur] || 0n;
+    return `${prev},${value}`;
+  }, "");
+  return a;
+}
