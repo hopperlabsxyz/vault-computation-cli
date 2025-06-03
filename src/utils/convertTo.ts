@@ -1,3 +1,5 @@
+import { formatUnits, parseUnits } from "viem";
+
 /**
  * Calculates assets from shares using 4626 vault formula
  * @param shares - Amount of shares to convert
@@ -38,4 +40,15 @@ export function convertToShares({
   totalSupply: bigint;
 }): bigint {
   return (assets * (totalSupply + 1n)) / (totalAssets + 1n);
+}
+
+export function convertBigIntToNumber(
+  value: bigint,
+  decimals: number = 18,
+  precision?: number,
+): number {
+  if (precision === undefined) precision = decimals;
+  const valueWithMoreDecimals = parseUnits(value.toString(), precision);
+  const valueDivided = valueWithMoreDecimals / BigInt(10 ** decimals);
+  return Number(formatUnits(valueDivided, precision));
 }

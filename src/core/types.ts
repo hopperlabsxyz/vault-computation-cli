@@ -33,12 +33,12 @@ export interface ReferralRate {
   feeRewardRate: number;
 }
 
+export type Deals = Record<Address, number>;
+
 export interface VaultAddrresses {
   silo: Address;
   vault: Address;
 }
-
-export type Deals = Record<Address, number>;
 
 export interface PreProcessingParams {
   events: VaultEventsQuery;
@@ -49,15 +49,15 @@ export interface PreProcessingParams {
 
 export interface ProcessEventParams {
   event: { __typename: string; blockNumber: bigint };
-  fromBlock: number;
+  fromBlock: bigint;
 }
 
 export interface ProcessVaultParams {
   vault: Vault;
   readable: boolean;
   deals: Record<Address, number>;
-  fromBlock: number;
-  toBlock: number;
+  fromBlock: bigint;
+  toBlock: bigint;
   feeRebateRate: number;
   feeRewardRate: number;
 }
@@ -83,6 +83,10 @@ export type PeriodFees = Array<{
   performanceFees: string;
   blockNumber: number;
   period: number;
+  timestamp: number;
+  managementRate: number;
+  performanceRate: number;
+  pricePerShare: number;
 }>;
 
 export type Rates = {

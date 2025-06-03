@@ -15,7 +15,7 @@ import type {
 import { erc20Abi, zeroAddress, type Address } from "viem";
 import type { ReferralConfig, ReferralCustom } from "types/Vault";
 import { publicClient } from "lib/publicClient";
-import { convertToShares } from "utils/convertTo";
+import { convertBigIntToNumber, convertToAssets, convertToShares } from "utils/convertTo";
 import type { DealEvent, PeriodFees, ProcessEventParams, Rates } from "./types";
 
 export class State {
@@ -29,6 +29,7 @@ export class State {
 
   // Do not use those value directly, rely on the feeRates function
   private rates: Rates;
+  private asset: { address: Address, decimals: number };
   private oldRates: Rates = {
     management: 0,
     performance: 0,
@@ -62,9 +63,11 @@ export class State {
     decimals,
     cooldown,
     rates,
+    asset
   }: {
     feeReceiver: Address;
     decimals: bigint;
+    asset: { address: Address, decimals: number };
     cooldown: number;
     rates: Rates;
   }) {
@@ -81,6 +84,7 @@ export class State {
       management: rates.management / Number(BPS_DIVIDER),
       performance: rates.performance / Number(BPS_DIVIDER),
     };
+    this.asset = asset;
   }
 
   public depositRequest(event: DepositRequest) {
@@ -132,6 +136,10 @@ export class State {
       blockNumber: Number(event.blockNumber),
       performanceFees: "0",
       period: this.periodFees.length,
+      timestamp: Number(event.blockTimestamp),
+      managementRate: this.rates.management,
+      performanceRate: this.rates.performance,
+      pricePerShare: convertBigIntToNumber(this.pricePerShare(), Number(this.asset.decimals))
     });
     this.lastTotalAssetsUpdateTimestamp = event.blockTimestamp;
   }
@@ -219,6 +227,9 @@ export class State {
       }
     }
     this.preReferrals = {};
+    const periodLength = this.periodFees.length;
+    const lastPeriod = this.periodFees[periodLength - 1];
+    lastPeriod.pricePerShare = convertBigIntToNumber(this.pricePerShare(), Number(this.asset.decimals))
   }
 
   public handleSettleRedeem(event: SettleRedeem) {
@@ -231,6 +242,9 @@ export class State {
       }
     }
     this.pendingRedeems = {};
+    const periodLength = this.periodFees.length;
+    const lastPeriod = this.periodFees[periodLength - 1];
+    lastPeriod.pricePerShare = convertBigIntToNumber(this.pricePerShare(), Number(this.asset.decimals))
   }
 
   private createAlternateFunction(): () => bigint {
@@ -335,7 +349,8 @@ export class State {
   }
 
   public pricePerShare(): bigint {
-    return (this.totalAssets * 10n ** this.decimals) / this.totalSupply;
+    const decimalsOffset = this.decimals - BigInt(this.asset.decimals)
+    return ((this.totalAssets + 1n) * 10n ** this.decimals) / (this.totalSupply + 10n ** decimalsOffset);
   }
 
   public handleDeal(deal: DealEvent) {

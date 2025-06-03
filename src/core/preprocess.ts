@@ -61,7 +61,8 @@ export function preprocessEvents({
   }));
 
   // Add __typename to totalAssetsUpdateds and convert relevant fields to BigInt
-  events.totalAssetsUpdateds = events.totalAssetsUpdateds.map((e) => ({
+  events.totalAssetsUpdateds = events.totalAssetsUpdateds.map((e) =>
+  ({
     ...e,
     totalAssets: BigInt(e.totalAssets),
     __typename: "TotalAssetsUpdated",
@@ -92,16 +93,16 @@ export function preprocessEvents({
     referrals = events.referrals
       .map(
         (e) =>
-          ({
-            ...e,
-            feeRewardRate: referral.feeRewardRate,
-            feeRebateRate: referral.feeRebateRate,
-            assets: BigInt(e.assets),
-            blockNumber: Number(e.blockNumber),
-            blockTimestamp: Number(e.blockTimestamp),
-            requestId: BigInt(e.requestId),
-            __typename: "Referral",
-          } satisfies ReferralEvent)
+        ({
+          ...e,
+          feeRewardRate: referral.feeRewardRate,
+          feeRebateRate: referral.feeRebateRate,
+          assets: BigInt(e.assets),
+          blockNumber: Number(e.blockNumber),
+          blockTimestamp: Number(e.blockTimestamp),
+          requestId: BigInt(e.requestId),
+          __typename: "Referral",
+        } satisfies ReferralEvent)
       )
       .filter((r) => r.owner !== r.referral);
   }
