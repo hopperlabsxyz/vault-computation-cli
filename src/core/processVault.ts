@@ -4,7 +4,6 @@ import { State } from "./state";
 import { sanityChecks } from "./sanityChecks";
 import type { ProcessVaultParams, ProcessVaultReturn } from "./types";
 import { preprocessEvents } from "./preprocess";
-import { fetchFeeRates } from "utils/fetchFeeRates";
 import { fetchVaultEvents } from "utils/fetchVaultEvents";
 
 export async function processVault({
@@ -18,7 +17,7 @@ export async function processVault({
 }: ProcessVaultParams): Promise<ProcessVaultReturn> {
   console.log(`Loading vault ${vault.address} on chain ${vault.chainId}`);
 
-  const vaultData = await fetchVault({ ...vault, block: BigInt(toBlock) });
+  const vaultData = await fetchVault({ ...vault, block: BigInt(fromBlock) });
 
   const vaultEvents = await fetchVaultEvents({ chainId: vault.chainId, vaultAddress: vault.address, toBlock: BigInt(toBlock) })
 
