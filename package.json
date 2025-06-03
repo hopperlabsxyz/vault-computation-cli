@@ -11,6 +11,7 @@
     "period-fee": "bun index.ts period-fee",
     "find-blocks": "bun index.ts find-blocks",
     "find-claimable-controllers": "bun index.ts find-claimable-controllers",
+    "interpolate": "bun index.ts interpolate",
     "generate": "bunx --bun graphql-codegen --config graphql-codegen-cli/fetch-schema.ts"
   },
   "keywords": [],

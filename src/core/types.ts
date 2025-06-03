@@ -2,31 +2,43 @@ import type { VaultEventsQuery } from "gql/graphql";
 import type { Address } from "viem";
 import type { Vault } from "types/Vault";
 
-export interface DealEvent {
-  feeRebateRate: number;
-  feeRewardRate: number;
-  vault: "0x";
-  __typename: "Deal";
-  owner: Address;
-  referral: Address;
+export interface EventBase {
   blockNumber: number;
   blockTimestamp: number;
   logIndex: number;
 }
-export interface ReferralEvent {
+
+export type DealEvent = {
+  feeRebateRate: number;
+  feeRewardRate: number;
+  vault: "0x"; // todo: maybe put a real vault address and 0x0 if wild card ?
+  __typename: "Deal";
+  owner: Address;
+  referral: Address;
+} & EventBase;
+
+/// A point transformed to mimic an Event type.
+export type PointEvent = {
+  amount: number;
+  vault: Address;
+  __typename: "Point";
+  name: string;
+} & EventBase;
+
+/// Basic form of a Point data.
+export type Point = { timestamp: number; amount: number; name: string };
+
+export type ReferralEvent = {
   feeRewardRate: number;
   feeRebateRate: number;
   assets: bigint;
-  blockNumber: number;
-  blockTimestamp: number;
   requestId: bigint;
   __typename: "Referral";
   id: `0x${string}`;
   transactionHash: `0x${string}`;
-  logIndex: number;
   owner: `0x${string}`;
   referral: `0x${string}`;
-}
+} & EventBase;
 
 export interface ReferralRate {
   feeRebateRate: number;
@@ -45,6 +57,7 @@ export interface PreProcessingParams {
   addresses: VaultAddrresses;
   referral?: ReferralRate;
   deals?: Deals;
+  points?: Point[];
 }
 
 export interface ProcessEventParams {
@@ -56,6 +69,7 @@ export interface ProcessVaultParams {
   vault: Vault;
   readable: boolean;
   deals: Record<Address, number>;
+  points?: Point[];
   fromBlock: number;
   toBlock: number;
   feeRebateRate: number;

@@ -1,9 +1,9 @@
 import { expect, test } from "bun:test";
 import { preprocessEvents } from "core/preprocess";
 import { sanityChecks } from "core/sanityChecks";
-import { State } from "core/state";
+import { Vault } from "core/Vault";
 import type { Rates } from "core/types";
-import { totalBalanceOf } from "core/vault";
+import { totalBalanceOf } from "core/onchain-calls";
 import { publicClient } from "lib/publicClient";
 import { fetchVault, type FetchVaultReturn } from "utils/fetchVault";
 import { formatUnits, maxUint256, type Address, type PublicClient } from "viem";
@@ -37,7 +37,7 @@ test(
       },
       deals: {},
     });
-    const state = new State({
+    const vault = new Vault({
       feeReceiver: vaultData.feesReceiver,
       decimals: BigInt(vaultData.decimals),
       cooldown: Number(vaultData.cooldown),
@@ -55,7 +55,7 @@ test(
     for (let i = 0; i < events.length; i++) {
       const currentBlock: BigInt = events[i].blockNumber;
       const nextBlock = events[i + 1] ? events[i + 1].blockNumber : maxUint256;
-      state.processEvent({
+      vault.processEvent({
         event: events[i] as { __typename: string; blockNumber: bigint },
         fromBlock,
       });
@@ -63,9 +63,9 @@ test(
       // if we are done with the block, we can check the state
       if (currentBlock != nextBlock) {
         for (const [user, account] of Object.entries(
-          state.getAccountsDeepCopy()
+          vault.getAccountsDeepCopy()
         )) {
-          if (user.toLowerCase() == state.feeReceiver.toLowerCase()) continue;
+          if (user.toLowerCase() == vault.feeReceiver.toLowerCase()) continue;
           const balance = account.balance;
 
           const realTotal = historicBalance[currentBlock.toString()][user];
@@ -94,8 +94,8 @@ function getFinalState({
   fromBlock: number;
   cooldown: number;
   rates: Rates;
-}): State {
-  const state = new State({
+}): Vault {
+  const state = new Vault({
     feeReceiver: feeReceiver,
     decimals: BigInt(decimals),
     cooldown,

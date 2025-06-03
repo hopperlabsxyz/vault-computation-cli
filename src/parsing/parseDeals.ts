@@ -21,9 +21,9 @@ export function mergeDeals(
 }
 
 export async function parseDeals(filePath: string): Promise<AllDeals> {
-  const otcData = (await Bun.file(filePath).text()).split("\n");
+  const dealsRaw = (await Bun.file(filePath).text()).split("\n");
   const deals: Record<number, Record<Address, Record<Address, number>>> = {};
-  for (const entry of otcData.slice(1)) {
+  for (const entry of dealsRaw.slice(1)) {
     const line = parseLine(entry);
     if (!line) continue;
     const [chainId, vault, owner, otcDeal] = line;

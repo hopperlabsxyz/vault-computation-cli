@@ -1,6 +1,6 @@
 import { fetchVault } from "utils/fetchVault";
 import { formatUnits } from "viem";
-import { State } from "./state";
+import { Vault } from "./Vault";
 import { sanityChecks } from "./sanityChecks";
 import type { ProcessVaultParams, ProcessVaultReturn } from "./types";
 import { preprocessEvents } from "./preprocess";
@@ -13,6 +13,7 @@ export async function processVault({
   fromBlock,
   feeRewardRate,
   feeRebateRate,
+  points,
 }: ProcessVaultParams): Promise<ProcessVaultReturn> {
   console.log(`Loading vault ${vault.address} on chain ${vault.chainId}`);
 
@@ -29,9 +30,10 @@ export async function processVault({
       feeRewardRate,
       feeRebateRate,
     },
-    deals: deals,
+    points,
+    deals,
   });
-  const state = new State({
+  const state = new Vault({
     feeReceiver: vaultData.feesReceiver,
     decimals: BigInt(vaultData.decimals),
     rates: vaultData.rates.rates,
