@@ -44,8 +44,8 @@ Example:
       const vault = parseArguments(args);
 
       const result = await processVault({
-        fromBlock: Number(options!.fromBlock!),
-        toBlock: Number(options!.toBlock!),
+        fromBlock: BigInt(options!.fromBlock!),
+        toBlock: BigInt(options!.toBlock!),
         deals: {},
         readable: options!.readable!,
         feeRebateRate: 0,

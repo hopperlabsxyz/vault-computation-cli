@@ -6,6 +6,7 @@ import type { Rates } from "core/types";
 import { totalBalanceOf } from "core/vault";
 import { publicClient } from "lib/publicClient";
 import { fetchVault, type FetchVaultReturn } from "utils/fetchVault";
+import { fetchVaultEvents } from "utils/fetchVaultEvents";
 import { formatUnits, maxUint256, type Address, type PublicClient } from "viem";
 
 export type EventsArray = ReturnType<typeof preprocessEvents>;
@@ -15,18 +16,22 @@ test(
   async () => {
     const address = "0x07ed467acD4ffd13023046968b0859781cb90D9B";
     const chainId = 1;
-    const fromBlock = 21142252;
-    const toBlock = 22011758;
+    const fromBlock = 21142252n;
+    const toBlock = 22011758n;
     const vaultData = await fetchVault({
       address,
       chainId,
-      toBlock,
-      fromBlock,
+      block: fromBlock,
     });
-    sanityChecks({ events: vaultData.events, fromBlock, toBlock });
+    const vaultEvents = await fetchVaultEvents({
+      chainId,
+      vaultAddress: address,
+      toBlock
+    })
+    sanityChecks({ events: vaultEvents, fromBlock, toBlock });
     const client = publicClient[chainId];
     let events = preprocessEvents({
-      events: vaultData.events,
+      events: vaultEvents,
       addresses: {
         silo: vaultData.silo,
         vault: address,
@@ -40,6 +45,7 @@ test(
     const state = new State({
       feeReceiver: vaultData.feesReceiver,
       decimals: BigInt(vaultData.decimals),
+      asset: vaultData.asset,
       cooldown: Number(vaultData.cooldown),
       rates: vaultData.rates.rates,
     });
@@ -87,17 +93,20 @@ function getFinalState({
   fromBlock,
   cooldown,
   rates,
+  vaultData
 }: {
   events: EventsArray;
   feeReceiver: Address;
   decimals: number;
-  fromBlock: number;
+  fromBlock: bigint;
   cooldown: number;
   rates: Rates;
+  vaultData: FetchVaultReturn;
 }): State {
   const state = new State({
     feeReceiver: feeReceiver,
     decimals: BigInt(decimals),
+    asset: vaultData.asset,
     cooldown,
     rates,
   });
@@ -120,7 +129,7 @@ async function getHistoricBalances({
 }: {
   events: EventsArray;
   vaultData: FetchVaultReturn;
-  fromBlock: number;
+  fromBlock: bigint;
   address: Address;
   client: PublicClient;
 }) {
@@ -143,6 +152,7 @@ async function getHistoricBalances({
     fromBlock,
     cooldown: vaultData.cooldown,
     rates: vaultData.rates.rates,
+    vaultData,
   });
 
   const uniqueUsers = finalState.users();

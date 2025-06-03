@@ -3,17 +3,23 @@ import { preprocessEvents } from "core/preprocess";
 import { sanityChecks } from "core/sanityChecks";
 import { State } from "core/state";
 import { fetchVault } from "utils/fetchVault";
+import { fetchVaultEvents } from "utils/fetchVaultEvents";
 import { maxUint256 } from "viem";
 
 test("check total fees are consistent all attributed fees", async () => {
   const address = "0x07ed467acD4ffd13023046968b0859781cb90D9B";
   const chainId = 1;
-  const fromBlock = 21142252;
-  const toBlock = 22011758;
-  const vaultData = await fetchVault({ address, chainId, toBlock, fromBlock });
-  sanityChecks({ events: vaultData.events, fromBlock, toBlock });
+  const fromBlock = 21142252n;
+  const toBlock = 22011758n;
+  const vaultEvents = await fetchVaultEvents({
+    chainId,
+    vaultAddress: address,
+    toBlock
+  })
+  const vaultData = await fetchVault({ address, chainId, block: fromBlock });
+  sanityChecks({ events: vaultEvents, fromBlock, toBlock });
   let events = preprocessEvents({
-    events: vaultData.events,
+    events: vaultEvents,
     addresses: {
       silo: vaultData.silo,
       vault: address,
@@ -29,6 +35,7 @@ test("check total fees are consistent all attributed fees", async () => {
     decimals: BigInt(vaultData.decimals),
     cooldown: vaultData.cooldown,
     rates: vaultData.rates.rates,
+    asset: vaultData.asset,
   });
 
   for (let i = 0; i < events.length; i++) {
