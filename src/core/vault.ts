@@ -15,7 +15,7 @@ import type {
 import { erc20Abi, zeroAddress, type Address } from "viem";
 import type { ReferralConfig, ReferralCustom } from "types/Vault";
 import { publicClient } from "lib/publicClient";
-import { convertToShares } from "utils/convertTo";
+import { convertBigIntToNumber, convertToShares } from "utils/convertTo";
 import type {
   Account,
   DealEvent,
@@ -36,6 +36,8 @@ export class Vault {
   public feeReceiver: Address;
   private pointTracker = new PointTracker();
   // public address: Address;
+
+  private asset: { address: Address; decimals: number };
 
   // Do not use those value directly, rely on the feeRates function
   private _rates: Rates;
@@ -71,11 +73,13 @@ export class Vault {
     decimals,
     cooldown,
     rates,
+    asset,
   }: {
     feeReceiver: Address;
     decimals: bigint;
     cooldown: number;
     rates: Rates;
+    asset: { address: Address; decimals: number };
   }) {
     this.feeReceiver = feeReceiver;
     this.decimals = decimals;
@@ -91,6 +95,7 @@ export class Vault {
       management: rates.management / Number(BPS_DIVIDER),
       performance: rates.performance / Number(BPS_DIVIDER),
     };
+    this.asset = asset;
   }
 
   public depositRequest(event: DepositRequest) {
@@ -137,11 +142,19 @@ export class Vault {
       });
     }
 
+    const rates = this.feeRates(event.blockTimestamp);
     this.periodFees.push({
       managementFees: "0",
       blockNumber: Number(event.blockNumber),
       performanceFees: "0",
       period: this.periodFees.length,
+      timestamp: Number(event.blockTimestamp),
+      managementRate: rates.management,
+      performanceRate: rates.performance,
+      pricePerShare: convertBigIntToNumber(
+        this.pricePerShare(),
+        Number(this.asset.decimals)
+      ),
     });
     this.lastTotalAssetsUpdateTimestamp = event.blockTimestamp;
   }
@@ -236,6 +249,12 @@ export class Vault {
       }
     }
     this.preReferrals = {};
+    const periodLength = this.periodFees.length;
+    const lastPeriod = this.periodFees[periodLength - 1];
+    lastPeriod.pricePerShare = convertBigIntToNumber(
+      this.pricePerShare(),
+      Number(this.asset.decimals)
+    );
   }
 
   public handleSettleRedeem(event: SettleRedeem) {
@@ -248,6 +267,12 @@ export class Vault {
       }
     }
     this.pendingRedeems = {};
+    const periodLength = this.periodFees.length;
+    const lastPeriod = this.periodFees[periodLength - 1];
+    lastPeriod.pricePerShare = convertBigIntToNumber(
+      this.pricePerShare(),
+      Number(this.asset.decimals)
+    );
   }
 
   private createAlternateFunction(): () => bigint {
@@ -354,7 +379,11 @@ export class Vault {
   }
 
   public pricePerShare(): bigint {
-    return (this.totalAssets * 10n ** this.decimals) / this.totalSupply;
+    const decimalsOffset = this.decimals - BigInt(this.asset.decimals);
+    return (
+      ((this.totalAssets + 1n) * 10n ** this.decimals) /
+      (this.totalSupply + 10n ** decimalsOffset)
+    );
   }
 
   public handleDeal(deal: DealEvent) {

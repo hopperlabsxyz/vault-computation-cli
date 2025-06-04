@@ -5,6 +5,7 @@ import { fetchVault } from "utils/fetchVault";
 import { preprocessEvents } from "core/preprocess";
 import type { DepositRequest, DepositRequestCanceled } from "gql/graphql";
 import type { Address } from "viem";
+import { fetchVaultEvents } from "utils/fetchVaultEvents";
 
 export function setControllersCommand(command: Command) {
   command
@@ -33,17 +34,22 @@ Examples:
 
       const vaultData = await fetchVault({
         ...vault,
-        toBlock: Number(toBlock),
-        fromBlock: Number(toBlock),
+        block: BigInt(toBlock),
       });
+      const vaultEvents = await fetchVaultEvents({
+        chainId: vault.chainId,
+        vaultAddress: vault.address,
+        toBlock: BigInt(toBlock),
+      })
 
-      let events = preprocessEvents({
-        events: vaultData.events,
+      let events = (await preprocessEvents({
+        chainId: vault.chainId,
+        events: vaultEvents,
         addresses: {
           silo: vaultData.silo,
           vault: vault.address,
         },
-      }).filter(
+      })).filter(
         (e) =>
           e.__typename === "DepositRequest" ||
           e.__typename === "DepositRequestCanceled" ||

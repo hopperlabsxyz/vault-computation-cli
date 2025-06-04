@@ -25,7 +25,6 @@ async function _fetchVaultEvents({
     skip,
   });
 }
-
 export async function fetchVaultEvents({
   chainId,
   vaultAddress,
@@ -36,8 +35,8 @@ export async function fetchVaultEvents({
   chainId: number;
   vaultAddress: Address;
   toBlock: bigint;
-  skip: number;
-  first: number;
+  skip?: number;
+  first?: number;
 }): Promise<VaultEventsQuery> {
   const events: VaultEventsQuery = {
     depositRequestCanceleds: [],

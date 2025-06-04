@@ -1,8 +1,6 @@
 import { LagoonVaultAbi } from "abis/VaultABI";
 import { publicClient } from "../lib/publicClient";
 import { erc20Abi, type Address } from "viem";
-import type { VaultEventsQuery } from "gql/graphql";
-import { fetchVaultEvents } from "utils/fetchVaultEvents";
 import { fetchFeeCooldown } from "./fetchFeeCooldown";
 import { fetchFeeRates } from "./fetchFeeRates";
 import type { Rates } from "core/types";
@@ -18,7 +16,6 @@ export interface FetchVaultReturn {
   decimals: number;
   feesReceiver: Address;
   silo: Address;
-  events: VaultEventsQuery;
   asset: {
     address: Address;
     decimals: number;
@@ -28,18 +25,20 @@ export interface FetchVaultReturn {
     rates: Rates;
     oldRates: Rates;
   };
+  totalSupply: bigint
+  totalAssets: bigint
 }
 
+// @dev: fetch onchain data for a vault at a certain block number
+// We can easily fetch vault state for a given event thanks to this function
 export async function fetchVault({
   chainId,
   address,
-  toBlock,
-  fromBlock,
+  block
 }: {
   chainId: number;
   address: Address;
-  toBlock: number;
-  fromBlock: number;
+  block: bigint;
 }): Promise<FetchVaultReturn> {
   const client = publicClient[chainId];
 
@@ -47,47 +46,58 @@ export async function fetchVault({
     throw new Error(`Missing client for chaindId : ${chainId}`);
   }
 
-  const [fees, decimals, roles, silo, events, asset, cooldown, feeRates] =
+  const [fees, decimals, roles, silo, asset, cooldown, feeRates, totalSupply, totalAssets] =
     await Promise.all([
       client.readContract({
         address,
         abi: LagoonVaultAbi,
         functionName: "feeRates",
+        blockNumber: block
       }),
       client.readContract({
         address,
         abi: LagoonVaultAbi,
         functionName: "decimals",
+        blockNumber: block
       }),
       client.readContract({
         address,
         abi: LagoonVaultAbi,
         functionName: "getRolesStorage",
-        blockNumber: BigInt(fromBlock),
+        blockNumber: block,
       }),
       client.getStorageAt({
         address: address,
         slot: siloStorageSlot,
+        blockNumber: block
       }) as Promise<Address>,
-      fetchVaultEvents({
-        chainId,
-        vaultAddress: address,
-        toBlock: BigInt(toBlock),
-      }),
       client.readContract({
         address,
         abi: LagoonVaultAbi,
         functionName: "asset",
+        blockNumber: block
       }),
       fetchFeeCooldown({
         client,
-        blockNumber: BigInt(fromBlock),
+        blockNumber: block,
         vaultAddress: address,
       }),
       fetchFeeRates({
         client,
-        blockNumber: BigInt(fromBlock),
+        blockNumber: block,
         vaultAddress: address,
+      }),
+      client.readContract({
+        address,
+        abi: LagoonVaultAbi,
+        functionName: "totalSupply",
+        blockNumber: block
+      }),
+      client.readContract({
+        address,
+        abi: LagoonVaultAbi,
+        functionName: "totalAssets",
+        blockNumber: block
       }),
     ]);
   const assetDecimals = await client.readContract({
@@ -101,12 +111,13 @@ export async function fetchVault({
     decimals,
     feesReceiver: roles.feeReceiver,
     silo: ("0x" + BigInt(silo).toString(16)) as Address,
-    events,
     asset: {
       address: asset,
       decimals: assetDecimals,
     },
     rates: feeRates,
     cooldown: Number(cooldown),
+    totalSupply,
+    totalAssets
   };
 }

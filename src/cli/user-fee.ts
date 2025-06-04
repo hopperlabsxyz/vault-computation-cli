@@ -74,8 +74,8 @@ Example:
       if (options.points) points = await parsePoints(options.points);
 
       const result = await processVault({
-        fromBlock: Number(options!.fromBlock!),
-        toBlock: Number(options!.toBlock!),
+        fromBlock: BigInt(options!.fromBlock!),
+        toBlock: BigInt(options!.toBlock!),
         deals: vaultDeals,
         readable: options!.readable!,
         feeRebateRate: Number(options!.feeRebateRate!),
@@ -127,11 +127,6 @@ function convertToCSV(vault: {
     `chainId,vault,wallet,balance,fees,pricePerShare,cashback${pointNamesString}`, // CSV header
     ...Object.entries(vault.data).map(
       ([address, { balance, fees, cashback, points }]) => {
-        if (
-          address.toLowerCase() ==
-          "0x1558b78560b88c75e9c95bbb9fda732f1e79f465".toLowerCase()
-        )
-          console.log(points);
         let str = `${vault.chainId},${vault.address},${address},${balance},${fees}`;
         str += `,${vault.pricePerShare},${cashback}`;
         str += pointsToCsv(points, vault.pointNames);
