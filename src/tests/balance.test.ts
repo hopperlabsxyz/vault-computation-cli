@@ -80,38 +80,6 @@ test(
   120 * 1000 // this test can be a bit long
 );
 
-function getFinalState({
-  events,
-  feeReceiver,
-  decimals,
-  fromBlock,
-  cooldown,
-  rates,
-  vaultData,
-}: {
-  events: EventsArray;
-  feeReceiver: Address;
-  decimals: number;
-  fromBlock: bigint;
-  cooldown: number;
-  rates: Rates;
-  vaultData: FetchVaultReturn;
-}): Vault {
-  const state = new Vault({
-    feeReceiver: feeReceiver,
-    decimals: BigInt(decimals),
-    asset: vaultData.asset,
-    cooldown,
-    rates,
-  });
-  state.processEvents({
-    events: events as { __typename: string; blockNumber: bigint }[],
-    fromBlock,
-  });
-
-  return state;
-}
-
 async function getHistoricBalances({
   events,
   vaultData,
@@ -172,4 +140,36 @@ async function getHistoricBalances({
   );
 
   return result;
+}
+
+function getFinalState({
+  events,
+  feeReceiver,
+  decimals,
+  fromBlock,
+  cooldown,
+  rates,
+  vaultData,
+}: {
+  events: EventsArray;
+  feeReceiver: Address;
+  decimals: number;
+  fromBlock: bigint;
+  cooldown: number;
+  rates: Rates;
+  vaultData: FetchVaultReturn;
+}): Vault {
+  const state = new Vault({
+    feeReceiver: feeReceiver,
+    decimals: BigInt(decimals),
+    asset: vaultData.asset,
+    cooldown,
+    rates,
+  });
+  state.processEvents({
+    events: events as { __typename: string; blockNumber: bigint }[],
+    fromBlock,
+  });
+
+  return state;
 }
