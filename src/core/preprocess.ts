@@ -101,30 +101,36 @@ export function preprocessEvents({
       name: p.name,
     })) || [];
 
-  let referrals: ReferralEvent[] = [];
-  if (referral) {
-    // Add __typename to referrals and we inject the parameters of the referral
-    referrals = events.referrals
-      .map(
-        (e) =>
-          ({
-            ...e,
-            feeRewardRate: referral.feeRewardRate,
-            feeRebateRate: referral.feeRebateRate,
-            assets: BigInt(e.assets),
-            blockNumber: Number(e.blockNumber),
-            blockTimestamp: Number(e.blockTimestamp),
-            requestId: BigInt(e.requestId),
-            __typename: "Referral",
-          } satisfies ReferralEvent)
-      )
-      .filter((r) => r.owner !== r.referral);
-  }
-
   let dealsParsed: DealEvent[] = [];
   if (deals) {
     dealsParsed = parseDeals(deals);
   }
+
+  let referrals: ReferralEvent[] = [];
+  // if (referral) {
+  const defaultRewardRate = referral.feeRewardRate;
+  const defaultRebateRate = referral.feeRebateRate;
+  // Add __typename to referrals and we inject the parameters of the referral
+  referrals = events.referrals
+    .map((e) => {
+      const rewardRate =
+        dealsParsed.find((deal) => deal.referral == e.referral)
+          ?.feeRewardRate || defaultRewardRate;
+      const rebateRate =
+        dealsParsed.find((deal) => deal.owner == e.owner)?.feeRebateRate ||
+        defaultRebateRate;
+      return {
+        ...e,
+        feeRewardRate: rewardRate,
+        feeRebateRate: rebateRate,
+        assets: BigInt(e.assets),
+        blockNumber: Number(e.blockNumber),
+        blockTimestamp: Number(e.blockTimestamp),
+        requestId: BigInt(e.requestId),
+        __typename: "Referral",
+      } satisfies ReferralEvent;
+    })
+    .filter((r) => r.owner !== r.referral);
 
   // Add __typename to transfers, filter ignored addresses, and convert relevant fields to BigInt
   events.transfers = filterTransfers(events.transfers, addresses).map((e) => ({
@@ -182,6 +188,7 @@ function parseDeals(deals: Deals): DealEvent[] {
   // Add __typename to deals and we inject the parameters of the deals
   // An otc deal is a deal on the fee rebate exclusively
   // thus referral is the user and the feeRewardRate is 0
+
   const dealsArray = Object.entries(deals).map((deal) => {
     return {
       owner: deal[0] as Address,
@@ -198,7 +205,7 @@ function parseDeals(deals: Deals): DealEvent[] {
     blockNumber: 0,
     blockTimestamp: 0,
     feeRebateRate: e.feeRebateRate,
-    feeRewardRate: 0,
+    feeRewardRate: e.feeRewardRate,
     assets: 0n,
     logIndex: 0,
     id: "0x",

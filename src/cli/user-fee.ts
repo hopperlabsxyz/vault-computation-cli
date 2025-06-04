@@ -33,7 +33,7 @@ export function setUserFeeCommand(command: Command) {
     )
     .option(
       "-d, --deals <string>",
-      "Path to the configuration file containing OTC (Over-The-Counter) deals. The amount of % is express in 10^2. For example, 8% is express 800 into the csv file."
+      "Path to the configuration file containing OTC (Over-The-Counter) deals on the fee rebate and fee rewards. The amount of % is express in 10^2. For example, 8% is express 800 in the csv file."
     )
     .option(
       "--fee-rebate-rate <number>",
@@ -69,8 +69,8 @@ Example:
       if (deals[vault.chainId])
         vaultDeals =
           deals[vault.chainId][vault.address.toLowerCase() as Address] || {};
-      vaultDeals = mergeDeals(deals[0]?.["0x0"] || {}, vaultDeals);
 
+      vaultDeals = mergeDeals(deals[0]?.["0x0"] || {}, vaultDeals);
       if (options.points) points = await parsePoints(options.points);
 
       const result = await processVault({

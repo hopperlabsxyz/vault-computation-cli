@@ -63,7 +63,7 @@ function parseLine(line: string):
   const [chainId, vault, owner, feeRebateRate, feeRewardRate] = line
     .replace(" ", "")
     .split(",") as [number, Address, Address, number, number];
-  if (!isAddress(vault) && vault !== "0x0") {
+  if (isAddress(vault) == false && vault !== "0x0") {
     throw new Error(`Invalid vault address in OTC deals file: ${vault}`);
   }
   if (!isAddress(owner)) {

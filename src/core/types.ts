@@ -55,7 +55,7 @@ export type Deals = Record<Address, ReferralRate>;
 export interface PreProcessingParams {
   events: VaultEventsQuery;
   addresses: VaultAddrresses;
-  referral?: ReferralRate;
+  referral: ReferralRate;
   deals?: Deals;
   points?: Point[];
 }
