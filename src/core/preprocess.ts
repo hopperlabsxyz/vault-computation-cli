@@ -11,7 +11,7 @@ import type {
 
 export function preprocessEvents({
   events,
-  referral,
+  referralRates,
   addresses,
   deals,
   points,
@@ -107,17 +107,17 @@ export function preprocessEvents({
   }
 
   let referrals: ReferralEvent[] = [];
-  const defaultRewardRate = referral.feeRewardRate;
-  const defaultRebateRate = referral.feeRebateRate;
+  const defaultRewardRate = referralRates.feeRewardRate;
+  const defaultRebateRate = referralRates.feeRebateRate;
   // Add __typename to referrals and we inject the parameters of the referral
   referrals = events.referrals
     .map((e) => {
       const rewardRate =
         dealsParsed.find((deal) => deal.referral == e.referral)
-          ?.feeRewardRate || defaultRewardRate;
+          ?.feeRewardRate || defaultRewardRate; // if there is a reward deal for this referrer it will be applied for all referral
       const rebateRate =
         dealsParsed.find((deal) => deal.owner == e.owner)?.feeRebateRate ||
-        defaultRebateRate;
+        defaultRebateRate; // if thes is a rebate deal for this user we use this value, otherwise we use the default rate
       return {
         ...e,
         feeRewardRate: rewardRate,

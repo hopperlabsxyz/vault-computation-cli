@@ -17,8 +17,8 @@ test("events of same blocknumber must have growing logIndex", async () => {
   const vaultEvents = await fetchVaultEvents({
     chainId,
     vaultAddress: address,
-    toBlock
-  })
+    toBlock,
+  });
   sanityChecks({ events: vaultEvents, fromBlock, toBlock });
 
   let events = preprocessEvents({
@@ -27,7 +27,7 @@ test("events of same blocknumber must have growing logIndex", async () => {
       silo: vault.silo,
       vault: address,
     },
-    referral: {
+    referralRates: {
       feeRewardRate: 0,
       feeRebateRate: 0,
     },

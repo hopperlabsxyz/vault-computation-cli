@@ -4,7 +4,7 @@ export class UserAccount {
   protected balance: bigint = 0n;
   protected cashback: bigint = 0n;
   protected fees: bigint = 0n;
-  protected points: Record<string, bigint> = {};
+  protected points: Record<string, number> = {};
   address: Address;
 
   constructor(address: Address) {
@@ -31,19 +31,19 @@ export class UserAccount {
     return this.cashback;
   }
 
-  public increasePoints(name: string, amount: bigint): bigint {
-    if (!this.points[name]) this.points[name] = 0n;
+  public increasePoints(name: string, amount: number): number {
+    if (!this.points[name]) this.points[name] = 0;
 
     this.points[name] += amount;
     return this.points[name];
   }
 
   // Getter
-  public getPoints(name: string): bigint {
-    return this.points[name] || 0n;
+  public getPoints(name: string): number {
+    return this.points[name] || 0;
   }
 
-  public getAllPoints(): Record<string, bigint> {
+  public getAllPoints(): Record<string, number> {
     return this.points;
   }
 

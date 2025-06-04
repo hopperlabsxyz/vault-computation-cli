@@ -40,7 +40,7 @@ export type ReferralEvent = {
   referral: `0x${string}`;
 } & EventBase;
 
-export interface ReferralRate {
+export interface ReferralRates {
   feeRebateRate: number;
   feeRewardRate: number;
 }
@@ -50,12 +50,12 @@ export interface VaultAddrresses {
   vault: Address;
 }
 
-export type Deals = Record<Address, ReferralRate>;
+export type Deals = Record<Address, ReferralRates>;
 
 export interface PreProcessingParams {
   events: VaultEventsQuery;
   addresses: VaultAddrresses;
-  referral: ReferralRate;
+  referralRates: ReferralRates;
   deals?: Deals;
   points?: Point[];
 }
@@ -65,10 +65,16 @@ export interface ProcessEventParams {
   fromBlock: bigint;
 }
 
+export interface ProcessEventsParams {
+  events: { __typename: string; blockNumber: bigint }[];
+  fromBlock: bigint;
+  blockEndHook?: (blockNumber: bigint) => Promise<any>;
+}
+
 export interface ProcessVaultParams {
   vault: Vault;
   readable: boolean;
-  deals: Record<Address, ReferralRate>;
+  deals: Record<Address, ReferralRates>;
   points?: Point[];
   fromBlock: bigint;
   toBlock: bigint;
@@ -114,5 +120,5 @@ export type Account = {
   balance: bigint;
   cashback: bigint;
   fees: bigint;
-  points: Record<string, bigint>;
+  points: Record<string, number>;
 };

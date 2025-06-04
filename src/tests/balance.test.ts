@@ -17,7 +17,7 @@ test(
     const address = "0x07ed467acD4ffd13023046968b0859781cb90D9B";
     const chainId = 1;
     const fromBlock = 21142252n;
-    const toBlock = 22011758n;
+    const toBlock = 22624283n;
     const vaultData = await fetchVault({
       address,
       chainId,
@@ -36,7 +36,7 @@ test(
         silo: vaultData.silo,
         vault: address,
       },
-      referral: {
+      referralRates: {
         feeRewardRate: 15,
         feeRebateRate: 5,
       },
@@ -58,30 +58,24 @@ test(
       vaultData,
     });
 
-    for (let i = 0; i < events.length; i++) {
-      const currentBlock: BigInt = events[i].blockNumber;
-      const nextBlock = events[i + 1] ? events[i + 1].blockNumber : maxUint256;
-      vault.processEvent({
-        event: events[i] as { __typename: string; blockNumber: bigint },
-        fromBlock,
-      });
-
-      // if we are done with the block, we can check the state
-      if (currentBlock != nextBlock) {
+    vault.processEvents({
+      events: events as { __typename: string; blockNumber: bigint }[],
+      fromBlock,
+      blockEndHook: async (blockNumber: bigint) => {
         for (const [user, account] of Object.entries(
           vault.getAccountsDeepCopy()
         )) {
           if (user.toLowerCase() == vault.feeReceiver.toLowerCase()) continue;
           const balance = account.balance;
 
-          const realTotal = historicBalance[currentBlock.toString()][user];
+          const realTotal = historicBalance[blockNumber.toString()][user];
           expect(Number(formatUnits(balance, vaultData.decimals))).toBeCloseTo(
             Number(formatUnits(realTotal, vaultData.decimals)),
             vaultData.decimals - 1
           );
         }
-      }
-    }
+      },
+    });
   },
   120 * 1000 // this test can be a bit long
 );
@@ -110,13 +104,11 @@ function getFinalState({
     cooldown,
     rates,
   });
+  state.processEvents({
+    events: events as { __typename: string; blockNumber: bigint }[],
+    fromBlock,
+  });
 
-  for (let i = 0; i < events.length; i++) {
-    state.processEvent({
-      event: events[i] as { __typename: string; blockNumber: bigint },
-      fromBlock,
-    });
-  }
   return state;
 }
 
@@ -139,7 +131,6 @@ async function getHistoricBalances({
     const currentBlock = events[i].blockNumber;
     const nextBlock = events[i + 1] ? events[i + 1].blockNumber : maxUint256;
 
-    // if we are done with the block, we can check the state
     if (currentBlock != nextBlock) {
       uniqueBlocks.push(currentBlock);
     }
@@ -156,7 +147,7 @@ async function getHistoricBalances({
   });
 
   const uniqueUsers = finalState.users();
-
+  //     blocknumber -> address --> balance
   const result: Record<string, Record<string, bigint>> = {};
 
   await Promise.all(

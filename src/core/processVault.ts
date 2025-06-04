@@ -34,7 +34,7 @@ export async function processVault({
       silo: vaultData.silo,
       vault: vault.address,
     },
-    referral: {
+    referralRates: {
       feeRewardRate,
       feeRebateRate,
     },

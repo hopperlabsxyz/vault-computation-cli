@@ -1,17 +1,17 @@
-import type { ReferralRate } from "core/types";
+import type { ReferralRates } from "core/types";
 import { isAddress, type Address } from "viem";
 
 // deals are done for a specific chain on a specific vault for a specific owner and a specific montant
 export type AllDeals = Record<number, Deals>;
-export type Deals = Record<Address, Record<Address, ReferralRate>>;
+export type Deals = Record<Address, Record<Address, ReferralRates>>;
 
 // merge deals
 // in case of conflict, the deal from deals2 will be used
 export function mergeDeals(
-  deals1: Record<Address, ReferralRate>,
-  deals2: Record<Address, ReferralRate>
-): Record<Address, ReferralRate> {
-  const merged: Record<Address, ReferralRate> = { ...deals1 };
+  deals1: Record<Address, ReferralRates>,
+  deals2: Record<Address, ReferralRates>
+): Record<Address, ReferralRates> {
+  const merged: Record<Address, ReferralRates> = { ...deals1 };
 
   for (const [ownerAddress, deal] of Object.entries(deals2)) {
     const ownerAddressLower = ownerAddress.toLowerCase() as Address;
@@ -25,7 +25,7 @@ export async function parseDeals(filePath: string): Promise<AllDeals> {
   const dealsRaw = (await Bun.file(filePath).text()).split("\n");
   const deals: Record<
     number,
-    Record<Address, Record<Address, ReferralRate>>
+    Record<Address, Record<Address, ReferralRates>>
   > = {};
   for (const entry of dealsRaw.slice(1)) {
     const line = parseLine(entry);
@@ -50,7 +50,7 @@ function parseLine(line: string):
       chainId: number;
       vault: Address;
       owner: Address;
-    } & ReferralRate)
+    } & ReferralRates)
   | undefined {
   if (line === "")
     return {

@@ -13,6 +13,7 @@ export async function parsePoints(filePath: string): Promise<Point[]> {
       timestamp,
     });
   }
+
   return points;
 }
 

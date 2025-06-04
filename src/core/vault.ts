@@ -12,7 +12,7 @@ import type {
   FeeReceiverUpdated,
 } from "gql/graphql";
 
-import { erc20Abi, zeroAddress, type Address } from "viem";
+import { erc20Abi, maxUint256, zeroAddress, type Address } from "viem";
 import type { ReferralConfig, ReferralCustom } from "types/Vault";
 import { publicClient } from "lib/publicClient";
 import { convertBigIntToNumber, convertToShares } from "utils/convertTo";
@@ -22,6 +22,7 @@ import type {
   PeriodFees,
   PointEvent,
   ProcessEventParams,
+  ProcessEventsParams,
   Rates,
 } from "./types";
 import { SolidityMath } from "utils/math";
@@ -50,6 +51,8 @@ export class Vault {
 
   public pendingDeposits: Record<Address, bigint | undefined> = {};
   public pendingRedeems: Record<Address, bigint | undefined> = {};
+
+  public spread = 0;
 
   // We need a 2 step referral system here in case a user cancel his deposits.
   // In this case the referral is voided.
@@ -305,9 +308,8 @@ export class Vault {
     // we compute how much fees they paid for this epoch
     // we emulated the rounding system of openzeppelin by adding 0 or 1
     if (distributeFees) {
-      // let checkTotal = 0n;
       this.accumulatedFees += totalFees;
-      for (const [_, acc] of Object.entries(this.accounts)) {
+      for (const acc of Object.values(this.accounts)) {
         acc.increaseFees(
           (acc.getBalance() * totalFees) / this.totalSupply +
             this.alternateZeroOne()
@@ -320,8 +322,6 @@ export class Vault {
         totalFees - this.nextManagementFees
       ).toString();
     }
-
-    // we must increase the totalSupply after computation
   }
 
   private handleReferral(event: ReferralCustom) {
@@ -353,13 +353,13 @@ export class Vault {
   }
 
   protected handlePoint(point: PointEvent) {
-    const scalingFactor = 10000n;
     const diff = this.pointTracker.registerPoint({
       amount: point.amount,
       name: point.name,
       timestamp: point.blockTimestamp,
     });
     const accountsArray = Object.entries(this.accounts);
+    let accumulated = 0;
     accountsArray.forEach((user) => {
       const account = user[1];
       if (this.totalSupply == 0n || !this.totalSupply) {
@@ -369,12 +369,9 @@ export class Vault {
       }
 
       const userPart =
-        (account.getBalance() * scalingFactor) / this.totalSupply;
-
-      account.increasePoints(
-        point.name,
-        (userPart * BigInt(diff)) / scalingFactor
-      );
+        (Number(account.getBalance()) * diff) / Number(this.totalSupply);
+      accumulated += userPart;
+      account.increasePoints(point.name, userPart);
     });
   }
 
@@ -422,6 +419,20 @@ export class Vault {
     return this.accounts[user].getBalance();
   }
 
+  public totalPointsAmongUsers(name: string): number {
+    let accumulated = 0;
+    for (const acc of Object.values(this.accounts)) {
+      accumulated += acc.getPoints(name);
+    }
+    return accumulated;
+  }
+
+  public lastPointEventValue(name: string): number {
+    const dot = this.pointTracker.lastPoint(name);
+    if (!dot) return 0;
+    return dot.amount;
+  }
+
   public accumulatedBalances(): bigint {
     let tt = 0n;
     for (const [_, acc] of Object.entries(this.accounts)) {
@@ -438,67 +449,23 @@ export class Vault {
     return _users;
   }
 
-  public async balanceOf(
-    blockNumber: number,
-    address: Address
-  ): Promise<bigint> {
-    const client = publicClient[1];
-    const totalSupp = await client.readContract({
-      abi: erc20Abi,
-      functionName: "balanceOf",
-      address,
-      args: [address],
-      blockNumber: BigInt(blockNumber),
-    });
-    return totalSupp;
-  }
+  public async processEvents({
+    events,
+    fromBlock,
+    blockEndHook,
+  }: ProcessEventsParams) {
+    for (let i = 0; i < events.length; i++) {
+      const currentBlock: bigint = events[i].blockNumber;
+      const nextBlock = events[i + 1] ? events[i + 1].blockNumber : maxUint256;
+      this.processEvent({
+        event: events[i] as { __typename: string; blockNumber: bigint },
+        fromBlock,
+      });
 
-  public async rightTotalSupply(
-    blockNumber: bigint,
-    address: Address
-  ): Promise<bigint> {
-    const client = publicClient[1];
-    const totalSupp = await client.readContract({
-      abi: erc20Abi,
-      functionName: "totalSupply",
-      address,
-      blockNumber: BigInt(blockNumber),
-    });
-    return totalSupp;
-  }
-
-  // DEBUG //
-  public async testSupply(
-    blockNumber: bigint,
-    address: Address
-  ): Promise<bigint> {
-    const acc = this.accumulatedSupply();
-    if (this.totalSupply + 100n < acc || this.totalSupply - 100n > acc) {
-      console.error({ error: "Error", totalSupply: this.totalSupply, acc });
-
-      console.error(
-        "Good value",
-        await this.rightTotalSupply(blockNumber, address)
-      );
-      throw "mismatch in totalsupply";
-    } else console.log("Supply is good");
-    return acc;
-  }
-
-  public getAccountsDeepCopy(): Record<Address, Account> {
-    const copiedAccounts: Record<Address, Account> = {};
-
-    // Iterate through each account and copy its properties
-    for (const [address, account] of Object.entries(this.accounts)) {
-      copiedAccounts[address as Address] = {
-        balance: account.getBalance(),
-        cashback: account.getCashback(),
-        fees: account.getFees(),
-        points: account.getAllPoints(),
-      };
+      // if we are done with the block, we can call the hook
+      if (currentBlock != nextBlock && blockEndHook)
+        await blockEndHook(currentBlock);
     }
-
-    return copiedAccounts;
   }
 
   public processEvent({ event, fromBlock }: ProcessEventParams) {
@@ -536,5 +503,68 @@ export class Vault {
     } else {
       throw new Error(`Unknown event ${event.__typename} : ${event}`);
     }
+  }
+
+  // DEBUG AND TESTING PURPOSE
+  public async testSupply(
+    blockNumber: bigint,
+    address: Address
+  ): Promise<bigint> {
+    const acc = this.accumulatedSupply();
+    if (this.totalSupply + 100n < acc || this.totalSupply - 100n > acc) {
+      console.error({ error: "Error", totalSupply: this.totalSupply, acc });
+
+      console.error(
+        "Good value",
+        await this.rightTotalSupply(blockNumber, address)
+      );
+      throw "mismatch in totalsupply";
+    } else console.log("Supply is good");
+    return acc;
+  }
+
+  public getAccountsDeepCopy(): Record<Address, Account> {
+    const copiedAccounts: Record<Address, Account> = {};
+
+    // Iterate through each account and copy its properties
+    for (const [address, account] of Object.entries(this.accounts)) {
+      copiedAccounts[address as Address] = {
+        balance: account.getBalance(),
+        cashback: account.getCashback(),
+        fees: account.getFees(),
+        points: account.getAllPoints(),
+      };
+    }
+
+    return copiedAccounts;
+  }
+
+  public async balanceOf(
+    blockNumber: number,
+    address: Address
+  ): Promise<bigint> {
+    const client = publicClient[1];
+    const totalSupp = await client.readContract({
+      abi: erc20Abi,
+      functionName: "balanceOf",
+      address,
+      args: [address],
+      blockNumber: BigInt(blockNumber),
+    });
+    return totalSupp;
+  }
+
+  public async rightTotalSupply(
+    blockNumber: bigint,
+    address: Address
+  ): Promise<bigint> {
+    const client = publicClient[1];
+    const totalSupp = await client.readContract({
+      abi: erc20Abi,
+      functionName: "totalSupply",
+      address,
+      blockNumber: BigInt(blockNumber),
+    });
+    return totalSupp;
   }
 }

@@ -65,12 +65,10 @@ Example:
 
       // prepare deals object
       if (options.deals) deals = await parseDeals(options.deals);
-      let vaultDeals: Deals = {};
-      if (deals[vault.chainId])
-        vaultDeals =
-          deals[vault.chainId][vault.address.toLowerCase() as Address] || {};
-
-      vaultDeals = mergeDeals(deals[0]?.["0x0"] || {}, vaultDeals);
+      const vaultDeals: Deals = mergeDeals(
+        deals[0]?.["0x0"] || {}, // those are wildcard deals
+        deals[vault.chainId]?.[vault.address.toLowerCase() as Address] || {} // those are vault level deals
+      );
       if (options.points) points = await parsePoints(options.points);
 
       const result = await processVault({
