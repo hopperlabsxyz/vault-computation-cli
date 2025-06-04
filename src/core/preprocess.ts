@@ -107,7 +107,6 @@ export function preprocessEvents({
   }
 
   let referrals: ReferralEvent[] = [];
-  // if (referral) {
   const defaultRewardRate = referral.feeRewardRate;
   const defaultRebateRate = referral.feeRebateRate;
   // Add __typename to referrals and we inject the parameters of the referral

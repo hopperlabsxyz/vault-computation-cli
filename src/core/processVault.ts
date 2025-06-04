@@ -34,33 +34,35 @@ export async function processVault({
     deals,
   });
 
-  const state = new Vault({
+  const vaultState = new Vault({
     feeReceiver: vaultData.feesReceiver,
     decimals: BigInt(vaultData.decimals),
     rates: vaultData.rates.rates,
     cooldown: vaultData.cooldown,
   });
   for (let i = 0; i < events.length; i++) {
-    state.processEvent({
+    vaultState.processEvent({
       event: events[i] as { __typename: string; blockNumber: bigint },
       fromBlock,
     });
   }
 
   // now we can compute the rebate users can get
-  state.rebate();
+  vaultState.rebate();
 
-  const result = state.getAccountsDeepCopy();
+  const result = vaultState.getAccountsDeepCopy();
   const sharesDecimals = readable ? vaultData.decimals : 0;
   const assetDecimals = readable ? vaultData.asset.decimals : 0;
 
   return {
     chainId: vault.chainId,
     address: vault.address,
-    decimals: Number(state.decimals),
-    pointNames: state.pointNames(),
-    pricePerShare: Number(formatUnits(state.pricePerShare(), assetDecimals)),
-    periodFees: state.periodFees,
+    decimals: Number(vaultState.decimals),
+    pointNames: vaultState.pointNames(),
+    pricePerShare: Number(
+      formatUnits(vaultState.pricePerShare(), assetDecimals)
+    ),
+    periodFees: vaultState.periodFees,
     data: Object.fromEntries(
       Object.entries(result).map(([address, values]) => [
         address,
