@@ -98,7 +98,7 @@ export class Vault {
     this.asset = asset;
   }
 
-  public depositRequest(event: DepositRequest) {
+  private depositRequest(event: DepositRequest) {
     const depositRequest = event as DepositRequest;
     const depositUser = depositRequest.controller;
 
@@ -108,7 +108,7 @@ export class Vault {
     this.prePendingDeposits[depositUser] += depositRequest.assets;
   }
 
-  public redeemRequest(event: RedeemRequest) {
+  private redeemRequest(event: RedeemRequest) {
     const redeemRequest = event as RedeemRequest;
     const redeemUser = redeemRequest.owner;
     if (this.prePendingRedeems[redeemUser] === undefined)
@@ -117,7 +117,7 @@ export class Vault {
     this.prePendingRedeems[redeemUser] += redeemRequest.shares;
   }
 
-  public handleTotalAssetsUpdated(event: TotalAssetsUpdated) {
+  private handleTotalAssetsUpdated(event: TotalAssetsUpdated) {
     //
     this.totalAssets = event.totalAssets;
 
@@ -159,7 +159,7 @@ export class Vault {
     this.lastTotalAssetsUpdateTimestamp = event.blockTimestamp;
   }
 
-  public handleNewTotalAssetsUpdated() {
+  private handleNewTotalAssetsUpdated() {
     // all the prePendingDeposits are ready to be settle, we can promute them
     // to the pendingDeposits mapping
     for (const [address, deposited] of Object.entries(
@@ -184,7 +184,7 @@ export class Vault {
     this.prePendingRedeems = {};
   }
 
-  public handleDeposit(event: Deposit) {
+  private handleDeposit(event: Deposit) {
     const { sender, owner, shares } = event;
     const receiver = owner;
     const controller = sender;
@@ -204,12 +204,12 @@ export class Vault {
     }
   }
 
-  public handleDepositRequestCanceled(event: DepositRequestCanceled) {
+  private handleDepositRequestCanceled(event: DepositRequestCanceled) {
     this.prePendingDeposits[event.controller] = 0n;
     this.preReferrals[event.controller] = undefined;
   }
 
-  public handleSettleDeposit(event: SettleDeposit) {
+  private handleSettleDeposit(event: SettleDeposit) {
     const {
       sharesMinted,
       assetsDeposited,
@@ -257,7 +257,7 @@ export class Vault {
     );
   }
 
-  public handleSettleRedeem(event: SettleRedeem) {
+  private handleSettleRedeem(event: SettleRedeem) {
     this.totalSupply = event.totalSupply;
     this.totalAssets = event.totalAssets;
 
@@ -284,11 +284,11 @@ export class Vault {
     };
   }
 
-  public handleFeeReceiverUpdateds(event: FeeReceiverUpdated) {
+  private handleFeeReceiverUpdateds(event: FeeReceiverUpdated) {
     this.feeReceiver = event.newReceiver;
   }
 
-  public handleRatesUpdateds(event: RatesUpdated) {
+  private handleRatesUpdateds(event: RatesUpdated) {
     this.newRatesTimestamp = event.blockTimestamp + this.cooldown;
 
     const currentRates = this._rates;
@@ -305,7 +305,7 @@ export class Vault {
     return this._oldRates;
   }
 
-  public handleTransfer(event: Transfer, distributeFees: boolean) {
+  private handleTransfer(event: Transfer, distributeFees: boolean) {
     // we initiate the accounts if it is not
     if (!this.accounts[event.from])
       this.accounts[event.from] = {
@@ -366,7 +366,7 @@ export class Vault {
     // we must increase the totalSupply after computation
   }
 
-  public handleReferral(event: ReferralCustom) {
+  private handleReferral(event: ReferralCustom) {
     if (event.owner === event.referral) return;
     if (this.preReferrals[event.owner]) return;
     else {
@@ -386,7 +386,7 @@ export class Vault {
     );
   }
 
-  public handleDeal(deal: DealEvent) {
+  private handleDeal(deal: DealEvent) {
     this.preReferrals[deal.owner] = {
       feeRewardRate: deal.feeRewardRate,
       feeRebateRate: deal.feeRebateRate,
