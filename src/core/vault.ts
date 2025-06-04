@@ -26,6 +26,8 @@ import type {
 } from "./types";
 import { SolidityMath } from "utils/math";
 import { PointTracker } from "./pointTracker";
+import { UserAccount } from "./account";
+import { RatesManager } from "./rates";
 
 export class Vault {
   public totalSupply = 0n;
@@ -37,17 +39,9 @@ export class Vault {
   private pointTracker = new PointTracker();
   // public address: Address;
 
+  private ratesManager: RatesManager;
+
   private asset: { address: Address; decimals: number };
-
-  // Do not use those value directly, rely on the feeRates function
-  private _rates: Rates;
-  private _oldRates: Rates = {
-    management: 0,
-    performance: 0,
-  };
-
-  public newRatesTimestamp = 0;
-  public cooldown = 0;
 
   public periodFees: PeriodFees = [];
 
@@ -62,7 +56,7 @@ export class Vault {
   public preReferrals: Record<Address, ReferralConfig | undefined> = {}; // first address is referee, second is referrer
   public referrals: Record<Address, ReferralConfig | undefined> = {};
 
-  private accounts: Record<Address, Account> = {};
+  private accounts: Record<Address, UserAccount> = {};
   private alternateZeroOne = this.createAlternateFunction();
 
   // DEBUG //
@@ -83,18 +77,10 @@ export class Vault {
   }) {
     this.feeReceiver = feeReceiver;
     this.decimals = decimals;
-    this.accounts[feeReceiver] = {
-      balance: 0n,
-      fees: 0n,
-      cashback: 0n,
-      points: {},
-    };
 
-    this.cooldown = cooldown;
-    this._rates = {
-      management: rates.management / Number(BPS_DIVIDER),
-      performance: rates.performance / Number(BPS_DIVIDER),
-    };
+    this.accounts[feeReceiver] = new UserAccount(feeReceiver);
+
+    this.ratesManager = new RatesManager(rates, cooldown);
     this.asset = asset;
   }
 
@@ -188,20 +174,10 @@ export class Vault {
     const { sender, owner, shares } = event;
     const receiver = owner;
     const controller = sender;
-    if (controller !== receiver) {
-      this.accounts[receiver].balance -= shares;
+    if (controller === receiver) return; // in this case the balance are already just
 
-      if (this.accounts[controller]) {
-        this.accounts[controller].balance += shares;
-      } else {
-        this.accounts[controller] = {
-          balance: shares,
-          cashback: 0n,
-          fees: 0n,
-          points: {},
-        };
-      }
-    }
+    this.getAndCreateAccount(receiver).increaseBalance(shares);
+    this.getAndCreateAccount(controller).decreaseBalance(shares);
   }
 
   private handleDepositRequestCanceled(event: DepositRequestCanceled) {
@@ -210,35 +186,24 @@ export class Vault {
   }
 
   private handleSettleDeposit(event: SettleDeposit) {
-    const {
-      sharesMinted,
-      assetsDeposited,
-      totalSupply: newTotalSupply,
-      totalAssets: newTotalAssets,
-    } = event;
+    const { sharesMinted, assetsDeposited, totalSupply, totalAssets } = event;
 
-    this.totalSupply = newTotalSupply;
-    this.totalAssets = newTotalAssets;
+    this.totalSupply = totalSupply;
+    this.totalAssets = totalAssets;
     // for each users who has pending deposit:
     for (const [address, userRequest] of Object.entries(this.pendingDeposits)) {
       // we initiate his accounts
-      if (!this.accounts[address as Address]) {
-        this.accounts[address as Address] = {
-          balance: 0n,
-          fees: 0n,
-          cashback: 0n,
-          points: {},
-        };
-      }
+      const acc = this.getAndCreateAccount(address as Address);
 
       // we increase it's balance (like if he claimed his shares)
-      this.accounts[address as Address].balance += SolidityMath.mulDivRounding(
-        userRequest!,
-        sharesMinted,
-        assetsDeposited,
-        SolidityMath.Rounding.Floor
+      acc.increaseBalance(
+        SolidityMath.mulDivRounding(
+          userRequest!,
+          sharesMinted,
+          assetsDeposited,
+          SolidityMath.Rounding.Floor
+        )
       );
-      // (userRequest! * sharesMinted) / assetsDeposited;
       // we don't update total supply because it will naturally be updated via the transfer
     }
     this.pendingDeposits = {};
@@ -263,7 +228,8 @@ export class Vault {
 
     for (const [address, redeemed] of Object.entries(this.pendingRedeems)) {
       if (this.accounts[address as Address]) {
-        this.accounts[address as Address].balance -= redeemed!;
+        // why this check ?
+        this.accounts[address as Address].decreaseBalance(redeemed || 0n);
       }
     }
     this.pendingRedeems = {};
@@ -289,39 +255,23 @@ export class Vault {
   }
 
   private handleRatesUpdateds(event: RatesUpdated) {
-    this.newRatesTimestamp = event.blockTimestamp + this.cooldown;
-
-    const currentRates = this._rates;
-    this._rates = {
-      management: event.newRate_managementRate / Number(BPS_DIVIDER),
-      performance: event.newRate_performanceRate / Number(BPS_DIVIDER),
-    };
-
-    this._oldRates = currentRates;
+    this.ratesManager.handleRatesUpdated({
+      blockTimestamp: event.blockTimestamp,
+      rates: {
+        management: event.newRate_managementRate,
+        performance: event.newRate_performanceRate,
+      },
+    });
   }
 
   public feeRates(blockTimestamp: number) {
-    if (this.newRatesTimestamp <= blockTimestamp) return this._rates;
-    return this._oldRates;
+    return this.ratesManager.feeRates(blockTimestamp);
   }
 
   private handleTransfer(event: Transfer, distributeFees: boolean) {
     // we initiate the accounts if it is not
-    if (!this.accounts[event.from])
-      this.accounts[event.from] = {
-        balance: 0n,
-        fees: 0n,
-        cashback: 0n,
-        points: {},
-      };
-
-    if (!this.accounts[event.to])
-      this.accounts[event.to] = {
-        balance: 0n,
-        fees: 0n,
-        cashback: 0n,
-        points: {},
-      };
+    const to: UserAccount = this.getAndCreateAccount(event.to);
+    const from: UserAccount = this.getAndCreateAccount(event.from);
 
     // this is a fee transfer
     if (
@@ -330,17 +280,23 @@ export class Vault {
     ) {
       this.handleFeeTransfer(event, distributeFees);
     }
-    // console.log({ feeReceiver: this.feeReceiver });
+
     // we decrement the balance of the sender
     if (event.from == zeroAddress)
       this.totalSupply += BigInt(event.value); // mint
-    else this.accounts[event.from].balance -= BigInt(event.value); // transfer
+    else from.decreaseBalance(BigInt(event.value)); // transfer
     // we initiate the accounts if it is not
 
     if (event.to == zeroAddress)
       this.totalSupply -= BigInt(event.value); // burn
     // we increment the balance of the receiver
-    else this.accounts[event.to].balance += BigInt(event.value); //transfer
+    else to.increaseBalance(BigInt(event.value)); //transfer
+  }
+
+  private getAndCreateAccount(address: Address): UserAccount {
+    if (!this.accounts[address])
+      this.accounts[address] = new UserAccount(address);
+    return this.accounts[address];
   }
 
   private handleFeeTransfer(event: Transfer, distributeFees: boolean) {
@@ -351,9 +307,11 @@ export class Vault {
     if (distributeFees) {
       // let checkTotal = 0n;
       this.accumulatedFees += totalFees;
-      for (const [address, { balance }] of Object.entries(this.accounts)) {
-        this.accounts[address as Address].fees +=
-          (balance * totalFees) / this.totalSupply + this.alternateZeroOne();
+      for (const [_, acc] of Object.entries(this.accounts)) {
+        acc.increaseFees(
+          (acc.getBalance() * totalFees) / this.totalSupply +
+            this.alternateZeroOne()
+        );
       }
       const periodLength = this.periodFees.length;
       const lastPeriod = this.periodFees[periodLength - 1];
@@ -403,19 +361,20 @@ export class Vault {
     });
     const accountsArray = Object.entries(this.accounts);
     accountsArray.forEach((user) => {
-      const address = user[0] as Address;
-      const userBalance = user[1].balance;
+      const account = user[1];
       if (this.totalSupply == 0n || !this.totalSupply) {
         throw new Error(
           `Totalsupply is 0, ${point.name} point distribution is not possible at ${point.blockTimestamp}`
         );
       }
 
-      const userPart = (userBalance * scalingFactor) / this.totalSupply;
-      const points = this.accounts[address].points;
+      const userPart =
+        (account.getBalance() * scalingFactor) / this.totalSupply;
 
-      if (points[point.name] === undefined) points[point.name] = 0n;
-      points[point.name] += (userPart * BigInt(diff)) / scalingFactor;
+      account.increasePoints(
+        point.name,
+        (userPart * BigInt(diff)) / scalingFactor
+      );
     });
   }
 
@@ -427,26 +386,20 @@ export class Vault {
     const accountsArray = Object.entries(this.accounts);
     accountsArray.forEach((user) => {
       const address = user[0] as Address;
+      const account = user[1];
       const referrer = this.referrals[address]?.referrer;
-      const fees = this.accounts[address].fees;
+      const fees = account.getFees();
       const rebate = this.referrals[address]?.feeRebateRate;
       const reward = this.referrals[address]?.feeRewardRate;
 
       if (rebate) {
-        this.accounts[address].cashback +=
-          (fees * BigInt(rebate)) / BPS_DIVIDER;
+        this.accounts[address].increaseCashback(
+          (fees * BigInt(rebate)) / BPS_DIVIDER
+        );
       }
       if (reward && referrer) {
-        if (!this.accounts[referrer]) {
-          this.accounts[referrer] = {
-            balance: 0n,
-            cashback: 0n,
-            fees: 0n,
-            points: {},
-          };
-        }
-        this.accounts[referrer].cashback +=
-          (fees * BigInt(reward)) / BPS_DIVIDER;
+        const referrerAcc = this.getAndCreateAccount(referrer);
+        referrerAcc.increaseCashback((fees * BigInt(reward)) / BPS_DIVIDER);
       }
     });
   }
@@ -455,24 +408,24 @@ export class Vault {
 
   public accumulatedSupply(): bigint {
     const accountss = Object.entries(this.accounts);
-    const acc = accountss.reduce((acc, curr) => acc + curr[1].balance, 0n);
+    const acc = accountss.reduce((acc, curr) => acc + curr[1].getBalance(), 0n);
     return acc;
   }
 
   public accumulatedFeesSinceFromBlock(): bigint {
     const accountss = Object.entries(this.accounts);
-    const acc = accountss.reduce((acc, curr) => acc + curr[1].fees, 0n);
+    const acc = accountss.reduce((acc, curr) => acc + curr[1].getFees(), 0n);
     return acc;
   }
 
   public balance(user: Address): bigint {
-    return this.accounts[user].balance;
+    return this.accounts[user].getBalance();
   }
 
   public accumulatedBalances(): bigint {
     let tt = 0n;
-    for (const [_, { balance }] of Object.entries(this.accounts)) {
-      tt += balance;
+    for (const [_, acc] of Object.entries(this.accounts)) {
+      tt += acc.getBalance();
     }
     return tt;
   }
@@ -538,10 +491,10 @@ export class Vault {
     // Iterate through each account and copy its properties
     for (const [address, account] of Object.entries(this.accounts)) {
       copiedAccounts[address as Address] = {
-        balance: account.balance,
-        cashback: account.cashback,
-        fees: account.fees,
-        points: account.points,
+        balance: account.getBalance(),
+        cashback: account.getCashback(),
+        fees: account.getFees(),
+        points: account.getAllPoints(),
       };
     }
 
