@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { preprocessEvents } from "core/preprocess";
+import { preprocessEvents } from "core/preprocessEvents";
 import { sanityChecks } from "core/sanityChecks";
 import { fetchVault } from "utils/fetchVault";
 import { fetchVaultEvents } from "utils/fetchVaultEvents";

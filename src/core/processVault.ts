@@ -1,9 +1,8 @@
-import { fetchVault } from "utils/fetchVault";
 import { formatUnits } from "viem";
-import { Vault } from "./vault";
+import { generateVault } from "./vault";
 import { sanityChecks } from "./sanityChecks";
 import type { ProcessVaultParams, ProcessVaultReturn } from "./types";
-import { preprocessEvents } from "./preprocess";
+import { preprocessEvents } from "./preprocessEvents";
 import { fetchVaultEvents } from "utils/fetchVaultEvents";
 
 export async function processVault({
@@ -12,13 +11,10 @@ export async function processVault({
   deals,
   toBlock,
   fromBlock,
-  feeRewardRate,
-  feeRebateRate,
+  rates,
   points,
 }: ProcessVaultParams): Promise<ProcessVaultReturn> {
   console.log(`Loading vault ${vault.address} on chain ${vault.chainId}`);
-
-  const vaultData = await fetchVault({ ...vault, block: BigInt(fromBlock) });
 
   const vaultEvents = await fetchVaultEvents({
     chainId: vault.chainId,
@@ -28,40 +24,32 @@ export async function processVault({
 
   sanityChecks({ events: vaultEvents, fromBlock, toBlock });
 
+  const vaultState = await generateVault({
+    vault,
+  });
+
   let events = preprocessEvents({
     events: vaultEvents,
     addresses: {
-      silo: vaultData.silo,
+      silo: vaultState.silo,
       vault: vault.address,
     },
-    referralRates: {
-      feeRewardRate,
-      feeRebateRate,
-    },
+    referralRates: rates,
     points,
     deals,
   });
 
-  const vaultState = new Vault({
-    feeReceiver: vaultData.feesReceiver,
-    decimals: BigInt(vaultData.decimals),
-    asset: vaultData.asset,
-    rates: vaultData.rates.rates,
-    cooldown: vaultData.cooldown,
+  vaultState.processEvents({
+    events: events as { __typename: string; blockNumber: bigint }[],
+    distributeFeesFromBlock: fromBlock,
   });
-  for (let i = 0; i < events.length; i++) {
-    vaultState.processEvent({
-      event: events[i] as { __typename: string; blockNumber: bigint },
-      fromBlock,
-    });
-  }
 
   // now we can compute the rebate users can get
-  vaultState.rebate();
+  vaultState.distributeRebatesAndRewards();
 
-  const result = vaultState.getAccountsDeepCopy();
-  const sharesDecimals = readable ? vaultData.decimals : 0;
-  const assetDecimals = readable ? vaultData.asset.decimals : 0;
+  const result = vaultState.getAccounts();
+  const sharesDecimals = readable ? vaultState.decimals : 0;
+  const assetDecimals = readable ? vaultState.asset.decimals : 0;
 
   return {
     chainId: vault.chainId,
@@ -76,10 +64,10 @@ export async function processVault({
       Object.entries(result).map(([address, values]) => [
         address,
         {
-          balance: Number(formatUnits(values.balance, sharesDecimals)),
-          fees: Number(formatUnits(values.fees, sharesDecimals)),
-          cashback: Number(formatUnits(values.cashback, sharesDecimals)),
-          points: values.points,
+          balance: Number(formatUnits(values.getBalance(), sharesDecimals)),
+          fees: Number(formatUnits(values.getFees(), sharesDecimals)),
+          cashback: Number(formatUnits(values.getCashback(), sharesDecimals)),
+          points: values.getAllPoints(),
         },
       ])
     ),

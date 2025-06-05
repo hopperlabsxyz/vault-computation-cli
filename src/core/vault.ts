@@ -17,7 +17,6 @@ import type { ReferralConfig, ReferralCustom } from "types/Vault";
 import { publicClient } from "lib/publicClient";
 import { convertBigIntToNumber, convertToShares } from "utils/convertTo";
 import type {
-  Account,
   DealEvent,
   PeriodFees,
   PointEvent,
@@ -27,21 +26,50 @@ import type {
 } from "./types";
 import { SolidityMath } from "utils/math";
 import { PointTracker } from "./pointTracker";
-import { UserAccount } from "./account";
+import { UserAccount } from "./userAccount";
 import { RatesManager } from "./rates";
+import { fetchVault } from "utils/fetchVault";
+import { fetchVaultStateUpdateds } from "utils/fetchVaultStateUpdateds";
 
-export class Vault {
+export async function generateVault({
+  vault,
+}: {
+  vault: { address: Address; chainId: number };
+}): Promise<Vault> {
+  const stateUpdateds = await fetchVaultStateUpdateds({
+    chainId: vault.chainId,
+    vaultAddress: vault.address,
+  });
+  if (!stateUpdateds || stateUpdateds.stateUpdateds.length == 0)
+    throw new Error(`Vault ${vault.address} doesn't exist`);
+  const vaultData = await fetchVault({
+    ...vault,
+    block: BigInt(stateUpdateds.stateUpdateds[0].blockNumber),
+  });
+
+  return new Vault({
+    feeReceiver: vaultData.feesReceiver,
+    decimals: vaultData.decimals,
+    asset: vaultData.asset,
+    rates: vaultData.rates.rates,
+    cooldown: vaultData.cooldown,
+    silo: vaultData.silo,
+  });
+}
+
+class Vault {
   public totalSupply = 0n;
   public totalAssets = 0n;
   public lastTotalAssetsUpdateTimestamp = 0;
   public nextManagementFees = 0n;
-  public decimals: bigint;
+  public decimals: number;
   public feeReceiver: Address;
+  public silo: Address;
   private pointTracker = new PointTracker();
 
   private ratesManager: RatesManager;
 
-  private asset: { address: Address; decimals: number };
+  public asset: { address: Address; decimals: number };
 
   public periodFees: PeriodFees = [];
 
@@ -68,9 +96,11 @@ export class Vault {
     cooldown,
     rates,
     asset,
+    silo,
   }: {
     feeReceiver: Address;
-    decimals: bigint;
+    silo: Address;
+    decimals: number;
     cooldown: number;
     rates: Rates;
     asset: { address: Address; decimals: number };
@@ -82,6 +112,7 @@ export class Vault {
 
     this.ratesManager = new RatesManager(rates, cooldown);
     this.asset = asset;
+    this.silo = silo;
   }
 
   private depositRequest(event: DepositRequest) {
@@ -139,7 +170,7 @@ export class Vault {
       performanceRate: rates.performance,
       pricePerShare: convertBigIntToNumber(
         this.pricePerShare(),
-        Number(this.asset.decimals)
+        this.asset.decimals
       ),
     });
     this.lastTotalAssetsUpdateTimestamp = event.blockTimestamp;
@@ -218,7 +249,7 @@ export class Vault {
     const lastPeriod = this.periodFees[periodLength - 1];
     lastPeriod.pricePerShare = convertBigIntToNumber(
       this.pricePerShare(),
-      Number(this.asset.decimals)
+      this.asset.decimals
     );
   }
 
@@ -336,10 +367,10 @@ export class Vault {
   }
 
   public pricePerShare(): bigint {
-    const decimalsOffset = this.decimals - BigInt(this.asset.decimals);
+    const decimalsOffset = this.decimals - this.asset.decimals;
     return (
-      ((this.totalAssets + 1n) * 10n ** this.decimals) /
-      (this.totalSupply + 10n ** decimalsOffset)
+      ((this.totalAssets + 1n) * 10n ** BigInt(this.decimals)) /
+      (this.totalSupply + 10n ** BigInt(decimalsOffset))
     );
   }
 
@@ -376,7 +407,7 @@ export class Vault {
     return this.pointTracker.pointNames();
   }
 
-  public rebate() {
+  public distributeRebatesAndRewards() {
     const accountsArray = Object.values(this.accounts);
     accountsArray.forEach((account) => {
       const address = account.address;
@@ -398,8 +429,6 @@ export class Vault {
       }
     });
   }
-
-  // public allAccounts(): Address[] {}
 
   public accumulatedSupply(): bigint {
     const accountss = Object.entries(this.accounts);
@@ -449,7 +478,7 @@ export class Vault {
 
   public async processEvents({
     events,
-    fromBlock,
+    distributeFeesFromBlock,
     blockEndHook,
   }: ProcessEventsParams) {
     for (let i = 0; i < events.length; i++) {
@@ -457,7 +486,7 @@ export class Vault {
       const nextBlock = events[i + 1] ? events[i + 1].blockNumber : maxUint256;
       this.processEvent({
         event: events[i] as { __typename: string; blockNumber: bigint },
-        fromBlock,
+        distributeFeesFromBlock,
       });
 
       // if we are done with the block, we can call the hook
@@ -466,7 +495,7 @@ export class Vault {
     }
   }
 
-  public processEvent({ event, fromBlock }: ProcessEventParams) {
+  public processEvent({ event, distributeFeesFromBlock }: ProcessEventParams) {
     if (event.__typename === "TotalAssetsUpdated") {
       this.handleTotalAssetsUpdated(event as TotalAssetsUpdated);
     } else if (event.__typename === "NewTotalAssetsUpdated") {
@@ -486,7 +515,7 @@ export class Vault {
     } else if (event.__typename === "Transfer") {
       this.handleTransfer(
         event as Transfer,
-        BigInt(fromBlock) < event.blockNumber
+        BigInt(distributeFeesFromBlock) < event.blockNumber
       );
     } else if (event.__typename === "Referral") {
       this.handleReferral(event as ReferralCustom);
@@ -521,20 +550,8 @@ export class Vault {
     return acc;
   }
 
-  public getAccountsDeepCopy(): Record<Address, Account> {
-    const copiedAccounts: Record<Address, Account> = {};
-
-    // Iterate through each account and copy its properties
-    for (const [address, account] of Object.entries(this.accounts)) {
-      copiedAccounts[address as Address] = {
-        balance: account.getBalance(),
-        cashback: account.getCashback(),
-        fees: account.getFees(),
-        points: account.getAllPoints(),
-      };
-    }
-
-    return copiedAccounts;
+  public getAccounts(): Record<Address, UserAccount> {
+    return this.accounts;
   }
 
   public async balanceOf(
@@ -566,5 +583,3 @@ export class Vault {
     return totalSupp;
   }
 }
-
-// 1_0x07ed467acd4ffd13023046968b0859781cb90d9b_22168965_22616435

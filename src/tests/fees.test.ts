@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
-import { preprocessEvents } from "core/preprocess";
+import { preprocessEvents } from "core/preprocessEvents";
 import { sanityChecks } from "core/sanityChecks";
-import { Vault } from "core/vault";
+import { generateVault } from "core/vault";
 import { fetchVault } from "utils/fetchVault";
 import { fetchVaultEvents } from "utils/fetchVaultEvents";
 
@@ -29,20 +29,19 @@ test("check total fees are consistent all attributed fees", async () => {
     },
     deals: {},
   });
-  const state = new Vault({
-    feeReceiver: vaultData.feesReceiver,
-    decimals: BigInt(vaultData.decimals),
-    cooldown: vaultData.cooldown,
-    rates: vaultData.rates.rates,
-    asset: vaultData.asset,
+  const vault = await generateVault({
+    vault: {
+      address,
+      chainId,
+    },
   });
 
-  state.processEvents({
+  vault.processEvents({
     events: events as { __typename: string; blockNumber: bigint }[],
     fromBlock,
     blockEndHook: async (_: bigint) => {
-      const accumulatedFeesAmongUsers = state.accumulatedFeesSinceFromBlock();
-      const totalFees = state.accumulatedFees;
+      const accumulatedFeesAmongUsers = vault.accumulatedFeesSinceFromBlock();
+      const totalFees = vault.accumulatedFees;
       const diff = accumulatedFeesAmongUsers - totalFees;
       expect(diff).toBeLessThan(100);
       expect(diff).toBeGreaterThan(-100);

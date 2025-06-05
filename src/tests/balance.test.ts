@@ -1,9 +1,8 @@
 import { expect, test } from "bun:test";
-import { preprocessEvents } from "core/preprocess";
+import { preprocessEvents } from "core/preprocessEvents";
 import { sanityChecks } from "core/sanityChecks";
-import { Vault } from "core/vault";
-import type { Rates } from "core/types";
-import { totalBalanceOf } from "core/onchain-calls";
+import { generateVault } from "core/vault";
+import { totalBalanceOf } from "utils/onchain-calls";
 import { publicClient } from "lib/publicClient";
 import { fetchVault, type FetchVaultReturn } from "utils/fetchVault";
 import { fetchVaultEvents } from "utils/fetchVaultEvents";
@@ -42,12 +41,11 @@ test(
       },
       deals: {},
     });
-    const vault = new Vault({
-      feeReceiver: vaultData.feesReceiver,
-      decimals: BigInt(vaultData.decimals),
-      asset: vaultData.asset,
-      cooldown: Number(vaultData.cooldown),
-      rates: vaultData.rates.rates,
+    const vault = await generateVault({
+      vault: {
+        address,
+        chainId,
+      },
     });
 
     const historicBalance = await getHistoricBalances({
@@ -82,7 +80,6 @@ test(
 
 async function getHistoricBalances({
   events,
-  vaultData,
   fromBlock,
   address,
   client,
@@ -104,14 +101,11 @@ async function getHistoricBalances({
     }
   }
 
-  const finalState = getFinalState({
-    decimals: vaultData.decimals,
+  const finalState = await getFinalState({
     events,
-    feeReceiver: vaultData.feesReceiver,
     fromBlock,
-    cooldown: vaultData.cooldown,
-    rates: vaultData.rates.rates,
-    vaultData,
+    address,
+    chainId: client.chain!.id,
   });
 
   const uniqueUsers = finalState.users();
@@ -142,34 +136,27 @@ async function getHistoricBalances({
   return result;
 }
 
-function getFinalState({
+async function getFinalState({
   events,
-  feeReceiver,
-  decimals,
   fromBlock,
-  cooldown,
-  rates,
-  vaultData,
+  address,
+  chainId,
 }: {
   events: EventsArray;
-  feeReceiver: Address;
-  decimals: number;
   fromBlock: bigint;
-  cooldown: number;
-  rates: Rates;
-  vaultData: FetchVaultReturn;
-}): Vault {
-  const state = new Vault({
-    feeReceiver: feeReceiver,
-    decimals: BigInt(decimals),
-    asset: vaultData.asset,
-    cooldown,
-    rates,
+  address: Address;
+  chainId: number;
+}): Promise<ReturnType<typeof generateVault>> {
+  const vault = await generateVault({
+    vault: {
+      address,
+      chainId,
+    },
   });
-  state.processEvents({
+  vault.processEvents({
     events: events as { __typename: string; blockNumber: bigint }[],
     fromBlock,
   });
 
-  return state;
+  return vault;
 }

@@ -2,7 +2,7 @@ import { parseArguments } from "utils/parseArguments";
 import { publicClient } from "lib/publicClient";
 import type { Command } from "@commander-js/extra-typings";
 import { fetchVault } from "utils/fetchVault";
-import { preprocessEvents } from "core/preprocess";
+import { preprocessEvents } from "core/preprocessEvents";
 import type { DepositRequest, DepositRequestCanceled } from "../../gql/graphql";
 import type { Address } from "viem";
 import { fetchVaultEvents } from "utils/fetchVaultEvents";

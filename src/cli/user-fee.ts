@@ -76,8 +76,10 @@ Example:
         toBlock: BigInt(options!.toBlock!),
         deals: vaultDeals,
         readable: options!.readable!,
-        feeRebateRate: Number(options!.feeRebateRate!),
-        feeRewardRate: Number(options!.feeRewardRate!),
+        rates: {
+          feeRebateRate: Number(options!.feeRebateRate!),
+          feeRewardRate: Number(options!.feeRewardRate!),
+        },
         vault,
         points,
       });

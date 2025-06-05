@@ -1,10 +1,10 @@
 import { expect, test } from "bun:test";
-import { preprocessEvents } from "core/preprocess";
+import { preprocessEvents } from "core/preprocessEvents";
 import { sanityChecks } from "core/sanityChecks";
-import { Vault } from "core/vault";
 import { fetchVault } from "utils/fetchVault";
 import { fetchVaultEvents } from "utils/fetchVaultEvents";
 import { mock_points } from "./mock/points";
+import { generateVault } from "core/vault";
 
 export type EventsArray = ReturnType<typeof preprocessEvents>;
 
@@ -37,12 +37,11 @@ test("check balance match real data after each block", async () => {
     deals: {},
     points: mock_points,
   });
-  const vault = new Vault({
-    feeReceiver: vaultData.feesReceiver,
-    decimals: BigInt(vaultData.decimals),
-    asset: vaultData.asset,
-    cooldown: Number(vaultData.cooldown),
-    rates: vaultData.rates.rates,
+  const vault = await generateVault({
+    vault: {
+      address,
+      chainId,
+    },
   });
 
   vault.processEvents({

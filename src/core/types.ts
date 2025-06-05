@@ -63,12 +63,12 @@ export interface PreProcessingParams {
 
 export interface ProcessEventParams {
   event: { __typename: string; blockNumber: bigint };
-  fromBlock: bigint;
+  distributeFeesFromBlock: bigint;
 }
 
 export interface ProcessEventsParams {
   events: { __typename: string; blockNumber: bigint }[];
-  fromBlock: bigint;
+  distributeFeesFromBlock: bigint;
   blockEndHook?: (blockNumber: bigint) => Promise<any>;
 }
 
@@ -79,8 +79,7 @@ export interface ProcessVaultParams {
   points?: Point[];
   fromBlock: bigint;
   toBlock: bigint;
-  feeRebateRate: number;
-  feeRewardRate: number;
+  rates: ReferralRates;
 }
 
 export interface ProcessVaultReturn {
@@ -117,9 +116,9 @@ export type Rates = {
   performance: number;
 };
 
-export type Account = {
-  balance: bigint;
-  cashback: bigint;
-  fees: bigint;
-  points: Record<string, number>;
-};
+// export type Account = {
+//   balance: bigint;
+//   cashback: bigint;
+//   fees: bigint;
+//   points: Record<string, number>;
+// };
