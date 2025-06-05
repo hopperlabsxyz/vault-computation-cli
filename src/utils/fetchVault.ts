@@ -25,8 +25,8 @@ export interface FetchVaultReturn {
     rates: Rates;
     oldRates: Rates;
   };
-  totalSupply: bigint
-  totalAssets: bigint
+  totalSupply: bigint;
+  totalAssets: bigint;
 }
 
 // @dev: fetch onchain data for a vault at a certain block number
@@ -34,7 +34,7 @@ export interface FetchVaultReturn {
 export async function fetchVault({
   chainId,
   address,
-  block
+  block,
 }: {
   chainId: number;
   address: Address;
@@ -46,60 +46,69 @@ export async function fetchVault({
     throw new Error(`Missing client for chaindId : ${chainId}`);
   }
 
-  const [fees, decimals, roles, silo, asset, cooldown, feeRates, totalSupply, totalAssets] =
-    await Promise.all([
-      client.readContract({
-        address,
-        abi: LagoonVaultAbi,
-        functionName: "feeRates",
-        blockNumber: block
-      }),
-      client.readContract({
-        address,
-        abi: LagoonVaultAbi,
-        functionName: "decimals",
-        blockNumber: block
-      }),
-      client.readContract({
-        address,
-        abi: LagoonVaultAbi,
-        functionName: "getRolesStorage",
-        blockNumber: block,
-      }),
-      client.getStorageAt({
-        address: address,
-        slot: siloStorageSlot,
-        blockNumber: block
-      }) as Promise<Address>,
-      client.readContract({
-        address,
-        abi: LagoonVaultAbi,
-        functionName: "asset",
-        blockNumber: block
-      }),
-      fetchFeeCooldown({
-        client,
-        blockNumber: block,
-        vaultAddress: address,
-      }),
-      fetchFeeRates({
-        client,
-        blockNumber: block,
-        vaultAddress: address,
-      }),
-      client.readContract({
-        address,
-        abi: LagoonVaultAbi,
-        functionName: "totalSupply",
-        blockNumber: block
-      }),
-      client.readContract({
-        address,
-        abi: LagoonVaultAbi,
-        functionName: "totalAssets",
-        blockNumber: block
-      }),
-    ]);
+  const [
+    fees,
+    decimals,
+    roles,
+    silo,
+    asset,
+    cooldown,
+    feeRates,
+    totalSupply,
+    totalAssets,
+  ] = await Promise.all([
+    client.readContract({
+      address,
+      abi: LagoonVaultAbi,
+      functionName: "feeRates",
+      blockNumber: block,
+    }),
+    client.readContract({
+      address,
+      abi: LagoonVaultAbi,
+      functionName: "decimals",
+      blockNumber: block,
+    }),
+    client.readContract({
+      address,
+      abi: LagoonVaultAbi,
+      functionName: "getRolesStorage",
+      blockNumber: block,
+    }),
+    client.getStorageAt({
+      address: address,
+      slot: siloStorageSlot,
+      blockNumber: block,
+    }) as Promise<Address>,
+    client.readContract({
+      address,
+      abi: LagoonVaultAbi,
+      functionName: "asset",
+      blockNumber: block,
+    }),
+    fetchFeeCooldown({
+      client,
+      blockNumber: block,
+      vaultAddress: address,
+    }),
+    fetchFeeRates({
+      client,
+      blockNumber: block,
+      vaultAddress: address,
+    }),
+    client.readContract({
+      address,
+      abi: LagoonVaultAbi,
+      functionName: "totalSupply",
+      blockNumber: block,
+    }),
+    client.readContract({
+      address,
+      abi: LagoonVaultAbi,
+      functionName: "totalAssets",
+      blockNumber: block,
+    }),
+  ]);
   const assetDecimals = await client.readContract({
     address: asset,
     abi: erc20Abi,
@@ -118,6 +127,6 @@ export async function fetchVault({
     rates: feeRates,
     cooldown: Number(cooldown),
     totalSupply,
-    totalAssets
+    totalAssets,
   };
 }

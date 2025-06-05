@@ -48,11 +48,12 @@ Example:
         toBlock: BigInt(options!.toBlock!),
         deals: {},
         readable: options!.readable!,
-        feeRebateRate: 0,
-        feeRewardRate: 0,
+        rates: {
+          feeRebateRate: 0,
+          feeRewardRate: 0,
+        },
         vault,
       });
-
 
       const csv = convertToCSVPeriodFees(
         {
@@ -63,12 +64,6 @@ Example:
         },
         options.readable
       );
-      // let total = 0n;
-      // result.periodFees.forEach((fees) => {
-      //   total += BigInt(fees.managementFees) + BigInt(fees.performanceFees);
-      // });
-
-      // console.log(total);
 
       if (options.output) {
         try {
@@ -100,7 +95,16 @@ export function convertToCSVPeriodFees(
 ) {
   const header = `chainId,vault,period,blockNumber,managementFees,performanceFees,timestamp,managementRate,performanceRate,pricePerShare`; // CSV header
   const csvRows = vault.periodFees.map(
-    ({ managementFees, performanceFees, period, blockNumber, timestamp, managementRate, performanceRate, pricePerShare }) => {
+    ({
+      managementFees,
+      performanceFees,
+      period,
+      blockNumber,
+      timestamp,
+      managementRate,
+      performanceRate,
+      pricePerShare,
+    }) => {
       if (readable) {
         managementFees = formatUnits(BigInt(managementFees), vault.decimals);
         performanceFees = formatUnits(BigInt(performanceFees), vault.decimals);
