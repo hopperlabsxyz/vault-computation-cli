@@ -31,7 +31,7 @@ function parseLine(line: string): [number, number, string] | undefined {
   }
   if (timestamp < 0) {
     throw new Error(
-      `Invalid point value in point file: ${amount}. Amount cannot be negative`
+      `Invalid point value in point file: ${timestamp}. Timestamp cannot be negative`
     );
   }
 
