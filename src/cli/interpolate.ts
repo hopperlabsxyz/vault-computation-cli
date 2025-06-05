@@ -10,10 +10,11 @@ export function setInterpolateCommand(command: Command) {
       "-o, --output",
       "Will save the result next to origin file with interpolate at the end of the name of the file"
     )
-    // .option(
-    //   "--from-block <number>",
-    //   "Starting at block number. Default to the vault inception block "
-    // )
+    .option("-f, --from-block <number>", "Perform the interpolation from")
+    .option(
+      "-t, --to-block <number>",
+      "Starting at block number. Default to the vault inception block "
+    )
     .addHelpText(
       "after",
       `

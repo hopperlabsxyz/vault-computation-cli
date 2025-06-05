@@ -40,16 +40,19 @@ Examples:
         chainId: vault.chainId,
         vaultAddress: vault.address,
         toBlock: BigInt(toBlock),
-      })
+      });
 
-      let events = (await preprocessEvents({
-        chainId: vault.chainId,
+      let events = preprocessEvents({
+        referralRates: {
+          feeRebateRate: 0,
+          feeRewardRate: 0,
+        },
         events: vaultEvents,
         addresses: {
           silo: vaultData.silo,
           vault: vault.address,
         },
-      })).filter(
+      }).filter(
         (e) =>
           e.__typename === "DepositRequest" ||
           e.__typename === "DepositRequestCanceled" ||
