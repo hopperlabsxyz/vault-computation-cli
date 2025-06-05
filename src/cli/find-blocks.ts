@@ -88,8 +88,12 @@ Examples:
             t.blockNumber >= options.fromBlock! &&
             t.blockNumber <= options.toBlock!
         )
-        .map((t) => t.blockNumber)
-        .sort((a, b) => a - b);
+        .map((t) => ({
+          blockNumber: t.blockNumber,
+          timestamp: t.blockTimestamp,
+          type: "Fee receiver transfer",
+        }))
+        .sort((a, b) => a.blockNumber - b.blockNumber);
 
       let vaultData = (
         await fetchVaultTotalAssetsUpdated({
@@ -107,21 +111,25 @@ Examples:
             ev.blockNumber >= options.fromBlock! &&
             ev.blockNumber <= options.toBlock!
         )
-        .map((e) => ({ blockNumber: e.blockNumber, type: "Fee minting" }));
+        .map((e) => ({
+          blockNumber: e.blockNumber,
+          type: "Fee minting",
+          timestamp: e.blockTimestamp,
+        }));
 
       // Combine and sort all events chronologically
-      const allEvents = [
-        ...events,
-        ...feeReceiverTransfers.map((block) => ({
-          blockNumber: block,
-          type: "Fee receiver transfer",
-        })),
-      ].sort((a, b) => a.blockNumber - b.blockNumber);
+      const allEvents = [...events, ...feeReceiverTransfers].sort(
+        (a, b) => a.blockNumber - b.blockNumber
+      );
 
       console.log(`From ${options.fromBlock}`);
       console.log("\nEvents in chronological order:");
       allEvents.forEach((event) =>
-        console.log(`${event.blockNumber} - ${event.type}`)
+        console.log(
+          `${new Date(event.timestamp * 1000).toDateString()} - ${
+            event.blockNumber
+          } - ${event.type}`
+        )
       );
       console.log(`\nTo ${options.toBlock}`);
     });
