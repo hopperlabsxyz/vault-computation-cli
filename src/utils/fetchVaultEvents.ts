@@ -1,7 +1,7 @@
 import { SUBGRAPHS } from "environnement";
-import type { VaultEventsQuery } from "gql/graphql";
+import type { VaultEventsQuery } from "../../gql/graphql";
 import request from "graphql-request";
-import { graphql } from "gql";
+import { graphql } from "../../gql";
 
 import type { Address } from "viem";
 

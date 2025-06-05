@@ -3,7 +3,7 @@ import { publicClient } from "lib/publicClient";
 import type { Command } from "@commander-js/extra-typings";
 import { fetchVault } from "utils/fetchVault";
 import { preprocessEvents } from "core/preprocess";
-import type { DepositRequest, DepositRequestCanceled } from "gql/graphql";
+import type { DepositRequest, DepositRequestCanceled } from "../../gql/graphql";
 import type { Address } from "viem";
 import { fetchVaultEvents } from "utils/fetchVaultEvents";
 
