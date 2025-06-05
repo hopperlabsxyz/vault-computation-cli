@@ -5,7 +5,7 @@ import type { Point } from "./types";
 /**
  * Represents a single point in time with an amount value
  */
-type Dot = { amount: number; timestamp: number };
+export type Dot = { amount: number; timestamp: number };
 
 /**
  * PointTracker is responsible for tracking and managing the evolution of various points

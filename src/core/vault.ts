@@ -38,7 +38,6 @@ export class Vault {
   public decimals: bigint;
   public feeReceiver: Address;
   private pointTracker = new PointTracker();
-  // public address: Address;
 
   private ratesManager: RatesManager;
 
@@ -51,8 +50,6 @@ export class Vault {
 
   public pendingDeposits: Record<Address, bigint | undefined> = {};
   public pendingRedeems: Record<Address, bigint | undefined> = {};
-
-  public spread = 0;
 
   // We need a 2 step referral system here in case a user cancel his deposits.
   // In this case the referral is voided.
@@ -310,10 +307,12 @@ export class Vault {
     if (distributeFees) {
       this.accumulatedFees += totalFees;
       for (const acc of Object.values(this.accounts)) {
+        if (acc.address == zeroAddress) continue;
         acc.increaseFees(
           (acc.getBalance() * totalFees) / this.totalSupply +
             this.alternateZeroOne()
         );
+        // if (acc.address == zeroAddress) console.log(acc.getFees());
       }
       const periodLength = this.periodFees.length;
       const lastPeriod = this.periodFees[periodLength - 1];
@@ -359,7 +358,6 @@ export class Vault {
       timestamp: point.blockTimestamp,
     });
     const accountsArray = Object.entries(this.accounts);
-    let accumulated = 0;
     accountsArray.forEach((user) => {
       const account = user[1];
       if (this.totalSupply == 0n || !this.totalSupply) {
@@ -370,7 +368,6 @@ export class Vault {
 
       const userPart =
         (Number(account.getBalance()) * diff) / Number(this.totalSupply);
-      accumulated += userPart;
       account.increasePoints(point.name, userPart);
     });
   }
@@ -380,20 +377,21 @@ export class Vault {
   }
 
   public rebate() {
-    const accountsArray = Object.entries(this.accounts);
-    accountsArray.forEach((user) => {
-      const address = user[0] as Address;
-      const account = user[1];
+    const accountsArray = Object.values(this.accounts);
+    accountsArray.forEach((account) => {
+      const address = account.address;
+
       const referrer = this.referrals[address]?.referrer;
       const fees = account.getFees();
       const rebate = this.referrals[address]?.feeRebateRate;
       const reward = this.referrals[address]?.feeRewardRate;
 
-      if (rebate) {
-        this.accounts[address].increaseCashback(
-          (fees * BigInt(rebate)) / BPS_DIVIDER
-        );
-      }
+      if (account)
+        if (rebate) {
+          this.accounts[address].increaseCashback(
+            (fees * BigInt(rebate)) / BPS_DIVIDER
+          );
+        }
       if (reward && referrer) {
         const referrerAcc = this.getAndCreateAccount(referrer);
         referrerAcc.increaseCashback((fees * BigInt(reward)) / BPS_DIVIDER);
@@ -568,3 +566,5 @@ export class Vault {
     return totalSupp;
   }
 }
+
+// 1_0x07ed467acd4ffd13023046968b0859781cb90d9b_22168965_22616435

@@ -47,8 +47,8 @@ export function setUserFeeCommand(command: Command) {
     )
     .option(
       "--points <string>",
-      "A path to a file containing the evolutions of points through time of the form timestamp,amount. For each of those points in time \
-       the program will distribute all the new points proportionnaly to the shares holders."
+      "A path to a file containing the evolutions of points through time with the following format: timestamp,amount,name. For each line \
+       the program will distribute the new points proportionnaly to shareholders."
     )
     .addHelpText(
       "after",

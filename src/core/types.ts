@@ -1,6 +1,7 @@
 import type { VaultEventsQuery } from "gql/graphql";
 import type { Address } from "viem";
 import type { Vault } from "types/Vault";
+import type { Dot } from "./pointTracker";
 
 export interface EventBase {
   blockNumber: number;
@@ -26,7 +27,7 @@ export type PointEvent = {
 } & EventBase;
 
 /// Basic form of a Point data.
-export type Point = { timestamp: number; amount: number; name: string };
+export type Point = Dot & { name: string };
 
 export type ReferralEvent = {
   feeRewardRate: number;

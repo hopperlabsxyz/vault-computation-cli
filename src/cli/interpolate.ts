@@ -1,5 +1,5 @@
 import type { Command } from "@commander-js/extra-typings";
-import type { Point } from "core/types";
+import type { Dot } from "core/pointTracker";
 
 export function setInterpolateCommand(command: Command) {
   command
@@ -25,31 +25,26 @@ Examples:
       console.log(args);
       const fileName = args.split("/").slice(-1)[0].slice(0, -4);
       const pointsRaw = (await Bun.file(args).text()).split("\n").slice(1);
-      //   const deals: Record<
-      //     number,
-      //     Record<Address, Record<Address, number>>
-      //   > = {};
-      let points: Point[] = [];
-      let tempPoints: Point[] = [];
+
+      let points: Dot[] = [];
+      let tempPoints: Dot[] = [];
       for (const entry of pointsRaw) {
         const line = entry.split(",");
+
         if (!line) continue;
         tempPoints.push({
           timestamp: Number(line[0]),
-
           amount: Number(line[1]),
-          name: fileName,
         });
         if (tempPoints.length == 2) {
           points = interpolateEveryX(
             tempPoints[0],
             tempPoints[1],
-            24 * 60 * 60,
-            fileName
+            24 * 60 * 60
           );
         }
       }
-      const csv = convertToCSVPoints(points);
+      const csv = convertToCSVPoints(points, fileName);
       if (options.output) {
         try {
           const path = `output/interpolate/${fileName}.csv`;
@@ -74,12 +69,7 @@ Examples:
  * @param seconds Number of seconds between points
  * @returns An array of interpolated points, including originals
  */
-function interpolateEveryX(
-  start: Point,
-  end: Point,
-  seconds: number,
-  name: string
-): Point[] {
+function interpolateEveryX(start: Dot, end: Dot, seconds: number): Dot[] {
   const { timestamp: timestamp0, amount: amount0 } = start;
   const { timestamp: timestamp1, amount: amount1 } = end;
   if (timestamp0 >= timestamp1) {
@@ -87,15 +77,13 @@ function interpolateEveryX(
   }
 
   const slope = (amount1 - amount0) / (timestamp1 - timestamp0);
-  const points: Point[] = new Array();
+  const points: Dot[] = new Array();
 
   for (let x = timestamp0; x <= timestamp1; x += seconds) {
-    // x = points.length - 1;
     const amount = amount0 + slope * (x - timestamp0);
     points.push({
       timestamp: x,
       amount,
-      name,
     });
 
     if (x + seconds > timestamp1) {
@@ -106,9 +94,9 @@ function interpolateEveryX(
   return points;
 }
 
-export function convertToCSVPoints(points: Point[]) {
+export function convertToCSVPoints(points: Dot[], name: string) {
   const header = `timestamp, amount, name`; // CSV header
-  const csvRows = points.map((p) => `${p.timestamp},${p.amount},${p.name}`);
+  const csvRows = points.map((p) => `${p.timestamp},${p.amount},${name}`);
 
   return [header, ...csvRows].join("\n");
 }
