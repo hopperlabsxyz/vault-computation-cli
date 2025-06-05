@@ -3,6 +3,7 @@ import { setBlocksCommand } from "cli/find-blocks";
 import { setUserFeeCommand } from "cli/user-fee";
 import { setControllersCommand } from "cli/find-claimable-controllers";
 import { setPeriodFeeCommand } from "cli/period-fee";
+import { setInterpolateCommand } from "cli/interpolate";
 
 export const computationProgram = new Command();
 
@@ -15,5 +16,6 @@ setBlocksCommand(computationProgram);
 setUserFeeCommand(computationProgram);
 setControllersCommand(computationProgram);
 setPeriodFeeCommand(computationProgram);
+setInterpolateCommand(computationProgram);
 
 computationProgram.parse();

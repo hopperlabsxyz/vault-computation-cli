@@ -1,6 +1,6 @@
 import { fetchVault } from "utils/fetchVault";
 import { formatUnits } from "viem";
-import { State } from "./state";
+import { Vault } from "./vault";
 import { sanityChecks } from "./sanityChecks";
 import type { ProcessVaultParams, ProcessVaultReturn } from "./types";
 import { preprocessEvents } from "./preprocess";
@@ -14,12 +14,17 @@ export async function processVault({
   fromBlock,
   feeRewardRate,
   feeRebateRate,
+  points,
 }: ProcessVaultParams): Promise<ProcessVaultReturn> {
   console.log(`Loading vault ${vault.address} on chain ${vault.chainId}`);
 
   const vaultData = await fetchVault({ ...vault, block: BigInt(fromBlock) });
 
-  const vaultEvents = await fetchVaultEvents({ chainId: vault.chainId, vaultAddress: vault.address, toBlock: BigInt(toBlock) })
+  const vaultEvents = await fetchVaultEvents({
+    chainId: vault.chainId,
+    vaultAddress: vault.address,
+    toBlock: BigInt(toBlock),
+  });
 
   sanityChecks({ events: vaultEvents, fromBlock, toBlock });
 
@@ -29,13 +34,15 @@ export async function processVault({
       silo: vaultData.silo,
       vault: vault.address,
     },
-    referral: {
+    referralRates: {
       feeRewardRate,
       feeRebateRate,
     },
-    deals: deals,
+    points,
+    deals,
   });
-  const state = new State({
+
+  const vaultState = new Vault({
     feeReceiver: vaultData.feesReceiver,
     decimals: BigInt(vaultData.decimals),
     asset: vaultData.asset,
@@ -43,24 +50,28 @@ export async function processVault({
     cooldown: vaultData.cooldown,
   });
   for (let i = 0; i < events.length; i++) {
-    state.processEvent({
+    vaultState.processEvent({
       event: events[i] as { __typename: string; blockNumber: bigint },
       fromBlock,
     });
   }
 
   // now we can compute the rebate users can get
-  state.rebate();
+  vaultState.rebate();
 
-  const result = state.getAccountsDeepCopy();
+  const result = vaultState.getAccountsDeepCopy();
   const sharesDecimals = readable ? vaultData.decimals : 0;
   const assetDecimals = readable ? vaultData.asset.decimals : 0;
 
   return {
     chainId: vault.chainId,
     address: vault.address,
-    decimals: Number(state.decimals),
-    pricePerShare: Number(formatUnits(state.pricePerShare(), assetDecimals)),
+    decimals: Number(vaultState.decimals),
+    pointNames: vaultState.pointNames(),
+    pricePerShare: Number(
+      formatUnits(vaultState.pricePerShare(), assetDecimals)
+    ),
+    periodFees: vaultState.periodFees,
     data: Object.fromEntries(
       Object.entries(result).map(([address, values]) => [
         address,
@@ -68,9 +79,9 @@ export async function processVault({
           balance: Number(formatUnits(values.balance, sharesDecimals)),
           fees: Number(formatUnits(values.fees, sharesDecimals)),
           cashback: Number(formatUnits(values.cashback, sharesDecimals)),
+          points: values.points,
         },
       ])
     ),
-    periodFees: state.periodFees,
   };
 }

@@ -100,7 +100,6 @@ Examples:
           first: 1000,
         })
       ).totalAssetsUpdateds;
-      if (vaultData.length >= 1000) throw new Error("only fetched first 1000");
 
       const events = vaultData
         .filter(
@@ -108,7 +107,7 @@ Examples:
             ev.blockNumber >= options.fromBlock! &&
             ev.blockNumber <= options.toBlock!
         )
-        .map((e) => ({ blockNumber: e.blockNumber, type: "Fee distribution" }));
+        .map((e) => ({ blockNumber: e.blockNumber, type: "Fee minting" }));
 
       // Combine and sort all events chronologically
       const allEvents = [

@@ -1,50 +1,64 @@
 import type { VaultEventsQuery } from "gql/graphql";
 import type { Address } from "viem";
 import type { Vault } from "types/Vault";
+import type { Dot } from "./pointTracker";
 
-export interface DealEvent {
-  feeRebateRate: number;
-  feeRewardRate: number;
-  vault: "0x";
-  __typename: "Deal";
-  owner: Address;
-  referral: Address;
+export interface EventBase {
   blockNumber: number;
   blockTimestamp: number;
   logIndex: number;
 }
-export interface ReferralEvent {
+
+export type DealEvent = {
+  feeRebateRate: number;
+  feeRewardRate: number;
+  vault: "0x"; // todo: maybe put a real vault address and 0x0 if wild card ?
+  __typename: "Deal";
+  owner: Address;
+  referral: Address;
+} & EventBase;
+
+/// A point transformed to mimic an Event type.
+export type PointEvent = {
+  amount: number;
+  vault: Address;
+  __typename: "Point";
+  name: string;
+} & EventBase;
+
+/// Basic form of a Point data.
+export type Point = Dot & { name: string };
+
+export type ReferralEvent = {
   feeRewardRate: number;
   feeRebateRate: number;
   assets: bigint;
-  blockNumber: number;
-  blockTimestamp: number;
   requestId: bigint;
   __typename: "Referral";
   id: `0x${string}`;
   transactionHash: `0x${string}`;
-  logIndex: number;
   owner: `0x${string}`;
   referral: `0x${string}`;
-}
+} & EventBase;
 
-export interface ReferralRate {
+export interface ReferralRates {
   feeRebateRate: number;
   feeRewardRate: number;
 }
-
-export type Deals = Record<Address, number>;
 
 export interface VaultAddrresses {
   silo: Address;
   vault: Address;
 }
 
+export type Deals = Record<Address, ReferralRates>;
+
 export interface PreProcessingParams {
   events: VaultEventsQuery;
   addresses: VaultAddrresses;
-  referral?: ReferralRate;
+  referralRates: ReferralRates;
   deals?: Deals;
+  points?: Point[];
 }
 
 export interface ProcessEventParams {
@@ -52,10 +66,17 @@ export interface ProcessEventParams {
   fromBlock: bigint;
 }
 
+export interface ProcessEventsParams {
+  events: { __typename: string; blockNumber: bigint }[];
+  fromBlock: bigint;
+  blockEndHook?: (blockNumber: bigint) => Promise<any>;
+}
+
 export interface ProcessVaultParams {
   vault: Vault;
   readable: boolean;
-  deals: Record<Address, number>;
+  deals: Record<Address, ReferralRates>;
+  points?: Point[];
   fromBlock: bigint;
   toBlock: bigint;
   feeRebateRate: number;
@@ -67,12 +88,14 @@ export interface ProcessVaultReturn {
   address: Address;
   decimals: number;
   pricePerShare: number;
+  pointNames: string[];
   data: Record<
     Address,
     {
       balance: number;
-      fees: number;
       cashback: number;
+      fees: number;
+      points: Record<string, bigint>;
     }
   >;
   periodFees: PeriodFees;
@@ -92,4 +115,11 @@ export type PeriodFees = Array<{
 export type Rates = {
   management: number;
   performance: number;
+};
+
+export type Account = {
+  balance: bigint;
+  cashback: bigint;
+  fees: bigint;
+  points: Record<string, number>;
 };

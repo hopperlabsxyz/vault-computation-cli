@@ -1,9 +1,9 @@
 import { expect, test } from "bun:test";
 import { preprocessEvents } from "core/preprocess";
 import { sanityChecks } from "core/sanityChecks";
-import { State } from "core/state";
+import { Vault } from "core/vault";
 import type { Rates } from "core/types";
-import { totalBalanceOf } from "core/vault";
+import { totalBalanceOf } from "core/onchain-calls";
 import { publicClient } from "lib/publicClient";
 import { fetchVault, type FetchVaultReturn } from "utils/fetchVault";
 import { fetchVaultEvents } from "utils/fetchVaultEvents";
@@ -17,7 +17,7 @@ test(
     const address = "0x07ed467acD4ffd13023046968b0859781cb90D9B";
     const chainId = 1;
     const fromBlock = 21142252n;
-    const toBlock = 22011758n;
+    const toBlock = 22624283n;
     const vaultData = await fetchVault({
       address,
       chainId,
@@ -26,8 +26,8 @@ test(
     const vaultEvents = await fetchVaultEvents({
       chainId,
       vaultAddress: address,
-      toBlock
-    })
+      toBlock,
+    });
     sanityChecks({ events: vaultEvents, fromBlock, toBlock });
     const client = publicClient[chainId];
     let events = preprocessEvents({
@@ -36,13 +36,13 @@ test(
         silo: vaultData.silo,
         vault: address,
       },
-      referral: {
+      referralRates: {
         feeRewardRate: 15,
         feeRebateRate: 5,
       },
       deals: {},
     });
-    const state = new State({
+    const vault = new Vault({
       feeReceiver: vaultData.feesReceiver,
       decimals: BigInt(vaultData.decimals),
       asset: vaultData.asset,
@@ -58,67 +58,27 @@ test(
       vaultData,
     });
 
-    for (let i = 0; i < events.length; i++) {
-      const currentBlock: BigInt = events[i].blockNumber;
-      const nextBlock = events[i + 1] ? events[i + 1].blockNumber : maxUint256;
-      state.processEvent({
-        event: events[i] as { __typename: string; blockNumber: bigint },
-        fromBlock,
-      });
-
-      // if we are done with the block, we can check the state
-      if (currentBlock != nextBlock) {
+    vault.processEvents({
+      events: events as { __typename: string; blockNumber: bigint }[],
+      fromBlock,
+      blockEndHook: async (blockNumber: bigint) => {
         for (const [user, account] of Object.entries(
-          state.getAccountsDeepCopy()
+          vault.getAccountsDeepCopy()
         )) {
-          if (user.toLowerCase() == state.feeReceiver.toLowerCase()) continue;
+          if (user.toLowerCase() == vault.feeReceiver.toLowerCase()) continue;
           const balance = account.balance;
 
-          const realTotal = historicBalance[currentBlock.toString()][user];
+          const realTotal = historicBalance[blockNumber.toString()][user];
           expect(Number(formatUnits(balance, vaultData.decimals))).toBeCloseTo(
             Number(formatUnits(realTotal, vaultData.decimals)),
             vaultData.decimals - 1
           );
         }
-      }
-    }
+      },
+    });
   },
   120 * 1000 // this test can be a bit long
 );
-
-function getFinalState({
-  events,
-  feeReceiver,
-  decimals,
-  fromBlock,
-  cooldown,
-  rates,
-  vaultData
-}: {
-  events: EventsArray;
-  feeReceiver: Address;
-  decimals: number;
-  fromBlock: bigint;
-  cooldown: number;
-  rates: Rates;
-  vaultData: FetchVaultReturn;
-}): State {
-  const state = new State({
-    feeReceiver: feeReceiver,
-    decimals: BigInt(decimals),
-    asset: vaultData.asset,
-    cooldown,
-    rates,
-  });
-
-  for (let i = 0; i < events.length; i++) {
-    state.processEvent({
-      event: events[i] as { __typename: string; blockNumber: bigint },
-      fromBlock,
-    });
-  }
-  return state;
-}
 
 async function getHistoricBalances({
   events,
@@ -139,7 +99,6 @@ async function getHistoricBalances({
     const currentBlock = events[i].blockNumber;
     const nextBlock = events[i + 1] ? events[i + 1].blockNumber : maxUint256;
 
-    // if we are done with the block, we can check the state
     if (currentBlock != nextBlock) {
       uniqueBlocks.push(currentBlock);
     }
@@ -156,7 +115,7 @@ async function getHistoricBalances({
   });
 
   const uniqueUsers = finalState.users();
-
+  //     blocknumber -> address --> balance
   const result: Record<string, Record<string, bigint>> = {};
 
   await Promise.all(
@@ -181,4 +140,36 @@ async function getHistoricBalances({
   );
 
   return result;
+}
+
+function getFinalState({
+  events,
+  feeReceiver,
+  decimals,
+  fromBlock,
+  cooldown,
+  rates,
+  vaultData,
+}: {
+  events: EventsArray;
+  feeReceiver: Address;
+  decimals: number;
+  fromBlock: bigint;
+  cooldown: number;
+  rates: Rates;
+  vaultData: FetchVaultReturn;
+}): Vault {
+  const state = new Vault({
+    feeReceiver: feeReceiver,
+    decimals: BigInt(decimals),
+    asset: vaultData.asset,
+    cooldown,
+    rates,
+  });
+  state.processEvents({
+    events: events as { __typename: string; blockNumber: bigint }[],
+    fromBlock,
+  });
+
+  return state;
 }
