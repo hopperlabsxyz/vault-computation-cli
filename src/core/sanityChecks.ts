@@ -1,4 +1,4 @@
-import type { VaultEventsQuery } from "gql/graphql";
+import type { VaultEventsQuery } from "../../gql/graphql";
 
 // This function checks some element to make sure the data are sain
 export function sanityChecks({

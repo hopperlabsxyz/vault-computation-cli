@@ -5,7 +5,7 @@ const config: CodegenConfig = {
   schema: process.env["MAINNET_SUBGRAPH_URL"],
   documents: ["src/**/*.tsx", "src/**/*.ts"],
   generates: {
-    "src/gql/": {
+    "gql/": {
       preset: "client",
       config: {
         avoidOptionals: true, // Avoid optional types unless required

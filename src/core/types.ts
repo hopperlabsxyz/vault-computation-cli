@@ -1,4 +1,4 @@
-import type { VaultEventsQuery } from "gql/graphql";
+import type { VaultEventsQuery } from "../../gql/graphql";
 import type { Address } from "viem";
 import type { Vault } from "types/Vault";
 import type { Dot } from "./pointTracker";
@@ -95,7 +95,7 @@ export interface ProcessVaultReturn {
       balance: number;
       cashback: number;
       fees: number;
-      points: Record<string, bigint>;
+      points: Record<string, number>;
     }
   >;
   periodFees: PeriodFees;

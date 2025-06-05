@@ -10,7 +10,7 @@ import type {
   Transfer,
   RatesUpdated,
   FeeReceiverUpdated,
-} from "gql/graphql";
+} from "../../gql/graphql";
 
 import { erc20Abi, maxUint256, zeroAddress, type Address } from "viem";
 import type { ReferralConfig, ReferralCustom } from "types/Vault";

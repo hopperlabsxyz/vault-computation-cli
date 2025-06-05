@@ -113,7 +113,7 @@ function convertToCSV(vault: {
       balance: number;
       fees: number;
       cashback: number;
-      points: Record<string, bigint>;
+      points: Record<string, number>;
     }
   >;
 }) {
@@ -136,7 +136,7 @@ function convertToCSV(vault: {
 }
 
 function pointsToCsv(
-  points: Record<string, bigint>,
+  points: Record<string, number>,
   pointsName: string[]
 ): string {
   const a = pointsName.reduce((prev, cur) => {

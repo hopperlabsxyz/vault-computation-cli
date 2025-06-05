@@ -1,4 +1,4 @@
-import type { Referral } from "gql/graphql";
+import type { Referral } from "../../gql/graphql";
 import { type Address } from "viem";
 
 export type Vault = {

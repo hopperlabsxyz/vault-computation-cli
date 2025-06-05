@@ -5,7 +5,7 @@ import { maxUint256, type Address } from "viem";
 import { fetchVaultTransfers } from "utils/fetchTransfer";
 import { fetchVaultTotalAssetsUpdated } from "utils/fetchVaultTotalAssetsUpdated";
 import type { Command } from "@commander-js/extra-typings";
-import type { Transfer } from "gql/graphql";
+import type { Transfer } from "../../gql/graphql";
 
 export function setBlocksCommand(command: Command) {
   command

@@ -1,4 +1,4 @@
-import type { Transfer } from "gql/graphql";
+import type { Transfer } from "../../gql/graphql";
 import { type Address } from "viem";
 import type {
   DealEvent,
