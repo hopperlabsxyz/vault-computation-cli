@@ -8,21 +8,31 @@ import { fetchVaultEvents } from "utils/fetchVaultEvents";
 export async function processVault({
   vault,
   readable,
-  deals,
+  deals = {},
   toBlock,
   fromBlock,
-  rates,
+  rates = {
+    feeRebateRate: 0,
+    feeRewardRate: 0,
+  },
   points,
+  strictBlockNumberMatching = true,
 }: ProcessVaultParams): Promise<ProcessVaultReturn> {
   console.log(`Loading vault ${vault.address} on chain ${vault.chainId}`);
 
   const vaultEvents = await fetchVaultEvents({
     chainId: vault.chainId,
     vaultAddress: vault.address,
-    toBlock: BigInt(toBlock),
+    toBlock: toBlock ? BigInt(toBlock) : undefined,
   });
 
-  sanityChecks({ events: vaultEvents, fromBlock, toBlock });
+  if (strictBlockNumberMatching) {
+    sanityChecks({
+      events: vaultEvents,
+      fromBlock: fromBlock || 0n,
+      toBlock: toBlock || BigInt(Infinity),
+    });
+  }
 
   const vaultState = await generateVault({
     vault,
@@ -41,7 +51,7 @@ export async function processVault({
 
   vaultState.processEvents({
     events: events as { __typename: string; blockNumber: bigint }[],
-    distributeFeesFromBlock: fromBlock,
+    distributeFeesFromBlock: fromBlock || 0n,
   });
 
   // now we can compute the rebate users can get

@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { preprocessEvents } from "core/preprocessEvents";
 import { sanityChecks } from "core/sanityChecks";
-import { fetchVault } from "utils/fetchVault";
+import { generateVault } from "core/vault";
 import { fetchVaultEvents } from "utils/fetchVaultEvents";
 
 test("events of same blocknumber must have growing logIndex", async () => {
@@ -9,10 +9,12 @@ test("events of same blocknumber must have growing logIndex", async () => {
   const chainId = 1;
   const fromBlock = 21142252n;
   const toBlock = 22011758n;
-  const vault = await fetchVault({
-    address,
-    chainId,
-    block: fromBlock,
+
+  const vault = await generateVault({
+    vault: {
+      address,
+      chainId,
+    },
   });
   const vaultEvents = await fetchVaultEvents({
     chainId,
@@ -27,11 +29,6 @@ test("events of same blocknumber must have growing logIndex", async () => {
       silo: vault.silo,
       vault: address,
     },
-    referralRates: {
-      feeRewardRate: 0,
-      feeRebateRate: 0,
-    },
-    deals: {},
   });
   const eventsByBlockNumber: Record<number, number[]> = {};
   for (let i = 0; i < events.length; i++) {

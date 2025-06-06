@@ -4,7 +4,6 @@ import { sanityChecks } from "core/sanityChecks";
 import { generateVault } from "core/vault";
 import { totalBalanceOf } from "utils/onchain-calls";
 import { publicClient } from "lib/publicClient";
-import { fetchVault, type FetchVaultReturn } from "utils/fetchVault";
 import { fetchVaultEvents } from "utils/fetchVaultEvents";
 import { formatUnits, maxUint256, type Address, type PublicClient } from "viem";
 
@@ -17,11 +16,6 @@ test(
     const chainId = 1;
     const fromBlock = 21142252n;
     const toBlock = 22624283n;
-    const vaultData = await fetchVault({
-      address,
-      chainId,
-      block: fromBlock,
-    });
     const vaultEvents = await fetchVaultEvents({
       chainId,
       vaultAddress: address,
@@ -29,22 +23,21 @@ test(
     });
     sanityChecks({ events: vaultEvents, fromBlock, toBlock });
     const client = publicClient[chainId];
+    const vault = await generateVault({
+      vault: {
+        address,
+        chainId,
+      },
+    });
     let events = preprocessEvents({
       events: vaultEvents,
       addresses: {
-        silo: vaultData.silo,
+        silo: vault.silo,
         vault: address,
       },
       referralRates: {
         feeRewardRate: 15,
         feeRebateRate: 5,
-      },
-      deals: {},
-    });
-    const vault = await generateVault({
-      vault: {
-        address,
-        chainId,
       },
     });
 
@@ -53,7 +46,6 @@ test(
       address,
       client,
       fromBlock,
-      vaultData,
     });
 
     vault.processEvents({
@@ -65,9 +57,9 @@ test(
           const balance = account.getBalance();
 
           const realTotal = historicBalance[blockNumber.toString()][user];
-          expect(Number(formatUnits(balance, vaultData.decimals))).toBeCloseTo(
-            Number(formatUnits(realTotal, vaultData.decimals)),
-            vaultData.decimals - 1
+          expect(Number(formatUnits(balance, vault.decimals))).toBeCloseTo(
+            Number(formatUnits(realTotal, vault.decimals)),
+            vault.decimals - 1
           );
         }
       },
@@ -83,7 +75,6 @@ async function getHistoricBalances({
   client,
 }: {
   events: EventsArray;
-  vaultData: FetchVaultReturn;
   fromBlock: bigint;
   address: Address;
   client: PublicClient;

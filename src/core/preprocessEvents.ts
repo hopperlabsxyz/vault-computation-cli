@@ -11,7 +11,10 @@ import type {
 
 export function preprocessEvents({
   events,
-  referralRates,
+  referralRates = {
+    feeRebateRate: 0,
+    feeRewardRate: 0,
+  },
   addresses,
   deals,
   points,
