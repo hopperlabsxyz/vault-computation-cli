@@ -1,4 +1,5 @@
 import type { Command } from "@commander-js/extra-typings";
+import { DAY_IN_SECONDS } from "../constants";
 import type { Dot } from "core/pointTracker";
 
 export function setInterpolateCommand(command: Command) {
@@ -10,10 +11,18 @@ export function setInterpolateCommand(command: Command) {
       "-o, --output",
       "Will save the result next to origin file with interpolate at the end of the name of the file"
     )
-    .option("-f, --from-block <number>", "Perform the interpolation from")
+    .requiredOption(
+      "-f, --from-timestamp <number>",
+      "Perform the interpolation from this timestamp"
+    )
+    .requiredOption(
+      "-t, --to-timestamp <number>",
+      "Stop interpolation at this timestamp"
+    )
     .option(
-      "-t, --to-block <number>",
-      "Starting at block number. Default to the vault inception block "
+      "--frequency <number>",
+      "Time between each points added, in second. Default is one day",
+      DAY_IN_SECONDS.toString()
     )
     .addHelpText(
       "after",
@@ -26,25 +35,40 @@ Examples:
       console.log(args);
       const fileName = args.split("/").slice(-1)[0].slice(0, -4);
       const pointsRaw = (await Bun.file(args).text()).split("\n").slice(1);
+      const toTime = Number(options.toTimestamp);
+      const fromTime = Number(options.fromTimestamp);
 
       let points: Dot[] = [];
-      let tempPoints: Dot[] = [];
+      let fromDot: Dot | undefined = undefined;
+      let toDot: Dot | undefined = undefined;
       for (const entry of pointsRaw) {
         const line = entry.split(",");
-
         if (!line) continue;
-        tempPoints.push({
+        const dot: Dot = {
           timestamp: Number(line[0]),
           amount: Number(line[1]),
-        });
-        if (tempPoints.length == 2) {
-          points = interpolateEveryX(
-            tempPoints[0],
-            tempPoints[1],
-            24 * 60 * 60
+        };
+
+        if (fromTime == dot.timestamp) {
+          fromDot = dot;
+        } else if (toTime == dot.timestamp) {
+          toDot = dot;
+          if (fromDot! == undefined)
+            throw new Error(
+              'From timestamp doesn\'t exist or is higher than "to" timestamp'
+            );
+          const interpolatedPoints = interpolateEveryX(
+            fromDot,
+            toDot,
+            Number(options.frequency)
           );
+          points.push(...interpolatedPoints);
+        } else if (dot.timestamp < fromTime || dot.timestamp > toTime) {
+          points.push(dot);
         }
       }
+      if (fromDot == undefined) throw new Error("From timestamp not valid");
+      if (toDot == undefined) throw new Error("To timestamp not valid");
       const csv = convertToCSVPoints(points, fileName);
       if (options.output) {
         try {

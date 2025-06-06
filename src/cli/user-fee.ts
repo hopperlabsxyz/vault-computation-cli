@@ -3,7 +3,7 @@ import { mergeDeals, parseDeals, type AllDeals } from "parsing/parseDeals";
 import { parseArguments } from "utils/parseArguments";
 import type { Address } from "viem";
 import type { Command } from "@commander-js/extra-typings";
-import type { Deals, Point } from "core/types";
+import type { Deals } from "core/types";
 
 export function setUserFeeCommand(command: Command) {
   command
@@ -55,7 +55,6 @@ Example:
       const vault = parseArguments(args);
 
       let deals: AllDeals = {};
-      let points: Point[] = [];
 
       // prepare deals object
       if (options.deals) deals = await parseDeals(options.deals);
@@ -63,11 +62,8 @@ Example:
         deals[0]?.["0x0"] || {}, // those are wildcard deals
         deals[vault.chainId]?.[vault.address.toLowerCase() as Address] || {} // those are vault level deals
       );
-      // if (options.points) points = await parsePoints(options.points);
 
       const result = await processVault({
-        fromBlock: BigInt(options!.fromBlock!),
-        toBlock: BigInt(options!.toBlock!),
         deals: vaultDeals,
         readable: options!.readable!,
         rates: {
@@ -75,7 +71,7 @@ Example:
           feeRewardRate: Number(options!.feeRewardRate!),
         },
         vault,
-        points,
+        strictBlockNumberMatching: true,
       });
 
       const csv = convertToCSV(result);

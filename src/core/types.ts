@@ -56,7 +56,7 @@ export type Deals = Record<Address, ReferralRates>;
 export interface PreProcessingParams {
   events: VaultEventsQuery;
   addresses: VaultAddrresses;
-  referralRates: ReferralRates;
+  referralRates?: ReferralRates;
   deals?: Deals;
   points?: Point[];
 }
@@ -75,11 +75,12 @@ export interface ProcessEventsParams {
 export interface ProcessVaultParams {
   vault: Vault;
   readable: boolean;
-  deals: Record<Address, ReferralRates>;
+  deals?: Record<Address, ReferralRates>;
   points?: Point[];
-  fromBlock: bigint;
-  toBlock: bigint;
-  rates: ReferralRates;
+  fromBlock?: bigint;
+  toBlock?: bigint;
+  rates?: ReferralRates;
+  strictBlockNumberMatching?: boolean;
 }
 
 export interface ProcessVaultReturn {

@@ -2,7 +2,6 @@ import { expect, test } from "bun:test";
 import { preprocessEvents } from "core/preprocessEvents";
 import { sanityChecks } from "core/sanityChecks";
 import { generateVault } from "core/vault";
-import { fetchVault } from "utils/fetchVault";
 import { fetchVaultEvents } from "utils/fetchVaultEvents";
 
 test("check total fees are consistent all attributed fees", async () => {
@@ -15,24 +14,23 @@ test("check total fees are consistent all attributed fees", async () => {
     vaultAddress: address,
     toBlock,
   });
-  const vaultData = await fetchVault({ address, chainId, block: fromBlock });
   sanityChecks({ events: vaultEvents, fromBlock, toBlock });
+
+  const vault = await generateVault({
+    vault: {
+      address,
+      chainId,
+    },
+  });
   let events = preprocessEvents({
     events: vaultEvents,
     addresses: {
-      silo: vaultData.silo,
+      silo: vault.silo,
       vault: address,
     },
     referralRates: {
       feeRewardRate: 15,
       feeRebateRate: 5,
-    },
-    deals: {},
-  });
-  const vault = await generateVault({
-    vault: {
-      address,
-      chainId,
     },
   });
 

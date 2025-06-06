@@ -11,18 +11,10 @@ export function setUserPointsCommand(command: Command) {
       "Calculate and generate fee reports for a specified vault, including referral rewards and rebates for all users"
     )
     .argument("chainId:VaultAddress")
-    .requiredOption(
-      "-f, --from-block <number>",
-      "Starting block number for fee computation (exclusive). Use 'find-blocks' command to find the appropriate block number"
-    )
-    .requiredOption(
-      "-t, --to-block <number>",
-      "Ending block number for fee computation (inclusive). Use 'find-blocks' command to find the appropriate block number"
-    )
     .option("-r, --readable", "Format the output in a human-readable format")
     .option(
       "-o, --output",
-      "Will save the result in output/user-fee in a file with following format: <chainId>-<vaultAddress>-<from-block>-<to-block>.csv"
+      "Will save the result in output/user-points in a file with following format: <chainId>-<vaultAddress>-<inputFileName>.csv"
     )
     .option(
       "--silent",
@@ -45,17 +37,13 @@ export function setUserPointsCommand(command: Command) {
 
       let points: Point[] = [];
 
+      if (options.points.slice(-4) != ".csv") throw new Error("");
+      const fileName = options.points.split("/").slice(-1);
       points = await parsePoints(options.points);
 
       const result = await processVault({
-        fromBlock: BigInt(options!.fromBlock!),
-        toBlock: BigInt(options!.toBlock!),
-        deals: {},
         readable: options!.readable!,
-        rates: {
-          feeRebateRate: 0,
-          feeRewardRate: 0,
-        },
+        strictBlockNumberMatching: false,
         vault,
         points,
       });
@@ -67,7 +55,7 @@ export function setUserPointsCommand(command: Command) {
       if (options.output) {
         try {
           const file = Bun.file(
-            `./output/user-points/${vault.chainId}-${vault.address}-${options.fromBlock}-${options.toBlock}.csv`
+            `./output/user-points/${vault.chainId}-${vault.address}-${fileName}`
           );
           await file.write(csv);
           console.log(`CSV report written to: ${file.name}`);
@@ -100,15 +88,12 @@ function convertToCSV(vault: {
     ""
   );
   const csvRows = [
-    `chainId,vault,wallet,balance,fees,pricePerShare,cashback${pointNamesString}`, // CSV header
-    ...Object.entries(vault.data).map(
-      ([address, { balance, fees, cashback, points }]) => {
-        let str = `${vault.chainId},${vault.address},${address},${balance},${fees}`;
-        str += `,${vault.pricePerShare},${cashback}`;
-        str += pointsToCsv(points, vault.pointNames);
-        return str;
-      }
-    ),
+    `chainId,vault,wallet${pointNamesString}`, // CSV header
+    ...Object.entries(vault.data).map(([address, { points }]) => {
+      let str = `${vault.chainId},${vault.address},${address}`;
+      str += pointsToCsv(points, vault.pointNames);
+      return str;
+    }),
   ];
   return csvRows.join("\n");
 }

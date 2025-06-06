@@ -1,11 +1,11 @@
 import { parseArguments } from "utils/parseArguments";
 import { publicClient } from "lib/publicClient";
 import type { Command } from "@commander-js/extra-typings";
-import { fetchVault } from "utils/fetchVault";
 import { preprocessEvents } from "core/preprocessEvents";
 import type { DepositRequest, DepositRequestCanceled } from "../../gql/graphql";
 import type { Address } from "viem";
 import { fetchVaultEvents } from "utils/fetchVaultEvents";
+import { generateVault } from "core/vault";
 
 export function setControllersCommand(command: Command) {
   command
@@ -32,24 +32,20 @@ Examples:
         await client.getBlock({ blockTag: "latest" })
       ).number.toString();
 
-      const vaultData = await fetchVault({
-        ...vault,
-        block: BigInt(toBlock),
-      });
       const vaultEvents = await fetchVaultEvents({
         chainId: vault.chainId,
         vaultAddress: vault.address,
         toBlock: BigInt(toBlock),
       });
 
+      const vaultState = await generateVault({
+        vault,
+      });
+
       let events = preprocessEvents({
-        referralRates: {
-          feeRebateRate: 0,
-          feeRewardRate: 0,
-        },
         events: vaultEvents,
         addresses: {
-          silo: vaultData.silo,
+          silo: vaultState.silo,
           vault: vault.address,
         },
       }).filter(
