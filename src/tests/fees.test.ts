@@ -38,7 +38,7 @@ test("check total fees are consistent all attributed fees", async () => {
 
   vault.processEvents({
     events: events as { __typename: string; blockNumber: bigint }[],
-    fromBlock,
+    distributeFeesFromBlock: fromBlock,
     blockEndHook: async (_: bigint) => {
       const accumulatedFeesAmongUsers = vault.accumulatedFeesSinceFromBlock();
       const totalFees = vault.accumulatedFees;

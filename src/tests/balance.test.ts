@@ -58,13 +58,11 @@ test(
 
     vault.processEvents({
       events: events as { __typename: string; blockNumber: bigint }[],
-      fromBlock,
+      distributeFeesFromBlock: fromBlock,
       blockEndHook: async (blockNumber: bigint) => {
-        for (const [user, account] of Object.entries(
-          vault.getAccountsDeepCopy()
-        )) {
+        for (const [user, account] of Object.entries(vault.getAccounts())) {
           if (user.toLowerCase() == vault.feeReceiver.toLowerCase()) continue;
-          const balance = account.balance;
+          const balance = account.getBalance();
 
           const realTotal = historicBalance[blockNumber.toString()][user];
           expect(Number(formatUnits(balance, vaultData.decimals))).toBeCloseTo(
@@ -155,7 +153,7 @@ async function getFinalState({
   });
   vault.processEvents({
     events: events as { __typename: string; blockNumber: bigint }[],
-    fromBlock,
+    distributeFeesFromBlock: fromBlock,
   });
 
   return vault;

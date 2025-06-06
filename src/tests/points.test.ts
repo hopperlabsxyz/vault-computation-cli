@@ -46,7 +46,7 @@ test("check balance match real data after each block", async () => {
 
   vault.processEvents({
     events: events as { __typename: string; blockNumber: bigint }[],
-    fromBlock,
+    distributeFeesFromBlock: fromBlock,
     blockEndHook: async (_: bigint) => {
       const accumulatedPoints = vault.totalPointsAmongUsers(
         mock_points[0].name

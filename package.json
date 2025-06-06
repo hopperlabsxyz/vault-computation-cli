@@ -9,6 +9,7 @@
   "scripts": {
     "help": "bun run index.ts help",
     "user-fee": "bun index.ts user-fee",
+    "user-points": "bun index.ts user-points",
     "period-fee": "bun index.ts period-fee",
     "find-blocks": "bun index.ts find-blocks",
     "find-claimable-controllers": "bun index.ts find-claimable-controllers",
