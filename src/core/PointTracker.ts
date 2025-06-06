@@ -35,7 +35,12 @@ export class PointTracker {
     } else this.points[point.name] = [];
 
     this.pushPoint(point);
-    return Number((point.amount - previousAmount).toFixed(0));
+    const diff = Number((point.amount - previousAmount).toFixed(0));
+    if (diff < 0)
+      throw new Error(
+        `New Point record decrease the amount of points: timestamp ${point.timestamp}`
+      );
+    return diff;
   }
 
   /**

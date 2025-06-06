@@ -88,7 +88,7 @@ function convertToCSV(vault: {
     ""
   );
   const csvRows = [
-    `chainId,vault,wallet,${pointNamesString}`, // CSV header
+    `chainId,vault,wallet${pointNamesString}`, // CSV header
     ...Object.entries(vault.data).map(([address, { points }]) => {
       let str = `${vault.chainId},${vault.address},${address}`;
       str += pointsToCsv(points, vault.pointNames);
