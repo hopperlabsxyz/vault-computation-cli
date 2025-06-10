@@ -108,7 +108,7 @@ function interpolateEveryX(start: Dot, end: Dot, seconds: number): Dot[] {
     const amount = amount0 + slope * (x - timestamp0);
     points.push({
       timestamp: x,
-      amount,
+      amount: Number(amount.toFixed(0)),
     });
 
     if (x + seconds > timestamp1) {

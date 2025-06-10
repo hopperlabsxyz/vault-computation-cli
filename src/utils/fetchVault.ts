@@ -1,6 +1,6 @@
 import { LagoonVaultAbi } from "abis/VaultABI";
 import { publicClient } from "../lib/publicClient";
-import { erc20Abi, type Address } from "viem";
+import { erc20Abi, getAddress, type Address } from "viem";
 import { fetchFeeCooldown } from "./fetchFeeCooldown";
 import { fetchFeeRates } from "./fetchFeeRates";
 import type { Rates } from "core/types";
@@ -119,7 +119,7 @@ export async function fetchVault({
     fees,
     decimals,
     feesReceiver: roles.feeReceiver,
-    silo: ("0x" + BigInt(silo).toString(16)) as Address,
+    silo: getAddress("0x" + silo.slice(-40)),
     asset: {
       address: asset,
       decimals: assetDecimals,

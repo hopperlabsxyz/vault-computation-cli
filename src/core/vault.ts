@@ -205,7 +205,7 @@ class Vault {
     const { sender, owner, shares } = event;
     const receiver = owner;
     const controller = sender;
-    if (controller === receiver) return; // in this case the balance are already just
+    if (controller.toLowerCase() === receiver.toLowerCase()) return; // in this case the balance are already just
 
     this.getAndCreateAccount(receiver).increaseBalance(shares);
     this.getAndCreateAccount(controller).decreaseBalance(shares);
@@ -232,7 +232,7 @@ class Vault {
           userRequest!,
           sharesMinted,
           assetsDeposited,
-          SolidityMath.Rounding.Floor
+          SolidityMath.Rounding.Ceil
         )
       );
       // we don't update total supply because it will naturally be updated via the transfer
@@ -315,7 +315,9 @@ class Vault {
     // we decrement the balance of the sender
     if (event.from == zeroAddress)
       this.totalSupply += BigInt(event.value); // mint
-    else from.decreaseBalance(BigInt(event.value)); // transfer
+    else {
+      from.decreaseBalance(BigInt(event.value)); // transfer
+    }
     // we initiate the accounts if it is not
 
     if (event.to == zeroAddress)
