@@ -1,6 +1,6 @@
 # Fees Computation CLI
 
-A command-line tool for computing lagoon v0 vault data multiple blockchain networks (Ethereum, Base, Arbitrum, and Avalanche).
+A command-line tool for computing lagoon v0 vault data on multiple blockchain networks (Ethereum, Base, Arbitrum, and Avalanche).
 
 ## Features
 
@@ -10,7 +10,8 @@ A command-line tool for computing lagoon v0 vault data multiple blockchain netwo
 - Fee rebate calculations
 - OTC (Over-The-Counter) deals support
 - CSV report generation
-- Block range analysis
+- Points repartition
+- Points interpolation
 - Fee receiver transfer tracking
 
 ## Prerequisites
