@@ -10,7 +10,7 @@ export const computationProgram = new Command();
 
 computationProgram
   .name("fees-computation-cli")
-  .description("CLI to compute fees generated from LagoonProtocol")
+  .description("A general purpose cli to compute data of a vault using events")
   .version("0.0.1");
 
 setBlocksCommand(computationProgram);

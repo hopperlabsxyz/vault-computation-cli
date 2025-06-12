@@ -45,7 +45,7 @@ For Windows users, Bun can be installed using WSL (Windows Subsystem for Linux) 
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/fees-computation-cli.git
+git clone https://github.com/hopperlabsxyz/fees-computation-cli.git
 cd fees-computation-cli
 ```
 
@@ -55,13 +55,14 @@ cd fees-computation-cli
 bun install
 ```
 
-3. Create a `.env` file in the root directory with your RPC URLs:
+3. Create a `.env` file in the root directory with your RPC URLs and subgraph URLs:
 
 ```env
-RPC_URL_1=https://eth-mainnet.g.alchemy.com/v2/your-api-key
-RPC_URL_8453=https://mainnet.base.org
-RPC_URL_42161=https://arb-mainnet.g.alchemy.com/v2/your-api-key
-RPC_URL_43114=https://api.avax.network/ext/bc/C/rpc
+MAINNET_RPC_URL=https://eth-mainnet.g.alchemy.com/v2/your-api-key
+BASE_RPC_URL=https://mainnet.base.org
+AVALANCHE_RPC_URL=https://api.avax.network/ext/bc/C/rpc
+MAINNET_SUBGRAPH_URL=
+BASE_SUBGRAPH_URL=
 ```
 
 ## Available Commands
@@ -78,6 +79,12 @@ Identifies blocks where fee distributions and fee receiver transfers occurred fo
 - Blocks with fee receiver transfers
 - All events in chronological order with timestamps
 
+To know more:
+
+```bash
+bun run find-blocks --help
+```
+
 ### User Fee
 
 ```bash
@@ -92,6 +99,12 @@ Generates comprehensive fee reports per user for a vault, calculating:
 - Fee rebates
 - Price per share
 
+To know more:
+
+```bash
+bun run user-fee --help
+```
+
 ### User Points
 
 ```bash
@@ -104,6 +117,12 @@ Required options:
 
 - `--points <string>`: CSV file with point evolution data (format: timestamp,amount,name)
 
+To know more:
+
+```bash
+bun run user-points --help
+```
+
 ### Find Claimable Controllers
 
 ```bash
@@ -111,6 +130,24 @@ bun run find-claimable-controllers <chainId:VaultAddress> [options]
 ```
 
 Identifies all controllers (users) who have made deposit requests on the vault and haven't cancelled them. Useful for getting the arguments for the `claimSharesOnBehalf()` function.
+
+To know more:
+
+```bash
+bun run find-claimable-controllers --help
+```
+
+#### Usage Example in Smart Contract Interaction
+
+This list can be used directly as input to the Vault smart contract function:
+
+```solidity
+claimSharesOnBehalf(address[] controllers)
+```
+
+You can pass this list of addresses as an argument to `claimSharesOnBehalf()` in order to trigger the claiming process on behalf of these users.
+
+Make sure the caller has the permission to claim on behalf of these addresses.
 
 ### Period Fee
 
@@ -126,6 +163,12 @@ Generates detailed fee reports for specific periods between totalAssets updates.
 - Price per share
 - Timestamps for each period
 
+To know more:
+
+```bash
+bun run period-fee --help
+```
+
 ### Interpolate
 
 ```bash
@@ -134,132 +177,11 @@ bun run interpolate <csv file> [options]
 
 Performs linear interpolation on a CSV file containing time series points, generating intermediate points at specified intervals.
 
-## Claimable deposits addresses
-
-Find addresses on a vault that have claimable deposits.
+To know more:
 
 ```bash
-bun run find-claimable-controllers <chainId>:<vaultAddress> --from-block <number> [options]
+bun run interpolate --help
 ```
-
-Examples:
-
-```bash
-# Basic usage looks since vault inception block
-bun run find-claimable-controllers 1:0x07ed467acd4ffd13023046968b0859781cb90d9b
-
-# Using from block
-bun run find-claimable-controllers 1:0x07ed467acd4ffd13023046968b0859781cb90d9b --from-block 1000000
-
-```
-
-### Output
-
-The command returns a list of addresses — these are the controller (user) addresses that still have unclaimed shares in the specified vault.
-
-#### Example Output
-
-```text
-[
-  "0xAbC123...def",
-  "0x456DeF...789",
-  "0x789abc...123"
-]
-```
-
-#### Usage Example in Smart Contract Interaction
-
-This list can be used directly as input to the Vault smart contract function:
-
-```solidity
-claimSharesOnBehalf(address[] controllers)
-```
-
-You can pass this list of addresses as an argument to `claimSharesOnBehalf()` in order to trigger the claiming process on behalf of these users.
-
-Make sure the caller has permission to claim on behalf of these addresses.
-
-## Compute Fees
-
-Calculate fees for a specific vault within a block range:
-
-```bash
-bun run compute <chainId>:<vaultAddress> --from-block <number> --to-block <number> [options]
-```
-
-Options:
-
-- `-r, --readable`: Format output in human-readable format
-- `-o, --output <string>`: Output file path for CSV report
-- `-d, --deals <string>`: Path to OTC deals configuration file
-- `--fee-rebate-rate <number>`: Bips of fees to refund to referred users (default: 500)
-- `--fee-reward-rate <number>`: Bips of fees to distribute to referrers (default: 1500)
-
-Examples:
-
-```bash
-# Basic usage with block range
-bun run user-fee 1:0x07ed467acd4ffd13023046968b0859781cb90d9b --from-block 1000000 --to-block 2000000
-
-# With readable output and CSV export
-bun run user-fee 1:0x07ed467acd4ffd13023046968b0859781cb90d9b --from-block 1000000 --to-block 2000000 -r -o fees.csv
-
-# With OTC deals and custom fee rates
-bun run user-fee 1:0x07ed467acd4ffd13023046968b0859781cb90d9b --from-block 1000000 --to-block 2000000 -d deals.csv --fee-rebate-rate 1000 --fee-reward-rate 2000
-```
-
-## Find Blocks
-
-Find blocks containing nav updates and fee receiver transfers:
-
-```bash
-bun run find-blocks <chainId>:<vaultAddress> --from-block <number> --to-block <number>
-```
-
-This command will show you:
-
-- All blocks where nav update occurred
-- All blocks where fee receiver transfers occurred
-- Events are displayed in chronological order
-
-Example:
-
-```bash
-bun run find-blocks 1:0x07ed467acd4ffd13023046968b0859781cb90d9b --from-block 1000000 --to-block 2000000
-```
-
-Output example:
-
-```
-From 1000000
-
-Events in chronological order:
-1000001 - Fee distribution
-1000001 - Fee receiver transfer
-1000002 - Fee distribution
-1000004 - Fee receiver transfer
-1000007 - Fee receiver transfer
-
-To 1001000
-```
-
-### OTC Deals Format
-
-The OTC deals file should be a CSV with the following format:
-
-```csv
-chainId,vault,ownerAddress,dealPercentage
-1,0x123...,0x456...,800
-8453,0x789...,0xabc...,500
-```
-
-- `chainId`: Network chain ID (1 for Ethereum, 8453 for Base, etc.)
-- `vault`: Address of the vault
-- `ownerAddress`: Address of the deal owner
-- `dealPercentage`: Deal percentage in basis points (e.g., 800 for 8%)
-
-If you put chainId 0 and vault 0x0 for a deal, it is considered as a wildcard and the tool will use it for all chains.
-Any other value will be used for the specific chain.
 
 # Project Structure
 
