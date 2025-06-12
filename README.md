@@ -1,6 +1,6 @@
 # Fees Computation CLI
 
-A command-line tool for computing and analyzing fees across multiple blockchain networks (Ethereum, Base, Arbitrum, and Avalanche). This tool helps track and analyze fee distributions, referral rewards, and rebates for vaults.
+A command-line tool for computing lagoon v0 vault data multiple blockchain networks (Ethereum, Base, Arbitrum, and Avalanche).
 
 ## Features
 
