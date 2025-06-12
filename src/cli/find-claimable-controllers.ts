@@ -12,7 +12,7 @@ export function setControllersCommand(command: Command) {
     .command("find-claimable-controllers")
     .argument("chainId:VaultAddress")
     .description(
-      "Finds all controllers that have shares still claimable on a vault. Use this command if you want to get the args for claimSharesOnBehalf()"
+      "Finds all controllers that made a deposit request. Use this command if you want to get the args for claimSharesOnBehalf()"
     )
     .option(
       "--from-block <number>",

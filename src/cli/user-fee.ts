@@ -9,7 +9,7 @@ export function setUserFeeCommand(command: Command) {
   command
     .command("user-fee")
     .description(
-      "Calculate and generate fee reports for a specified vault, including referral rewards and rebates for all users"
+      "Calculate and generate fee reports for a specified vault, including referral rewards and rebates for all users. The output is a csv with the following columns: chainId, vault, wallet, balance, fees, pricePerShare, cashback."
     )
     .argument("chainId:VaultAddress")
     .requiredOption(
@@ -98,42 +98,24 @@ function convertToCSV(vault: {
   chainId: number;
   address: string;
   pricePerShare: number;
-  pointNames: string[];
   data: Record<
     string,
     {
       balance: number;
       fees: number;
       cashback: number;
-      points: Record<string, number>;
     }
   >;
 }) {
-  const pointNamesString = vault.pointNames.reduce(
-    (prev, cur) => `${prev},${cur}`,
-    ""
-  );
   const csvRows = [
-    `chainId,vault,wallet,balance,fees,pricePerShare,cashback${pointNamesString}`, // CSV header
+    `chainId,vault,wallet,balance,fees,pricePerShare,cashback$`, // CSV header
     ...Object.entries(vault.data).map(
-      ([address, { balance, fees, cashback, points }]) => {
+      ([address, { balance, fees, cashback }]) => {
         let str = `${vault.chainId},${vault.address},${address},${balance},${fees}`;
         str += `,${vault.pricePerShare},${cashback}`;
-        str += pointsToCsv(points, vault.pointNames);
         return str;
       }
     ),
   ];
   return csvRows.join("\n");
-}
-
-function pointsToCsv(
-  points: Record<string, number>,
-  pointsName: string[]
-): string {
-  const a = pointsName.reduce((prev, cur) => {
-    const value = points[cur] || 0n;
-    return `${prev},${value}`;
-  }, "");
-  return a;
 }

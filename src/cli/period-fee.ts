@@ -8,7 +8,7 @@ export function setPeriodFeeCommand(command: Command) {
   command
     .command("period-fee")
     .description(
-      "Calculate and generate fee reports for a specific between 2 updates of totalAssets (period)."
+      "Calculate and generate fee reports for a specific period between 2 updates of totalAssets (period)."
     )
     .argument("chainId:VaultAddress")
     .requiredOption(

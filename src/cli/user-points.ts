@@ -8,7 +8,7 @@ export function setUserPointsCommand(command: Command) {
   command
     .command("user-points")
     .description(
-      "Calculate and generate fee reports for a specified vault, including referral rewards and rebates for all users"
+      "Calculate and generate points repartitions for a specified vault. The output is a csv with the following columns: chainId, vault, wallet, points. For more accuracy, data timestamp should be right before totalAssets updates."
     )
     .argument("chainId:VaultAddress")
     .option("-r, --readable", "Format the output in a human-readable format")
