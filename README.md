@@ -72,7 +72,11 @@ RPC_URL_43114=https://api.avax.network/ext/bc/C/rpc
 bun run find-blocks <chainId:VaultAddress> [options]
 ```
 
-Find all blocks where fee distributions occurred for a specific vault. Use this command to determine the block range for fee computation.
+Identifies blocks where fee distributions and fee receiver transfers occurred for a specific vault. This command helps determine the block range for fee computation by showing:
+
+- Blocks with total assets updates
+- Blocks with fee receiver transfers
+- All events in chronological order with timestamps
 
 ### User Fee
 
@@ -80,7 +84,13 @@ Find all blocks where fee distributions occurred for a specific vault. Use this 
 bun run user-fee <chainId:VaultAddress> [options]
 ```
 
-Calculate and generate fee reports for a specified vault, including referral rewards and rebates for all users.
+Generates comprehensive fee reports per user for a vault, calculating:
+
+- User balances
+- Fee amounts
+- Referral rewards
+- Fee rebates
+- Price per share
 
 ### User Points
 
@@ -88,7 +98,11 @@ Calculate and generate fee reports for a specified vault, including referral rew
 bun run user-points <chainId:VaultAddress> [options]
 ```
 
-Calculate and generate reports for a specified vault, including referral rewards and rebates for all users.
+Calculates and distributes points to shareholders proportionally based on their holdings. Points are distributed according to a time series specified in a CSV file.
+
+Required options:
+
+- `--points <string>`: CSV file with point evolution data (format: timestamp,amount,name)
 
 ### Find Claimable Controllers
 
@@ -96,7 +110,7 @@ Calculate and generate reports for a specified vault, including referral rewards
 bun run find-claimable-controllers <chainId:VaultAddress> [options]
 ```
 
-Finds all controllers that made deposit request on a specific period. Use this command if you want to get the arguments for claimSharesOnBehalf().
+Identifies all controllers (users) who have made deposit requests on the vault and haven't cancelled them. Useful for getting the arguments for the `claimSharesOnBehalf()` function.
 
 ### Period Fee
 
@@ -104,7 +118,13 @@ Finds all controllers that made deposit request on a specific period. Use this c
 bun run period-fee <chainId:VaultAddress> [options]
 ```
 
-Calculate and generate fee reports for a specific period between 2 updates of totalAssets.
+Generates detailed fee reports for specific periods between totalAssets updates. The report includes:
+
+- Management fees
+- Performance fees
+- Management and performance rates
+- Price per share
+- Timestamps for each period
 
 ### Interpolate
 
@@ -112,7 +132,7 @@ Calculate and generate fee reports for a specific period between 2 updates of to
 bun run interpolate <csv file> [options]
 ```
 
-Interpolate a CSV of points.
+Performs linear interpolation on a CSV file containing time series points, generating intermediate points at specified intervals.
 
 ## Claimable deposits addresses
 
