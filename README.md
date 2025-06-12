@@ -64,6 +64,56 @@ RPC_URL_42161=https://arb-mainnet.g.alchemy.com/v2/your-api-key
 RPC_URL_43114=https://api.avax.network/ext/bc/C/rpc
 ```
 
+## Available Commands
+
+### Find Blocks
+
+```bash
+bun run find-blocks <chainId:VaultAddress> [options]
+```
+
+Find all blocks where fee distributions occurred for a specific vault. Use this command to determine the block range for fee computation.
+
+### User Fee
+
+```bash
+bun run user-fee <chainId:VaultAddress> [options]
+```
+
+Calculate and generate fee reports for a specified vault, including referral rewards and rebates for all users.
+
+### User Points
+
+```bash
+bun run user-points <chainId:VaultAddress> [options]
+```
+
+Calculate and generate reports for a specified vault, including referral rewards and rebates for all users.
+
+### Find Claimable Controllers
+
+```bash
+bun run find-claimable-controllers <chainId:VaultAddress> [options]
+```
+
+Finds all controllers that made deposit request on a specific period. Use this command if you want to get the arguments for claimSharesOnBehalf().
+
+### Period Fee
+
+```bash
+bun run period-fee <chainId:VaultAddress> [options]
+```
+
+Calculate and generate fee reports for a specific period between 2 updates of totalAssets.
+
+### Interpolate
+
+```bash
+bun run interpolate <csv file> [options]
+```
+
+Interpolate a CSV of points.
+
 ## Claimable deposits addresses
 
 Find addresses on a vault that have claimable deposits.
