@@ -68,6 +68,13 @@ BASE_SUBGRAPH_URL=
 
 ## Available Commands
 
+You can list all available commands by running:
+
+```bash
+bun run help
+```
+
+
 ### Find Blocks
 
 ```bash
