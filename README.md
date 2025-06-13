@@ -1,4 +1,4 @@
-# Fees Computation CLI
+# Vault Computation CLI
 
 A command-line tool for computing lagoon v0 vault data on multiple blockchain networks (Ethereum, Base, Arbitrum, and Avalanche).
 
