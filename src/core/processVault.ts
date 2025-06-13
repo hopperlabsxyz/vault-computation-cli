@@ -1,4 +1,4 @@
-import { formatUnits } from "viem";
+import { formatUnits, maxUint256 } from "viem";
 import { generateVault } from "./vault";
 import { sanityChecks } from "./sanityChecks";
 import type { ProcessVaultParams, ProcessVaultReturn } from "./types";
@@ -30,7 +30,7 @@ export async function processVault({
     sanityChecks({
       events: vaultEvents,
       fromBlock: fromBlock || 0n,
-      toBlock: toBlock || BigInt(Infinity),
+      toBlock: toBlock || BigInt(maxUint256),
     });
   }
 

@@ -16,7 +16,7 @@ export function setControllersCommand(command: Command) {
     )
     .option(
       "--from-block <number>",
-      "Starting at block number. Default to the vault inception block "
+      "Starting at block number. Default to the vault inception block"
     )
     .addHelpText(
       "after",

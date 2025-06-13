@@ -13,11 +13,12 @@ export function sanityChecks({
   const updatedTotalAssets = events.totalAssetsUpdateds;
   if (updatedTotalAssets.length == 0) throw new Error("0 totalAssetsUpdateds");
 
-  const found = updatedTotalAssets.find(
-    (event) => BigInt(event.blockNumber) === fromBlock
-  );
+  const found = updatedTotalAssets.find((event) => {
+    console.log(BigInt(event.blockNumber), fromBlock);
+    return BigInt(event.blockNumber) === fromBlock;
+  });
   if (!found) {
-    throw new Error(`invalid fromBlock, run bun `);
+    throw new Error(`invalid fromBlock, run bun find-blocks `);
   }
   const lastBlock = BigInt(updatedTotalAssets[0].blockNumber);
   if (lastBlock != toBlock)

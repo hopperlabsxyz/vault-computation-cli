@@ -9,7 +9,8 @@ export function setUserFeeCommand(command: Command) {
   command
     .command("user-fee")
     .description(
-      "Calculate and generate fee reports for a specified vault, including referral rewards and rebates for all users. The output is a csv with the following columns: chainId, vault, wallet, balance, fees, pricePerShare, cashback."
+      "Calculate and generate fee reports for a specified vault, including referral rewards and rebates for all users. The output is a csv with the following columns: chainId, vault, wallet, balance, fees, pricePerShare, cashback.\
+ This command require precise block input. The fromBlock and the toBlock must correspond to totalAssets updates blockNumber."
     )
     .argument("chainId:VaultAddress")
     .requiredOption(
@@ -71,6 +72,8 @@ Example:
           feeRewardRate: Number(options!.feeRewardRate!),
         },
         vault,
+        fromBlock: BigInt(options.fromBlock),
+        toBlock: BigInt(options.fromBlock),
         strictBlockNumberMatching: true,
       });
 
