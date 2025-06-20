@@ -14,7 +14,6 @@ export function sanityChecks({
   if (updatedTotalAssets.length == 0) throw new Error("0 totalAssetsUpdateds");
 
   const found = updatedTotalAssets.find((event) => {
-    console.log(BigInt(event.blockNumber), fromBlock);
     return BigInt(event.blockNumber) === fromBlock;
   });
   if (!found) {

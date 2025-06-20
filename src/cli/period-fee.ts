@@ -65,7 +65,9 @@ Example:
         },
         options.readable
       );
-
+      if (!options.silent) {
+        console.log(csv);
+      }
       if (options.output) {
         try {
           const file = Bun.file(
@@ -78,9 +80,6 @@ Example:
           console.log("CSV content:");
           console.log(csv);
         }
-      }
-      if (!options.silent) {
-        console.log(csv);
       }
     });
 }
