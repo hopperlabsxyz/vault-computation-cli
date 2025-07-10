@@ -13,6 +13,7 @@ A command-line tool for computing lagoon v0 vault data on multiple blockchain ne
 - Points repartition
 - Points interpolation
 - Fee receiver transfer tracking
+- User balance tracking
 
 ## Prerequisites
 
@@ -74,6 +75,25 @@ You can list all available commands by running:
 bun run help
 ```
 
+### User Balance
+
+```bash
+bun run user-balance <chainId:VaultAddress> [options]
+```
+
+Generates a balance report for a specified vault, including all users balance.
+
+Required options:
+
+- `--to-block <number>`: Ending block number for fee computation (inclusive). Use 'find-blocks' command to find the appropriate block number
+- `-o, --output`: Will save the result in output/user-balance in a csv file with following name: <chainId>-<vaultAddress>-<to-block>.csv
+- `--silent`: This will prevent the printing of the output on stdout
+
+To know more:
+
+```bash
+bun run user-balance --help
+```
 
 ### Find Blocks
 
