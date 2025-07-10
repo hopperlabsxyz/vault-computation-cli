@@ -77,9 +77,10 @@ function convertToCSV(vault: {
   const csvRows = [
     `chainId,vault,wallet,balance`, // CSV header
     ...Object.entries(vault.data).map(([address, { balance }]) => {
+      if (balance === 0) return "";
       let str = `${vault.chainId},${vault.address},${address},${balance}`;
       return str;
     }),
   ];
-  return csvRows.join("\n");
+  return csvRows.filter((row) => row !== "").join("\n");
 }

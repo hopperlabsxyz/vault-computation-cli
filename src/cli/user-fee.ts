@@ -114,11 +114,12 @@ function convertToCSV(vault: {
     `chainId,vault,wallet,balance,fees,pricePerShare,cashback$`, // CSV header
     ...Object.entries(vault.data).map(
       ([address, { balance, fees, cashback }]) => {
+        if (balance === 0) return "";
         let str = `${vault.chainId},${vault.address},${address},${balance},${fees}`;
         str += `,${vault.pricePerShare},${cashback}`;
         return str;
       }
     ),
   ];
-  return csvRows.join("\n");
+  return csvRows.filter((row) => row !== "").join("\n");
 }
