@@ -5,6 +5,7 @@ import { setControllersCommand } from "cli/find-claimable-controllers";
 import { setPeriodFeeCommand } from "cli/period-fee";
 import { setInterpolateCommand } from "cli/interpolate";
 import { setUserPointsCommand } from "cli/user-points";
+import { setUserBalanceCommand } from "cli/user-balance";
 
 export const computationProgram = new Command();
 
@@ -19,5 +20,6 @@ setUserPointsCommand(computationProgram);
 setControllersCommand(computationProgram);
 setPeriodFeeCommand(computationProgram);
 setInterpolateCommand(computationProgram);
+setUserBalanceCommand(computationProgram);
 
 computationProgram.parse();
