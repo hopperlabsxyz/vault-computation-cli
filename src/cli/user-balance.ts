@@ -1,17 +1,18 @@
 import { processVault } from "core/processVault";
 import { parseArguments } from "utils/parseArguments";
 import type { Command } from "@commander-js/extra-typings";
+import { publicClient } from "lib/publicClient";
 
 export function setUserBalanceCommand(command: Command) {
   command
     .command("user-balance")
     .description(
-      "Calculate and generate a balance report for a specified vault, including all users balance."
+      "Calculate and generate a balance report for a specified vault, including all users balance. If no block is provided, the latest is used."
     )
     .argument("chainId:VaultAddress")
     .option("-r, --readable", "Format the output in a human-readable format")
     .option(
-      "-t, --to-block <number>",
+      "-b, --block <number>",
       "Ending block number for fee computation (inclusive). Use 'find-blocks' command to find the appropriate block number"
     )
     .option(
@@ -32,12 +33,14 @@ Example:
     )
     .action(async (args, options) => {
       const vault = parseArguments(args);
-
+      const client = publicClient[vault.chainId];
+      if (!options.block)
+        options.block = (await client.getBlockNumber()).toString();
       const result = await processVault({
         deals: {},
         readable: options!.readable!,
         vault,
-        toBlock: options.toBlock ? BigInt(options.toBlock) : undefined,
+        toBlock: BigInt(options.block),
         strictBlockNumberMatching: false,
       });
 
@@ -48,7 +51,7 @@ Example:
       if (options.output) {
         try {
           const file = Bun.file(
-            `./output/user-balance/${vault.chainId}-${vault.address}-${options.toBlock}.csv`
+            `./output/user-balance/${vault.chainId}-${vault.address}-${options.block}.csv`
           );
           await file.write(csv);
           console.log(`CSV report written to: ${file.name}`);
