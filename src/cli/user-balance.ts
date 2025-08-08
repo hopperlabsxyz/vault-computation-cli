@@ -13,7 +13,7 @@ export function setUserBalanceCommand(command: Command) {
     .option("-r, --readable", "Format the output in a human-readable format")
     .option(
       "-b, --block <number>",
-      "Ending block number for fee computation (inclusive). Use 'find-blocks' command to find the appropriate block number"
+      "Block number at which the snapshot is taken. If not provided, the latest is used"
     )
     .option(
       "-o, --output",
@@ -28,7 +28,7 @@ export function setUserBalanceCommand(command: Command) {
       "after",
       `
 Example:
-  $ bun user-balance 1:0x07ed467acd4ffd13023046968b0859781cb90d9b -r -o --to-block 1000000
+  $ bun user-balance 1:0x07ed467acd4ffd13023046968b0859781cb90d9b -r -o --block 1000000
     `
     )
     .action(async (args, options) => {
@@ -38,7 +38,7 @@ Example:
         options.block = (await client.getBlockNumber()).toString();
       const result = await processVault({
         deals: {},
-        readable: options!.readable!,
+        readable: options.readable ?? false,
         vault,
         toBlock: BigInt(options.block),
         strictBlockNumberMatching: false,
@@ -64,24 +64,37 @@ Example:
     });
 }
 
-function convertToCSV(vault: {
-  chainId: number;
-  address: string;
-  pricePerShare: number;
-  data: Record<
-    string,
-    {
-      balance: number;
-      fees: number;
-      cashback: number;
-    }
-  >;
-}) {
+function convertToCSV(
+  vault: {
+    chainId: number;
+    address: string;
+    pricePerShare: number;
+    data: Record<
+      string,
+      {
+        balance: number;
+        fees: number;
+        cashback: number;
+      }
+    >;
+  }
+  // readable: boolean
+) {
   const csvRows = [
     `chainId,vault,wallet,balance`, // CSV header
     ...Object.entries(vault.data).map(([address, { balance }]) => {
       if (balance === 0) return "";
-      let str = `${vault.chainId},${vault.address},${address},${balance}`;
+      let balanceStr = balance.toString();
+      // if (readable || true) {
+      // balanceStr = balance.toLocaleString("fullwide", {
+      // useGrouping: false,
+      // });
+      // } else {
+      balanceStr = balance.toLocaleString("fullwide", {
+        useGrouping: false,
+      });
+      // }
+      let str = `${vault.chainId},${vault.address},${address},${balanceStr}`;
       return str;
     }),
   ];
