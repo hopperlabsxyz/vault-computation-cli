@@ -73,7 +73,7 @@ Example:
         },
         vault,
         fromBlock: BigInt(options.fromBlock),
-        toBlock: BigInt(options.fromBlock),
+        toBlock: BigInt(options.toBlock),
         strictBlockNumberMatching: true,
       });
 

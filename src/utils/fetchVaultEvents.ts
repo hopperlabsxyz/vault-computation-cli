@@ -25,6 +25,7 @@ async function _fetchVaultEvents({
     skip,
   });
 }
+
 export async function fetchVaultEvents({
   chainId,
   vaultAddress,
@@ -85,22 +86,16 @@ export async function fetchVaultEvents({
     }
     skip += first;
   }
+  // vaultEventsQueryLength(newEvents);
   return events;
 }
 
 function vaultEventsQueryLength(query: VaultEventsQuery): number {
-  return (
-    query.depositRequestCanceleds.length +
-    query.deposits.length +
-    query.newTotalAssetsUpdateds.length +
-    query.referrals.length +
-    query.settleDeposits.length +
-    query.settleRedeems.length +
-    query.totalAssetsUpdateds.length +
-    query.transfers.length +
-    query.ratesUpdateds.length +
-    query.feeReceiverUpdateds.length
-  );
+  let length = 0;
+  Object.keys(query).forEach((k) => {
+    if (k != "__typename?") length += k.length;
+  });
+  return length;
 }
 
 export const query = graphql(`

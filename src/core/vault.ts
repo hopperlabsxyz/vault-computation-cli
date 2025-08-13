@@ -135,7 +135,6 @@ class Vault {
   }
 
   private handleTotalAssetsUpdated(event: TotalAssetsUpdated) {
-    //
     this.totalAssets = event.totalAssets;
 
     // this is for usual computation
@@ -333,27 +332,25 @@ class Vault {
   }
 
   private handleFeeTransfer(event: Transfer, distributeFees: boolean) {
+    if (!distributeFees) return;
     const totalFees = BigInt(event.value);
-
     // we compute how much fees they paid for this epoch
     // we emulated the rounding system of openzeppelin by adding 0 or 1
-    if (distributeFees) {
-      this.accumulatedFees += totalFees;
-      for (const acc of Object.values(this.accounts)) {
-        if (acc.address == zeroAddress) continue;
-        acc.increaseFees(
-          (acc.getBalance() * totalFees) / this.totalSupply +
-            this.alternateZeroOne()
-        );
-        // if (acc.address == zeroAddress) console.log(acc.getFees());
-      }
-      const periodLength = this.periodFees.length;
-      const lastPeriod = this.periodFees[periodLength - 1];
-      lastPeriod.managementFees = this.nextManagementFees.toString();
-      lastPeriod.performanceFees = (
-        totalFees - this.nextManagementFees
-      ).toString();
+    this.accumulatedFees += totalFees;
+    for (const acc of Object.values(this.accounts)) {
+      if (acc.address == zeroAddress) continue;
+      acc.increaseFees(
+        (acc.getBalance() * totalFees) / this.totalSupply +
+          this.alternateZeroOne()
+      );
+      // if (acc.address == zeroAddress) console.log(acc.getFees());
     }
+    const periodLength = this.periodFees.length;
+    const lastPeriod = this.periodFees[periodLength - 1];
+    lastPeriod.managementFees = this.nextManagementFees.toString();
+    lastPeriod.performanceFees = (
+      totalFees - this.nextManagementFees
+    ).toString();
   }
 
   private handleReferral(event: ReferralCustom) {
@@ -478,6 +475,12 @@ class Vault {
     return _users;
   }
 
+  /**
+   * Process a list of events
+   * @param events - The list of events to process, must be sorted by block number
+   * @param distributeFeesFromBlock - The block number from which to distribute fees
+   * @param blockEndHook - A hook to call when the block is done, perfect for testing
+   */
   public async processEvents({
     events,
     distributeFeesFromBlock,

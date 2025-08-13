@@ -55,7 +55,6 @@ test(
         for (const [user, account] of Object.entries(vault.getAccounts())) {
           if (user.toLowerCase() == vault.feeReceiver.toLowerCase()) continue;
           const balance = account.getBalance();
-          console.log(user);
           const realTotal = historicBalance[blockNumber.toString()][user];
           expect(Number(formatUnits(balance, vault.decimals))).toBeCloseTo(
             Number(formatUnits(realTotal, vault.decimals)),
