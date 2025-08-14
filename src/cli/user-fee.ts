@@ -1,9 +1,18 @@
 import { processVault } from "core/processVault";
-import { mergeDeals, parseDeals, type AllDeals } from "parsing/parseDeals";
+import {
+  mergeRebateDeals,
+  parseRebateDeals,
+  type AllDeals,
+} from "parsing/parseRebateDeals";
 import { parseArguments } from "utils/parseArguments";
 import type { Address } from "viem";
 import type { Command } from "@commander-js/extra-typings";
-import type { Deals } from "core/types";
+import type { RebateDeals } from "core/types";
+import {
+  parseOffchainReferrals,
+  type OffChainReferral,
+} from "parsing/parseOffchainReferrals";
+import { isWildCard } from "utils/various";
 
 export function setUserFeeCommand(command: Command) {
   command
@@ -33,7 +42,11 @@ export function setUserFeeCommand(command: Command) {
     )
     .option(
       "-d, --deals <string>",
-      "Path to the configuration file containing OTC (Over-The-Counter) deals on the fee rebate and fee rewards. The amount of % is express in 10^2. For example, 8% is express 800 in the csv file."
+      "Path to the configuration file containing OTC (Over-The-Counter) deals on the fee rebate. The amount of % is express in 10^2. For example, 8% is express 800 in the csv file."
+    )
+    .option(
+      "--referrals <string>",
+      "Path to the configuration file containing OTC (Over-The-Counter) referrals on the fee rewards. The amount of % is express in 10^2. For example, 8% is express 800 in the csv file."
     )
     .option(
       "--fee-rebate-rate <number>",
@@ -58,19 +71,29 @@ Example:
       let deals: AllDeals = {};
 
       // prepare deals object
-      if (options.deals) deals = await parseDeals(options.deals);
-      const vaultDeals: Deals = mergeDeals(
+      if (options.deals) deals = await parseRebateDeals(options.deals);
+      const rebateDeals: RebateDeals = mergeRebateDeals(
         deals[0]?.["0x0"] || {}, // those are wildcard deals
         deals[vault.chainId]?.[vault.address.toLowerCase() as Address] || {} // those are vault level deals
       );
 
+      let offChainReferrals: OffChainReferral[] | undefined;
+      if (options.referrals) {
+        offChainReferrals = await parseOffchainReferrals(options.referrals);
+        offChainReferrals = offChainReferrals.filter(
+          (referral) =>
+            isWildCard(referral.chainId, referral.vault) ||
+            (referral.chainId === vault.chainId &&
+              referral.vault.toLowerCase() == vault.address.toLowerCase())
+        );
+      }
+
       const result = await processVault({
-        deals: vaultDeals,
+        rebateDeals,
+        offChainReferrals,
         readable: options!.readable!,
-        rates: {
-          feeRebateRate: Number(options!.feeRebateRate!),
-          feeRewardRate: Number(options!.feeRewardRate!),
-        },
+        defaultReferralRate: Number(options!.feeRebateRate!),
+        defaultRebateRate: Number(options!.feeRewardRate!),
         vault,
         fromBlock: BigInt(options.fromBlock),
         toBlock: BigInt(options.toBlock),
@@ -123,3 +146,9 @@ function convertToCSV(vault: {
   ];
   return csvRows.filter((row) => row !== "").join("\n");
 }
+
+const dealsCsvFormat = `chainId,vault,address,`;
+const dealsCsvRowsExample = `1,0x07ed467acD4ffd13023046968b0859781cb90D9B,0x1234567890123456789012345678901234567890,1000,4500`;
+
+const referralCsvFormat = `chainId,vault,referrer,referree,reward`;
+const referralCsvRowsExample = `1,0x07ed467acD4ffd13023046968b0859781cb90D9B,0x1234567890123456789012345678901234567891,0x1234567890123456789012345678901234567890,4500`;

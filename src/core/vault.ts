@@ -17,7 +17,7 @@ import type { ReferralConfig, ReferralCustom } from "types/Vault";
 import { publicClient } from "lib/publicClient";
 import { convertBigIntToNumber, convertToShares } from "utils/convertTo";
 import type {
-  DealEvent,
+  RebateEvent,
   PeriodFees,
   PointEvent,
   ProcessEventParams,
@@ -343,7 +343,6 @@ class Vault {
         (acc.getBalance() * totalFees) / this.totalSupply +
           this.alternateZeroOne()
       );
-      // if (acc.address == zeroAddress) console.log(acc.getFees());
     }
     const periodLength = this.periodFees.length;
     const lastPeriod = this.periodFees[periodLength - 1];
@@ -354,12 +353,11 @@ class Vault {
   }
 
   private handleReferral(event: ReferralCustom) {
-    if (event.owner === event.referral) return;
+    // we don't overwrite the referral if it is already set
     if (this.preReferrals[event.owner]) return;
     else {
       this.preReferrals[event.owner] = {
         feeRewardRate: event.feeRewardRate,
-        feeRebateRate: event.feeRebateRate,
         referrer: event.referral,
       };
     }
@@ -373,12 +371,8 @@ class Vault {
     );
   }
 
-  private handleDeal(deal: DealEvent) {
-    this.preReferrals[deal.owner] = {
-      feeRewardRate: deal.feeRewardRate,
-      feeRebateRate: deal.feeRebateRate,
-      referrer: deal.referral,
-    };
+  private handleRebateDeal(deal: RebateEvent) {
+    this.getAndCreateAccount(deal.owner).setRebateRate(deal.feeRebateRate);
   }
 
   protected handlePoint(point: PointEvent) {
@@ -410,18 +404,25 @@ class Vault {
     const accountsArray = Object.values(this.accounts);
     accountsArray.forEach((account) => {
       const address = account.address;
-
+      console.log(address);
       const referrer = this.referrals[address]?.referrer;
       const fees = account.getFees();
-      const rebate = this.referrals[address]?.feeRebateRate;
-      const reward = this.referrals[address]?.feeRewardRate;
+      const rebate = account.getRebateRate();
+      const reward = this.referrals[address]?.feeRewardRate || 0;
 
-      if (account)
-        if (rebate) {
-          this.accounts[address].increaseCashback(
-            (fees * BigInt(rebate)) / BPS_DIVIDER
-          );
-        }
+      if (rebate + reward > Number(BPS_DIVIDER)) {
+        console.log(typeof rebate, typeof reward);
+        throw new Error(
+          `Rebate (${rebate}) and reward (${
+            reward || 0
+          }) cumulated are greater than 100% for ${address}`
+        );
+      }
+      if (account) {
+        this.accounts[address].increaseCashback(
+          (fees * BigInt(rebate)) / BPS_DIVIDER
+        );
+      }
       if (reward && referrer) {
         const referrerAcc = this.getAndCreateAccount(referrer);
         referrerAcc.increaseCashback((fees * BigInt(reward)) / BPS_DIVIDER);
@@ -524,8 +525,8 @@ class Vault {
       );
     } else if (event.__typename === "Referral") {
       this.handleReferral(event as ReferralCustom);
-    } else if (event.__typename === "Deal") {
-      this.handleDeal(event as any as DealEvent); // TODO: fix any
+    } else if (event.__typename === "RebateDeal") {
+      this.handleRebateDeal(event as unknown as RebateEvent); // TODO: fix any
     } else if (event.__typename === "FeeReceiverUpdated") {
       this.handleFeeReceiverUpdateds(event as FeeReceiverUpdated);
     } else if (event.__typename === "RatesUpdated") {

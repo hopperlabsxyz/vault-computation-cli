@@ -26,12 +26,7 @@ export function setUserPointsCommand(command: Command) {
       "A path to a file containing the evolutions of points through time with the following format: timestamp,amount,name. For each line \
        the program will distribute the new points proportionnaly to shareholders."
     )
-    //     .addHelpText(
-    //       "after",
-    //       `
-    // Example:
-    //     `
-    //     )
+
     .action(async (args, options) => {
       const vault = parseArguments(args);
 

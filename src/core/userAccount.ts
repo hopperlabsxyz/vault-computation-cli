@@ -5,6 +5,8 @@ export class UserAccount {
   protected cashback: bigint = 0n;
   protected fees: bigint = 0n;
   protected points: Record<string, number> = {};
+  protected offChainReferrals: Record<Address, number> = {};
+  protected rebateRate: number = 0;
   address: Address;
 
   constructor(address: Address) {
@@ -57,5 +59,14 @@ export class UserAccount {
 
   public getBalance(): bigint {
     return this.balance;
+  }
+
+  public setRebateRate(rate: number) {
+    this.rebateRate = rate;
+  }
+
+  public getRebateRate(): number {
+    console.log(typeof this.rebateRate);
+    return this.rebateRate;
   }
 }

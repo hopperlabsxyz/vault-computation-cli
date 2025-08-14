@@ -2,6 +2,7 @@ import type { VaultEventsQuery } from "../../gql/graphql";
 import type { Address } from "viem";
 import type { Vault } from "types/Vault";
 import type { Dot } from "./pointTracker";
+import type { OffChainReferral } from "parsing/parseOffchainReferrals";
 
 export interface EventBase {
   blockNumber: number;
@@ -9,13 +10,20 @@ export interface EventBase {
   logIndex: number;
 }
 
-export type DealEvent = {
+export type RebateEvent = {
   feeRebateRate: number;
+  vault: "0x"; // todo: maybe put a real vault address and 0x0 if wild card ?
+  __typename: "RebateDeal";
+  owner: Address;
+} & EventBase;
+
+export type OffChainReferralEvent = {
   feeRewardRate: number;
   vault: "0x"; // todo: maybe put a real vault address and 0x0 if wild card ?
-  __typename: "Deal";
+  __typename: "OffChainReferral";
   owner: Address;
   referral: Address;
+  reward: number;
 } & EventBase;
 
 /// A point transformed to mimic an Event type.
@@ -31,7 +39,6 @@ export type Point = Dot & { name: string };
 
 export type ReferralEvent = {
   feeRewardRate: number;
-  feeRebateRate: number;
   assets: bigint;
   requestId: bigint;
   __typename: "Referral";
@@ -46,23 +53,40 @@ export interface ReferralRates {
   feeRewardRate: number;
 }
 
+export interface OffChainReferralRates {
+  feeRewardRate: number;
+}
+
 export interface VaultAddrresses {
   silo: Address;
   vault: Address;
 }
 
-export type Deals = Record<Address, ReferralRates>;
+export type RebateDeals = Record<Address, number>;
+
+export type OffChainReferrals = [
+  {
+    referrer: Address;
+    referred: Address;
+    reward: number;
+    blockNumber: number;
+    blockTimestamp: number;
+    logIndex: number;
+  }
+];
 
 export interface PreProcessingParams {
   events: VaultEventsQuery;
   addresses: VaultAddrresses;
-  referralRates?: ReferralRates;
-  deals?: Deals;
+  defaultReferralRate: number;
+  defaultRebateRate: number;
+  rebateDeals?: RebateDeals;
+  offChainReferrals?: OffChainReferral[];
   points?: Point[];
 }
 
 export interface ProcessEventParams {
-  event: { __typename: string; blockNumber: bigint };
+  event: { __typename: string; blockNumber: bigint } & Record<string, any>;
   distributeFeesFromBlock: bigint;
 }
 
@@ -75,11 +99,13 @@ export interface ProcessEventsParams {
 export interface ProcessVaultParams {
   vault: Vault;
   readable: boolean;
-  deals?: Record<Address, ReferralRates>;
+  rebateDeals?: RebateDeals;
+  offChainReferrals?: OffChainReferral[];
   points?: Point[];
   fromBlock?: bigint;
   toBlock?: bigint;
-  rates?: ReferralRates;
+  defaultReferralRate?: number;
+  defaultRebateRate?: number;
   strictBlockNumberMatching?: boolean;
 }
 
@@ -116,10 +142,3 @@ export type Rates = {
   management: number;
   performance: number;
 };
-
-// export type Account = {
-//   balance: bigint;
-//   cashback: bigint;
-//   fees: bigint;
-//   points: Record<string, number>;
-// };

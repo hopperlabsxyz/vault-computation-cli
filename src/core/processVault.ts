@@ -8,13 +8,12 @@ import { fetchVaultEvents } from "utils/fetchVaultEvents";
 export async function processVault({
   vault,
   readable,
-  deals = {},
+  rebateDeals,
+  offChainReferrals,
   toBlock,
   fromBlock,
-  rates = {
-    feeRebateRate: 0,
-    feeRewardRate: 0,
-  },
+  defaultReferralRate = 0,
+  defaultRebateRate = 0,
   points,
   strictBlockNumberMatching = true,
 }: ProcessVaultParams): Promise<ProcessVaultReturn> {
@@ -37,18 +36,23 @@ export async function processVault({
   const vaultState = await generateVault({
     vault,
   });
-
   let events = preprocessEvents({
     events: vaultEvents,
     addresses: {
       silo: vaultState.silo,
       vault: vault.address,
     },
-    referralRates: rates,
+    defaultReferralRate,
+    defaultRebateRate,
     points,
-    deals,
+    rebateDeals,
+    offChainReferrals,
   });
-
+  console.log({
+    events: events
+      .filter((e) => e.__typename === "Referral")
+      .forEach((e) => console.log(typeof e.feeRewardRate)),
+  });
   vaultState.processEvents({
     events: events as { __typename: string; blockNumber: bigint }[],
     distributeFeesFromBlock: fromBlock || 0n,

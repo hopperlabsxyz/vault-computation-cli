@@ -35,10 +35,8 @@ test(
         silo: vault.silo,
         vault: address,
       },
-      referralRates: {
-        feeRewardRate: 15,
-        feeRebateRate: 5,
-      },
+      defaultReferralRate: 5,
+      defaultRebateRate: 15,
     });
 
     const historicBalance = await getHistoricBalances({

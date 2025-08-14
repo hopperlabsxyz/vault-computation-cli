@@ -13,6 +13,6 @@ export type ReferralCustom = Referral & {
 
 export type ReferralConfig = {
   referrer: Address;
-  feeRebateRate: number;
+  // feeRebateRate: number;
   feeRewardRate: number;
 };
