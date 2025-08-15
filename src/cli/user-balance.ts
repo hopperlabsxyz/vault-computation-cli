@@ -2,6 +2,8 @@ import { processVault } from "core/processVault";
 import { parseVaultArgument } from "parsing/parseVault";
 import type { Command } from "@commander-js/extra-typings";
 import { publicClient } from "lib/publicClient";
+import type { ProcessVaultReturn } from "core/types";
+import type { Vault } from "types/Vault";
 
 export function setUserBalanceCommand(command: Command) {
   command
@@ -15,7 +17,11 @@ If no block is provided, the latest is used.\n"
       "The chain ID and vault address to find blocks for",
       parseVaultArgument
     )
-    .option("-r, --readable", "Format the output in a human-readable format")
+    .option(
+      "-r, --readable",
+      "Format the output in a human-readable format",
+      false
+    )
     .option(
       "-b, --block <number>",
       "Block number at which the snapshot is taken. If not provided, the latest is used"
@@ -42,14 +48,18 @@ Example:
         options.block = (await client.getBlockNumber()).toString();
 
       const result = await processVault({
-        readable: options.readable ?? false,
+        readable: options.readable,
         vault,
         toBlock: BigInt(options.block),
         strictBlockNumberMatching: false,
       });
 
-      const csv = convertToCSV(result);
-      if (options.silent == false) {
+      const csv = convertToCSV({
+        vault,
+        data: result.data,
+      });
+
+      if (!options.silent) {
         console.log(csv);
       }
       if (options.output) {
@@ -68,37 +78,23 @@ Example:
     });
 }
 
-function convertToCSV(
-  vault: {
-    chainId: number;
-    address: string;
-    pricePerShare: number;
-    data: Record<
-      string,
-      {
-        balance: number;
-        fees: number;
-        cashback: number;
-      }
-    >;
-  }
-  // readable: boolean
-) {
+function convertToCSV({
+  vault,
+  data,
+}: {
+  vault: Vault;
+  data: ProcessVaultReturn["data"];
+}) {
   const csvRows = [
     `chainId,vault,wallet,balance`, // CSV header
-    ...Object.entries(vault.data).map(([address, { balance }]) => {
+    ...data.map(({ balance, account }) => {
       if (balance === 0) return "";
       let balanceStr = balance.toString();
-      // if (readable || true) {
-      // balanceStr = balance.toLocaleString("fullwide", {
-      // useGrouping: false,
-      // });
-      // } else {
       balanceStr = balance.toLocaleString("fullwide", {
         useGrouping: false,
       });
-      // }
-      let str = `${vault.chainId},${vault.address},${address},${balanceStr}`;
+
+      let str = `${vault.chainId},${vault.address},${account},${balanceStr}`;
       return str;
     }),
   ];

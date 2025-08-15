@@ -35,7 +35,7 @@ This command require precise block input. The fromBlock and the toBlock must cor
     )
     .option(
       "--silent",
-      "This will prevent the printing of the output in stdout",
+      "This will prevent the printing of the output on stdout",
       false
     )
     .addHelpText(

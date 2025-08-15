@@ -12,6 +12,9 @@ export type RebateDeal = {
 export async function parseRebateDeals(
   filePath: string
 ): Promise<RebateDeal[]> {
+  if (!filePath.endsWith(".csv")) {
+    throw new Error("File must have .csv extension");
+  }
   const dealsRaw = (await Bun.file(filePath).text()).split("\n");
   const deals: Record<Address, RebateDeal> = {};
 

@@ -69,16 +69,13 @@ export async function processVault({
       formatUnits(vaultState.pricePerShare(), assetDecimals)
     ),
     periodFees: vaultState.periodFees,
-    data: Object.fromEntries(
-      accounts.map((account) => [
-        account.address,
-        {
-          balance: Number(formatUnits(account.getBalance(), sharesDecimals)),
-          fees: Number(formatUnits(account.getFees(), sharesDecimals)),
-          cashback: Number(formatUnits(account.getCashback(), sharesDecimals)),
-          points: account.getAllPoints(),
-        },
-      ])
-    ),
+    data: accounts.map((account) => ({
+      balance: Number(formatUnits(account.getBalance(), sharesDecimals)),
+      fees: Number(formatUnits(account.getFees(), sharesDecimals)),
+      cashback: Number(formatUnits(account.getCashback(), sharesDecimals)),
+      points: account.getAllPoints(),
+      account: account.address,
+    })),
+    // ),
   };
 }

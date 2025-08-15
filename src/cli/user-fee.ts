@@ -4,6 +4,8 @@ import { parseOffchainReferrals } from "parsing/parseOffchainReferrals";
 import { parseVaultArgument } from "parsing/parseVault";
 import type { Command } from "@commander-js/extra-typings";
 import { filterWildCard } from "utils/various";
+import type { ProcessVaultReturn } from "core/types";
+import type { Vault } from "types/Vault";
 
 export function setUserFeeCommand(command: Command) {
   command
@@ -26,7 +28,11 @@ This command require precise block input. The fromBlock and the toBlock must cor
       "-t, --to-block <number>",
       "Ending block number for fee computation (inclusive). Use 'find-blocks' command to find the appropriate block number"
     )
-    .option("-r, --readable", "Format the output in a human-readable format")
+    .option(
+      "-r, --readable",
+      "Format the output in a human-readable format",
+      false
+    )
     .option(
       "-o, --output",
       "Will save the result in output/user-fee in a file with following format: <chainId>-<vaultAddress>-<from-block>-<to-block>.csv"
@@ -78,21 +84,26 @@ Example:
     .action(async (vault, options) => {
       const rebateDeals = filterWildCard(await options.deals, vault);
       const offChainReferrals = filterWildCard(await options.referrals, vault);
-
+      console.log(options.readable);
       const result = await processVault({
         rebateDeals,
         offChainReferrals,
-        readable: options!.readable!,
-        defaultReferralRateBps: Number(options!.feeRebateRate!),
-        defaultRebateRateBps: Number(options!.feeRewardRate!),
+        readable: options.readable,
+        defaultReferralRateBps: Number(options.feeRebateRate),
+        defaultRebateRateBps: Number(options.feeRewardRate),
         vault,
         fromBlock: BigInt(options.fromBlock),
         toBlock: BigInt(options.toBlock),
         strictBlockNumberMatching: true,
       });
 
-      const csv = convertToCSV(result);
-      if (options.silent == false) {
+      const csv = convertToCSV({
+        vault,
+        data: result.data,
+        pricePerShare: result.pricePerShare,
+      });
+
+      if (!options.silent) {
         console.log(csv);
       }
       if (options.output) {
@@ -111,29 +122,23 @@ Example:
     });
 }
 
-function convertToCSV(vault: {
-  chainId: number;
-  address: string;
+function convertToCSV({
+  vault,
+  data,
+  pricePerShare,
+}: {
+  vault: Vault;
+  data: ProcessVaultReturn["data"];
   pricePerShare: number;
-  data: Record<
-    string,
-    {
-      balance: number;
-      fees: number;
-      cashback: number;
-    }
-  >;
 }) {
   const csvRows = [
     `chainId,vault,wallet,balance,fees,pricePerShare,cashback$`, // CSV header
-    ...Object.entries(vault.data).map(
-      ([address, { balance, fees, cashback }]) => {
-        if (balance === 0) return "";
-        let str = `${vault.chainId},${vault.address},${address},${balance},${fees}`;
-        str += `,${vault.pricePerShare},${cashback}`;
-        return str;
-      }
-    ),
+    ...data.map(({ balance, fees, cashback, account }) => {
+      if (balance === 0) return "";
+      let str = `${vault.chainId},${vault.address},${account},${balance},${fees}`;
+      str += `,${pricePerShare},${cashback}`;
+      return str;
+    }),
   ];
   return csvRows.filter((row) => row !== "").join("\n");
 }

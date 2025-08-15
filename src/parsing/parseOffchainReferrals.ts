@@ -14,6 +14,10 @@ export type OffChainReferral = {
 export async function parseOffchainReferrals(
   filePath: string
 ): Promise<OffChainReferral[]> {
+  console.log("filePath", filePath);
+  if (!filePath.endsWith(".csv")) {
+    throw new Error(`File ${filePath} must have .csv extension`);
+  }
   const csv = (await Bun.file(filePath).text()).split("\n");
   const referrals: Record<Address, OffChainReferral> = {};
   for (const entry of csv.slice(1)) {

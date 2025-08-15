@@ -126,15 +126,14 @@ export interface ProcessVaultReturn {
   decimals: number;
   pricePerShare: number;
   pointNames: string[];
-  data: Record<
-    Address,
-    {
-      balance: number;
-      cashback: number;
-      fees: number;
-      points: Record<string, number>;
-    }
-  >;
+  data: {
+    balance: number;
+    cashback: number;
+    fees: number;
+    points: Record<string, number>;
+    account: Address;
+  }[];
+
   periodFees: PeriodFees;
 }
 
