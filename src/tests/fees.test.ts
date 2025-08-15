@@ -39,8 +39,8 @@ test("check total fees are consistent all attributed fees", async () => {
       const accumulatedFeesAmongUsers = vault.accumulatedFeesSinceFromBlock();
       const totalFees = vault.accumulatedFees;
       const diff = accumulatedFeesAmongUsers - totalFees;
-      expect(diff).toBeLessThan(100);
-      expect(diff).toBeGreaterThan(-100);
+      expect(diff).toBeLessThan(50);
+      expect(diff).toBeGreaterThan(-50);
     },
   });
 });

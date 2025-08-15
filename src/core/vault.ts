@@ -14,7 +14,7 @@ import type {
 
 import { erc20Abi, maxUint256, zeroAddress, type Address } from "viem";
 import { publicClient } from "lib/publicClient";
-import { convertBigIntToNumber, convertToShares } from "utils/convertTo";
+import { convertBigIntToNumber } from "utils/convertTo";
 import type {
   RebateEvent,
   PeriodFees,
@@ -25,12 +25,13 @@ import type {
   ReferralConfig,
   ReferralEvent,
 } from "./types";
-import { SolidityMath } from "utils/math";
+// import { SolidityMath } from "utils/math";
 import { PointTracker } from "./pointTracker";
 import { UserAccount } from "./userAccount";
 import { RatesManager } from "./rates";
 import { fetchVault } from "utils/fetchVault";
 import { fetchVaultStateUpdateds } from "utils/fetchVaultStateUpdateds";
+import { MathLib } from "@morpho-org/blue-sdk";
 
 export async function generateVault({
   vault,
@@ -64,6 +65,7 @@ class Vault {
   public lastTotalAssetsUpdateTimestamp = 0;
   public nextManagementFees = 0n;
   public decimals: number;
+  public decimalsOffset: bigint;
   public feeReceiver: Address;
   public silo: Address;
   private pointTracker = new PointTracker();
@@ -115,6 +117,7 @@ class Vault {
     this.ratesManager = new RatesManager(rates, cooldown);
     this.asset = asset;
     this.silo = silo;
+    this.decimalsOffset = BigInt(decimals - asset.decimals);
   }
 
   private depositRequest(event: DepositRequest) {
@@ -147,15 +150,15 @@ class Vault {
       const percentToDeposit =
         this.feeRates(Number(event.blockTimestamp)).management / ratioOverAYear;
 
-      const assetsToDeposits = Math.trunc(
+      const feesInAsset = Math.trunc(
         percentToDeposit * Number(this.totalAssets)
       );
 
-      this.nextManagementFees = convertToShares({
-        assets: BigInt(assetsToDeposits),
-        totalAssets: this.totalAssets - BigInt(assetsToDeposits),
-        totalSupply: this.totalSupply,
-      });
+      this.nextManagementFees = MathLib.mulDivUp(
+        BigInt(feesInAsset),
+        this.totalSupply + 10n ** BigInt(this.decimalsOffset),
+        this.totalAssets - BigInt(feesInAsset) + 1n
+      );
     }
 
     const rates = this.feeRates(Number(event.blockTimestamp));
@@ -204,6 +207,7 @@ class Vault {
     const { sender, owner, shares } = event;
     const receiver = owner;
     const controller = sender;
+
     if (controller.toLowerCase() === receiver.toLowerCase()) return; // in this case the balance are already updated in the transfer event
 
     this.getOrCreateAccount(receiver).increaseBalance(shares);
@@ -217,7 +221,7 @@ class Vault {
   }
 
   private handleSettleDeposit(event: SettleDeposit) {
-    const { sharesMinted, assetsDeposited, totalSupply, totalAssets } = event;
+    const { totalSupply, totalAssets } = event;
 
     this.totalSupply = totalSupply;
     this.totalAssets = totalAssets;
@@ -227,11 +231,10 @@ class Vault {
       // we initiate his accounts
       const acc = this.getOrCreateAccount(address as Address);
 
-      const shares = SolidityMath.mulDivRounding(
+      const shares = MathLib.mulDivDown(
         userRequest!,
-        sharesMinted,
-        assetsDeposited,
-        SolidityMath.Rounding.Floor
+        totalSupply + 10n ** this.decimalsOffset,
+        totalAssets + 1n
       );
 
       // we increase it's balance (like if he claimed his shares)
@@ -268,7 +271,7 @@ class Vault {
 
     for (const [address, redeemed] of Object.entries(this.pendingRedeems)) {
       if (this.accounts[address as Address]) {
-        // why this check ?
+        // why this check ?\
         this.accounts[address as Address].decreaseBalance(redeemed || 0n);
       }
     }
