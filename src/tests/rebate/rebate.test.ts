@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { preprocessEvents } from "core/preprocessEvents";
-import { sanityChecks } from "core/sanityChecks";
+import { checkStrictBlockNumberMatching } from "core/strictBlockNumberMatching";
 import { generateVault } from "core/vault";
 import { parseRebateDeals } from "parsing/parseRebateDeals";
 import { fetchVaultEvents } from "utils/fetchVaultEvents";
@@ -15,7 +15,7 @@ test("check 0-0x0 works as a wildcard", async () => {
     vaultAddress: address,
     toBlock,
   });
-  sanityChecks({ events: vaultEvents, fromBlock, toBlock });
+  checkStrictBlockNumberMatching({ events: vaultEvents, fromBlock, toBlock });
 
   const vault = await generateVault({
     vault: {
@@ -62,7 +62,7 @@ test("check matching chainId-address works", async () => {
     vaultAddress: address,
     toBlock,
   });
-  sanityChecks({ events: vaultEvents, fromBlock, toBlock });
+  checkStrictBlockNumberMatching({ events: vaultEvents, fromBlock, toBlock });
 
   const vault = await generateVault({
     vault: {
@@ -110,7 +110,7 @@ test("check matching chainId-address overrides a wildcard deal", async () => {
     toBlock,
   });
   const rebateDeals = await parseRebateDeals("./src/tests/rebate/rebate.csv");
-  sanityChecks({ events: vaultEvents, fromBlock, toBlock });
+  checkStrictBlockNumberMatching({ events: vaultEvents, fromBlock, toBlock });
 
   const vault = await generateVault({
     vault: {
@@ -151,7 +151,7 @@ test("check that an offchain rebate doesn't get overriden by a referral", async 
     vaultAddress: address,
     toBlock,
   });
-  sanityChecks({ events: vaultEvents, fromBlock, toBlock });
+  checkStrictBlockNumberMatching({ events: vaultEvents, fromBlock, toBlock });
 
   const vault = await generateVault({
     vault: {
@@ -210,7 +210,7 @@ test("check that a user reabte doens't get overriden by the rebate of a referral
     vaultAddress: address,
     toBlock,
   });
-  sanityChecks({ events: vaultEvents, fromBlock, toBlock });
+  checkStrictBlockNumberMatching({ events: vaultEvents, fromBlock, toBlock });
 
   const vault = await generateVault({
     vault: {
@@ -262,7 +262,7 @@ test("check that a user referred has a rebate of defaultRebateRate", async () =>
     vaultAddress: address,
     toBlock,
   });
-  sanityChecks({ events: vaultEvents, fromBlock, toBlock });
+  checkStrictBlockNumberMatching({ events: vaultEvents, fromBlock, toBlock });
 
   const vault = await generateVault({
     vault: {
@@ -310,7 +310,7 @@ test("check that a a user.referral.rewardRate + user.rebateRate < 100%", async (
     vaultAddress: address,
     toBlock,
   });
-  sanityChecks({ events: vaultEvents, fromBlock, toBlock });
+  checkStrictBlockNumberMatching({ events: vaultEvents, fromBlock, toBlock });
 
   const vault = await generateVault({
     vault: {

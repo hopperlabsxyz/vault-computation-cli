@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { preprocessEvents } from "core/preprocessEvents";
-import { sanityChecks } from "core/sanityChecks";
+import { checkStrictBlockNumberMatching } from "core/strictBlockNumberMatching";
 import { generateVault } from "core/vault";
 import { fetchVaultEvents } from "utils/fetchVaultEvents";
 
@@ -14,7 +14,7 @@ test("check total fees are consistent all attributed fees", async () => {
     vaultAddress: address,
     toBlock,
   });
-  sanityChecks({ events: vaultEvents, fromBlock, toBlock });
+  checkStrictBlockNumberMatching({ events: vaultEvents, fromBlock, toBlock });
 
   const vault = await generateVault({
     vault: {
@@ -28,8 +28,8 @@ test("check total fees are consistent all attributed fees", async () => {
       silo: vault.silo,
       vault: address,
     },
-    defaultReferralRate: 5,
-    defaultRebateRate: 15,
+    defaultReferralRateBps: 500,
+    defaultRebateRateBps: 1500,
   });
 
   await vault.processEvents({

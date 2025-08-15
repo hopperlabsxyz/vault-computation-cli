@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { preprocessEvents } from "core/preprocessEvents";
-import { sanityChecks } from "core/sanityChecks";
+import { checkStrictBlockNumberMatching } from "core/strictBlockNumberMatching";
 import { generateVault } from "core/vault";
 import { totalBalanceOf } from "utils/onchain-calls";
 import { publicClient } from "lib/publicClient";
@@ -21,7 +21,7 @@ test(
       vaultAddress: address,
       toBlock,
     });
-    sanityChecks({ events: vaultEvents, fromBlock, toBlock });
+    checkStrictBlockNumberMatching({ events: vaultEvents, fromBlock, toBlock });
     const client = publicClient[chainId];
     const vault = await generateVault({
       vault: {
@@ -35,8 +35,8 @@ test(
         silo: vault.silo,
         vault: address,
       },
-      defaultReferralRate: 5,
-      defaultRebateRate: 15,
+      defaultReferralRateBps: 500,
+      defaultRebateRateBps: 1500,
     });
 
     const historicBalance = await getHistoricBalances({

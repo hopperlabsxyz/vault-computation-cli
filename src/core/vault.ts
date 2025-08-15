@@ -371,12 +371,7 @@ class Vault {
 
   private handleReferral(event: ReferralEvent) {
     const owner = this.getOrCreateAccount(event.owner);
-    // if (
-    //   owner.address ==
-    //   "0xD408c5DdcBf297dcAa745009277007429719E205".toLowerCase()
-    // ) {
-    console.log(event);
-    // }
+
     if (event.offchain) {
       owner.setReferral(event.referral, event.rewardRateBps);
       owner.setRebateRateBps(event.rebateRateBps);

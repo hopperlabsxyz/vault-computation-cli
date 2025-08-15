@@ -1,6 +1,6 @@
 import { formatUnits, maxUint256 } from "viem";
 import { generateVault } from "./vault";
-import { sanityChecks } from "./sanityChecks";
+import { checkStrictBlockNumberMatching } from "./strictBlockNumberMatching";
 import type { ProcessVaultParams, ProcessVaultReturn } from "./types";
 import { preprocessEvents } from "./preprocessEvents";
 import { fetchVaultEvents } from "utils/fetchVaultEvents";
@@ -26,7 +26,7 @@ export async function processVault({
   });
 
   if (strictBlockNumberMatching) {
-    sanityChecks({
+    checkStrictBlockNumberMatching({
       events: vaultEvents,
       fromBlock: fromBlock || 0n,
       toBlock: toBlock || BigInt(maxUint256),

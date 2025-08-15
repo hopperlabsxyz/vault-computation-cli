@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { preprocessEvents } from "core/preprocessEvents";
-import { sanityChecks } from "core/sanityChecks";
+import { checkStrictBlockNumberMatching } from "core/strictBlockNumberMatching";
 import { generateVault } from "core/vault";
 import { parseOffchainReferrals } from "parsing/parseOffchainReferrals";
 import { fetchVaultEvents } from "utils/fetchVaultEvents";
@@ -15,7 +15,7 @@ test("check 0-0x0 works as a wildcard", async () => {
     vaultAddress: address,
     toBlock,
   });
-  sanityChecks({ events: vaultEvents, fromBlock, toBlock });
+  checkStrictBlockNumberMatching({ events: vaultEvents, fromBlock, toBlock });
 
   const vault = await generateVault({
     vault: {
@@ -72,7 +72,7 @@ test("check matching chainId-address works", async () => {
     vaultAddress: address,
     toBlock,
   });
-  sanityChecks({ events: vaultEvents, fromBlock, toBlock });
+  checkStrictBlockNumberMatching({ events: vaultEvents, fromBlock, toBlock });
 
   const vault = await generateVault({
     vault: {
@@ -131,7 +131,7 @@ test("check matching chainId-address overrides a wildcard deal", async () => {
   const offChainReferrals = await parseOffchainReferrals(
     "./src/tests/referrals/referral.csv"
   );
-  sanityChecks({ events: vaultEvents, fromBlock, toBlock });
+  checkStrictBlockNumberMatching({ events: vaultEvents, fromBlock, toBlock });
 
   const vault = await generateVault({
     vault: {
@@ -176,7 +176,7 @@ test("check that an offchain referral doesn't get overriden by another onchain r
     vaultAddress: address,
     toBlock,
   });
-  sanityChecks({ events: vaultEvents, fromBlock, toBlock });
+  checkStrictBlockNumberMatching({ events: vaultEvents, fromBlock, toBlock });
 
   const vault = await generateVault({
     vault: {

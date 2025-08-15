@@ -70,15 +70,9 @@ Example:
     `
     )
     .action(async (vault, options) => {
-      // prepare deals object
-      // if (options.deals) deals = await parseRebateDeals(options.deals);
-      // const rebateDeals: RebateDeals = mergeRebateDeals(
-      //   deals[0]?.["0x0"] || {}, // those are wildcard deals
-      //   deals[vault.chainId]?.[vault.address.toLowerCase() as Address] || {} // those are vault level deals
-      // );
-      // TODO: test if they are 2 colliding deals
       const rebateDeals = filterWildCard(await options.deals, vault);
       const offChainReferrals = filterWildCard(await options.referrals, vault);
+
       const result = await processVault({
         rebateDeals,
         offChainReferrals,
