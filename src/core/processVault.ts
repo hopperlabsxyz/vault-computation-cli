@@ -48,11 +48,6 @@ export async function processVault({
     rebateDeals,
     offChainReferrals,
   });
-  console.log({
-    events: events
-      .filter((e) => e.__typename === "Referral")
-      .forEach((e) => console.log(typeof e.feeRewardRate)),
-  });
   vaultState.processEvents({
     events: events as { __typename: string; blockNumber: bigint }[],
     distributeFeesFromBlock: fromBlock || 0n,

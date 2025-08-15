@@ -28,13 +28,11 @@ test("check total fees are consistent all attributed fees", async () => {
       silo: vault.silo,
       vault: address,
     },
-    referralRates: {
-      feeRewardRate: 15,
-      feeRebateRate: 5,
-    },
+    defaultReferralRate: 5,
+    defaultRebateRate: 15,
   });
 
-  vault.processEvents({
+  await vault.processEvents({
     events: events as { __typename: string; blockNumber: bigint }[],
     distributeFeesFromBlock: fromBlock,
     blockEndHook: async (_: bigint) => {

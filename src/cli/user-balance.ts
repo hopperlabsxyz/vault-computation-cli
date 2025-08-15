@@ -37,7 +37,6 @@ Example:
       if (!options.block)
         options.block = (await client.getBlockNumber()).toString();
       const result = await processVault({
-        deals: {},
         readable: options.readable ?? false,
         vault,
         toBlock: BigInt(options.block),

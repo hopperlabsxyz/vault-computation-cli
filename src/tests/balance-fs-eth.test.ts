@@ -13,9 +13,11 @@ test(
   "check balance match real data after each block",
   async () => {
     const address = "0x07ed467acD4ffd13023046968b0859781cb90D9B";
+
     const chainId = 1;
     const fromBlock = 21142252n;
     const toBlock = 22624283n;
+
     const vaultEvents = await fetchVaultEvents({
       chainId,
       vaultAddress: address,
@@ -55,6 +57,7 @@ test(
           const balance = account.getBalance();
 
           const realTotal = historicBalance[blockNumber.toString()][user];
+
           expect(Number(formatUnits(balance, vault.decimals))).toBeCloseTo(
             Number(formatUnits(realTotal, vault.decimals)),
             vault.decimals - 1

@@ -1,19 +1,18 @@
-import type { Transfer } from "../../gql/graphql";
-import { type Address } from "viem";
+import type { Transfer, VaultEventsQuery } from "../../gql/graphql";
 import type {
   RebateEvent,
-  RebateDeals,
   PointEvent,
   PreProcessingParams,
   ReferralEvent,
   VaultAddrresses,
 } from "./types";
 import type { OffChainReferral } from "parsing/parseOffchainReferrals";
+import type { RebateDeal } from "parsing/parseRebateDeals";
 
 export function preprocessEvents({
   events,
   addresses,
-  rebateDeals = {},
+  rebateDeals = [],
   offChainReferrals,
   points,
   defaultReferralRate = 0,
@@ -174,25 +173,15 @@ function filterTransfers(
   );
 }
 
-function preprocessRebateDeals(deals: RebateDeals): RebateEvent[] {
-  if (!deals) {
-    return [];
-  }
-
+function preprocessRebateDeals(deals: RebateDeal[]): RebateEvent[] {
   // Add __typename to deals and we inject the parameters of the deals
   // An otc deal is a deal on the fee rebate exclusively
   // thus referral is the user and the feeRewardRate is 0
 
-  const dealsArray = Object.entries(deals).map((deal) => {
-    return {
-      owner: deal[0] as Address,
-      feeRebateRate: deal[1],
-    };
-  });
   // We create fake events for the deals to be able to process them like the other events
   // we give them a block number 0 and a timestamp 0 so that they are processed first
-  return dealsArray.map((e) => ({
-    ...e,
+  return deals.map((e) => ({
+    owner: e.owner,
     blockNumber: 0,
     blockTimestamp: 0,
     feeRebateRate: e.feeRebateRate,
@@ -223,13 +212,14 @@ function preprocessReferrals({
   offChainReferrals,
   defaultReferralRate,
 }: {
-  referrals: ReferralEvent[];
-  offChainReferrals?: OffChainReferral[];
+  referrals: VaultEventsQuery["referrals"];
+  offChainReferrals: OffChainReferral[] | undefined;
   defaultReferralRate: number;
 }): ReferralEvent[] {
+  const referralsArray: ReferralEvent[] = [];
   // Add offchain referrals to the referrals array
   offChainReferrals?.forEach((referral) => {
-    referrals.push({
+    referralsArray.push({
       owner: referral.referred,
       referral: referral.referrer,
       feeRewardRate: referral.reward,
@@ -244,24 +234,25 @@ function preprocessReferrals({
     });
   });
 
+  // Add onchain referrals to the referrals array
+  referrals?.forEach((referral) => {
+    referralsArray.push({
+      owner: referral.owner,
+      referral: referral.referral,
+      feeRewardRate: defaultReferralRate,
+      assets: BigInt(referral.assets),
+      blockNumber: Number(referral.blockNumber),
+      blockTimestamp: Number(referral.blockTimestamp),
+      logIndex: Number(referral.logIndex),
+      requestId: BigInt(referral.requestId),
+      id: referral.id,
+      transactionHash: referral.transactionHash,
+      __typename: "Referral",
+    });
+  });
+
   // Add __typename to referrals and we inject the parameters of the referral
-  return referrals
-    .map((e) => {
-      return {
-        owner: e.owner,
-        referral: e.referral,
-        feeRewardRate: Number(e.feeRewardRate || defaultReferralRate),
-        assets: BigInt(e.assets),
-        blockNumber: Number(e.blockNumber),
-        blockTimestamp: Number(e.blockTimestamp),
-        requestId: BigInt(e.requestId),
-        __typename: "Referral" as const,
-        id: e.id,
-        transactionHash: e.transactionHash,
-        logIndex: e.logIndex,
-      };
-    })
-    .filter((r) => r.owner !== r.referral);
+  return referralsArray;
 }
 
 function preprocessTransfers(

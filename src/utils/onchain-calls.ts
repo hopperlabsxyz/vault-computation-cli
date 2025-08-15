@@ -21,30 +21,30 @@ export async function totalBalanceOf({
     client.readContract({
       abi: LagoonVaultAbi,
       functionName: "balanceOf",
-      args: [user as Address],
+      args: [user],
       address,
-      blockNumber: blockNumber,
+      blockNumber,
     }),
     client.readContract({
       abi: LagoonVaultAbi,
       functionName: "claimableDepositRequest",
-      args: [0n, user as Address],
+      args: [0n, user],
       address,
-      blockNumber: blockNumber,
+      blockNumber,
     }),
     client.readContract({
       abi: LagoonVaultAbi,
       functionName: "lastDepositRequestId",
-      args: [user as Address],
+      args: [user],
       address,
-      blockNumber: blockNumber,
+      blockNumber,
     }),
     client.readContract({
       abi: LagoonVaultAbi,
       functionName: "pendingRedeemRequest",
-      args: [0n, user as Address],
+      args: [0n, user],
       address,
-      blockNumber: blockNumber,
+      blockNumber,
     }),
   ]);
 
@@ -54,7 +54,7 @@ export async function totalBalanceOf({
       functionName: "convertToShares",
       args: [claimableDepositRequest, BigInt(lastDepositRequestId)],
       address,
-      blockNumber: blockNumber,
+      blockNumber,
     }),
   ]);
 

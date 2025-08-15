@@ -3,6 +3,7 @@ import type { Address } from "viem";
 import type { Vault } from "types/Vault";
 import type { Dot } from "./pointTracker";
 import type { OffChainReferral } from "parsing/parseOffchainReferrals";
+import type { RebateDeal } from "parsing/parseRebateDeals";
 
 export interface EventBase {
   blockNumber: number;
@@ -38,7 +39,7 @@ export type PointEvent = {
 export type Point = Dot & { name: string };
 
 export type ReferralEvent = {
-  feeRewardRate: number;
+  feeRewardRate?: number;
   assets: bigint;
   requestId: bigint;
   __typename: "Referral";
@@ -62,8 +63,6 @@ export interface VaultAddrresses {
   vault: Address;
 }
 
-export type RebateDeals = Record<Address, number>;
-
 export type OffChainReferrals = [
   {
     referrer: Address;
@@ -80,7 +79,7 @@ export interface PreProcessingParams {
   addresses: VaultAddrresses;
   defaultReferralRate: number;
   defaultRebateRate: number;
-  rebateDeals?: RebateDeals;
+  rebateDeals?: RebateDeal[];
   offChainReferrals?: OffChainReferral[];
   points?: Point[];
 }
@@ -99,7 +98,7 @@ export interface ProcessEventsParams {
 export interface ProcessVaultParams {
   vault: Vault;
   readable: boolean;
-  rebateDeals?: RebateDeals;
+  rebateDeals?: RebateDeal[];
   offChainReferrals?: OffChainReferral[];
   points?: Point[];
   fromBlock?: bigint;

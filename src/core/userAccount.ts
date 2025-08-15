@@ -66,7 +66,6 @@ export class UserAccount {
   }
 
   public getRebateRate(): number {
-    console.log(typeof this.rebateRate);
     return this.rebateRate;
   }
 }

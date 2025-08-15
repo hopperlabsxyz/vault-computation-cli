@@ -137,20 +137,18 @@ class Vault {
   private handleTotalAssetsUpdated(event: TotalAssetsUpdated) {
     this.totalAssets = event.totalAssets;
 
-    // this is for usual computation
-    // compute 4% of annual fees value in shares
+    // compute the next management fees
     if (this.lastTotalAssetsUpdateTimestamp != 0) {
       const timepast =
         Number(event.blockTimestamp) - this.lastTotalAssetsUpdateTimestamp;
       const ratioOverAYear = YEAR_IN_SECONDS / Number(timepast);
       const percentToDeposit =
-        this.feeRates(event.blockNumber).management / ratioOverAYear;
+        this.feeRates(Number(event.blockTimestamp)).management / ratioOverAYear;
 
       const assetsToDeposits = Math.trunc(
         percentToDeposit * Number(this.totalAssets)
       );
 
-      // this is to compute the repartition between management and performance fees
       this.nextManagementFees = convertToShares({
         assets: BigInt(assetsToDeposits),
         totalAssets: this.totalAssets - BigInt(assetsToDeposits),
@@ -158,11 +156,11 @@ class Vault {
       });
     }
 
-    const rates = this.feeRates(event.blockTimestamp);
+    const rates = this.feeRates(Number(event.blockTimestamp));
     this.periodFees.push({
-      managementFees: "0",
+      managementFees: this.nextManagementFees.toString(),
       blockNumber: Number(event.blockNumber),
-      performanceFees: "0",
+      performanceFees: "0", // we will update this in handleFeeTransfer, because we don't know the performance fees yet
       period: this.periodFees.length,
       timestamp: Number(event.blockTimestamp),
       managementRate: rates.management,
@@ -204,7 +202,7 @@ class Vault {
     const { sender, owner, shares } = event;
     const receiver = owner;
     const controller = sender;
-    if (controller.toLowerCase() === receiver.toLowerCase()) return; // in this case the balance are already just
+    if (controller.toLowerCase() === receiver.toLowerCase()) return; // in this case the balance are already updated in the transfer event
 
     this.getAndCreateAccount(receiver).increaseBalance(shares);
     this.getAndCreateAccount(controller).decreaseBalance(shares);
@@ -220,20 +218,21 @@ class Vault {
 
     this.totalSupply = totalSupply;
     this.totalAssets = totalAssets;
+
     // for each users who has pending deposit:
     for (const [address, userRequest] of Object.entries(this.pendingDeposits)) {
       // we initiate his accounts
       const acc = this.getAndCreateAccount(address as Address);
 
-      // we increase it's balance (like if he claimed his shares)
-      acc.increaseBalance(
-        SolidityMath.mulDivRounding(
-          userRequest!,
-          sharesMinted,
-          assetsDeposited,
-          SolidityMath.Rounding.Ceil
-        )
+      const shares = SolidityMath.mulDivRounding(
+        userRequest!,
+        sharesMinted,
+        assetsDeposited,
+        SolidityMath.Rounding.Floor
       );
+
+      // we increase it's balance (like if he claimed his shares)
+      acc.increaseBalance(shares);
       // we don't update total supply because it will naturally be updated via the transfer
     }
     this.pendingDeposits = {};
@@ -337,16 +336,21 @@ class Vault {
     // we compute how much fees they paid for this epoch
     // we emulated the rounding system of openzeppelin by adding 0 or 1
     this.accumulatedFees += totalFees;
-    for (const acc of Object.values(this.accounts)) {
-      if (acc.address == zeroAddress) continue;
-      acc.increaseFees(
+
+    // let distributedFees = 0n;
+    const _accounts = Object.values(this.accounts).filter(
+      (acc) => acc.address != zeroAddress
+    );
+
+    for (const [_, acc] of _accounts.entries()) {
+      const fees =
         (acc.getBalance() * totalFees) / this.totalSupply +
-          this.alternateZeroOne()
-      );
+        this.alternateZeroOne();
+
+      acc.increaseFees(fees);
     }
     const periodLength = this.periodFees.length;
     const lastPeriod = this.periodFees[periodLength - 1];
-    lastPeriod.managementFees = this.nextManagementFees.toString();
     lastPeriod.performanceFees = (
       totalFees - this.nextManagementFees
     ).toString();
@@ -404,14 +408,12 @@ class Vault {
     const accountsArray = Object.values(this.accounts);
     accountsArray.forEach((account) => {
       const address = account.address;
-      console.log(address);
       const referrer = this.referrals[address]?.referrer;
       const fees = account.getFees();
       const rebate = account.getRebateRate();
       const reward = this.referrals[address]?.feeRewardRate || 0;
 
       if (rebate + reward > Number(BPS_DIVIDER)) {
-        console.log(typeof rebate, typeof reward);
         throw new Error(
           `Rebate (${rebate}) and reward (${
             reward || 0

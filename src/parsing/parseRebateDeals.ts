@@ -1,23 +1,28 @@
 import { isAddress, type Address } from "viem";
 
 // deals are done for a specific chain on a specific vault for a specific owner and a specific amount
-export type AllDeals = Record<number, Deals>;
-export type Deals = Record<Address, Record<Address, number>>;
+export type RebateDeal = {
+  chainId: number;
+  vault: Address;
+  owner: Address;
+  feeRebateRate: number;
+};
 
-export async function parseRebateDeals(filePath: string): Promise<AllDeals> {
+export async function parseRebateDeals(
+  filePath: string
+): Promise<RebateDeal[]> {
   const dealsRaw = (await Bun.file(filePath).text()).split("\n");
-  const deals: Record<number, Record<Address, Record<Address, number>>> = {};
+  const deals: RebateDeal[] = [];
   for (const entry of dealsRaw.slice(1)) {
     const line = parseLine(entry);
     if (!line) continue;
     const { chainId, vault, owner, feeRebateRate } = line;
-    deals[chainId] = {
-      ...deals?.[chainId],
-      [vault]: {
-        ...deals?.[chainId]?.[vault],
-        [owner]: feeRebateRate,
-      },
-    };
+    deals.push({
+      chainId,
+      vault,
+      owner,
+      feeRebateRate,
+    });
   }
   return deals;
 }
@@ -30,13 +35,7 @@ function parseLine(line: string):
       feeRebateRate: number;
     }
   | undefined {
-  if (line === "")
-    return {
-      chainId: 0,
-      vault: "0x0",
-      owner: "0x0",
-      feeRebateRate: 0,
-    };
+  if (line === "") return undefined;
   const [chainId, vault, owner, feeRebateRate] = line
     .replace(" ", "")
     .split(",") as [string, Address, Address, string];

@@ -121,5 +121,3 @@ export class SolidityMath {
     return rounding % 2 === 1;
   }
 }
-
-// export const solMath = new SolidityMath();

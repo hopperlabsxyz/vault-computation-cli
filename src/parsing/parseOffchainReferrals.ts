@@ -1,3 +1,4 @@
+import { isWildCard } from "utils/various";
 import { isAddress, type Address } from "viem";
 
 export type OffChainReferral = {
@@ -13,11 +14,12 @@ export async function parseOffchainReferrals(
   filePath: string
 ): Promise<OffChainReferral[]> {
   const csv = (await Bun.file(filePath).text()).split("\n");
-  const deals: OffChainReferral[] = [];
+  const referrals: OffChainReferral[] = [];
   for (const entry of csv.slice(1)) {
     const line = parseLine(entry);
     if (!line) continue;
-    deals.push({
+
+    referrals.push({
       chainId: Number(line.chainId),
       vault: line.vault,
       referrer: line.referrer,
@@ -26,19 +28,12 @@ export async function parseOffchainReferrals(
       assets: line.assets,
     });
   }
-  return deals;
+
+  return referrals;
 }
 
 function parseLine(line: string): OffChainReferral | undefined {
-  if (line === "")
-    return {
-      chainId: 0,
-      vault: "0x0",
-      referrer: "0x0",
-      referred: "0x0",
-      reward: 0,
-      assets: 0,
-    };
+  if (line === "") return undefined;
   const [chainId, vault, referrer, referred, reward] = line
     .replace(" ", "")
     .split(",") as [string, Address, Address, Address, string];
