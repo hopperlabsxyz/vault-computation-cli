@@ -6,7 +6,7 @@ export function setInterpolateCommand(command: Command) {
   command
     .command("interpolate")
     .argument("csv file")
-    .description("Interpolate data between two points.")
+    .description("Interpolate data between two points.\n")
     .option(
       "-o, --output",
       "Will save the result next to origin file with interpolate at the end of the name of the file"

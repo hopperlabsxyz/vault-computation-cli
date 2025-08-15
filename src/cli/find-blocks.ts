@@ -14,7 +14,7 @@ export function setBlocksCommand(command: Command) {
       parseVaultArgument
     )
     .description(
-      "Find all blocks where fee minting occurred for a specific vault. Use this command to determine the block range for fee computation."
+      "Find all blocks where fee minting occurred for a specific vault. Use this command to determine the block range for fee computation.\n"
     )
     .option(
       "--fromBlock <number>",

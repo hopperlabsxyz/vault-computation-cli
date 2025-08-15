@@ -8,7 +8,7 @@ export function setUserBalanceCommand(command: Command) {
     .command("user-balance")
     .description(
       "Calculate and generate a balance report for a specified vault, including all users balance. \
-      If no block is provided, the latest is used."
+If no block is provided, the latest is used.\n"
     )
     .argument(
       "chainId:VaultAddress",

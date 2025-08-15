@@ -1,4 +1,3 @@
-import { parseArguments } from "parsing/parseVault";
 import { publicClient } from "lib/publicClient";
 import type { Command } from "@commander-js/extra-typings";
 import { preprocessEvents } from "core/preprocessEvents";
@@ -6,13 +5,18 @@ import type { DepositRequest, DepositRequestCanceled } from "../../gql/graphql";
 import type { Address } from "viem";
 import { fetchVaultEvents } from "utils/fetchVaultEvents";
 import { generateVault } from "core/vault";
+import { parseVaultArgument } from "parsing/parseVault";
 
 export function setControllersCommand(command: Command) {
   command
     .command("find-claimable-controllers")
-    .argument("chainId:VaultAddress")
+    .argument(
+      "chainId:VaultAddress",
+      "The chain ID and vault address to find controllers for",
+      parseVaultArgument
+    )
     .description(
-      "Finds all controllers that made a deposit request. Use this command if you want to get the args for claimSharesOnBehalf()"
+      "Finds all controllers that made a deposit request. Use this command if you want to get the args for claimSharesOnBehalf().\n"
     )
     .option(
       "--from-block <number>",
@@ -25,8 +29,7 @@ Examples:
   $ fees-computation-cli find-claimable-controllers 1:0x123...                    # Find all claimable controllers 
     `
     )
-    .action(async (args, options) => {
-      const vault = parseArguments(args);
+    .action(async (vault, options) => {
       const client = publicClient[vault.chainId];
       const toBlock = (
         await client.getBlock({ blockTag: "latest" })

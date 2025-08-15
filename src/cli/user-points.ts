@@ -9,8 +9,8 @@ export function setUserPointsCommand(command: Command) {
     .command("user-points")
     .description(
       "Calculate and generate points repartitions for a specified vault. \
-      The output is a csv with the following columns: chainId, vault, wallet, points. \
-      For more accuracy, data timestamp should be right before totalAssets updates."
+The output is a csv with the following columns: chainId, vault, wallet, points. \
+For more accuracy, data timestamp should be right before totalAssets updates.\n"
     )
     .argument(
       "chainId:VaultAddress",
@@ -30,7 +30,7 @@ export function setUserPointsCommand(command: Command) {
     .requiredOption(
       "--points <string>",
       "A path to a file containing the evolutions of points through time with the following format: timestamp,amount,name. \
-      For each line the program will distribute the new points proportionnaly to shareholders."
+For each line the program will distribute the new points proportionnaly to shareholders."
     )
 
     .action(async (vault, options) => {
