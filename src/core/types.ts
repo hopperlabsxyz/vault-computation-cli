@@ -39,7 +39,9 @@ export type PointEvent = {
 export type Point = Dot & { name: string };
 
 export type ReferralEvent = {
-  feeRewardRate?: number;
+  rewardRateBps: number;
+  rebateRateBps: number;
+  offchain: boolean;
   assets: bigint;
   requestId: bigint;
   __typename: "Referral";
@@ -50,9 +52,19 @@ export type ReferralEvent = {
 } & EventBase;
 
 export interface ReferralRates {
-  feeRebateRate: number;
-  feeRewardRate: number;
+  feeRebateRateBps: number;
+  feeRewardRateBps: number;
 }
+
+export interface ReferralConfig {
+  referral: Address;
+  rewardRateBps: number;
+}
+
+// export type ReferralConfig = {
+//   referral: Address;
+//   feeRewardRateBps: number;
+// };
 
 export interface OffChainReferralRates {
   feeRewardRate: number;
@@ -65,9 +77,9 @@ export interface VaultAddrresses {
 
 export type OffChainReferrals = [
   {
-    referrer: Address;
-    referred: Address;
-    reward: number;
+    referral: Address;
+    referee: Address;
+    rewardRateBps: number;
     blockNumber: number;
     blockTimestamp: number;
     logIndex: number;
@@ -77,8 +89,8 @@ export type OffChainReferrals = [
 export interface PreProcessingParams {
   events: VaultEventsQuery;
   addresses: VaultAddrresses;
-  defaultReferralRate: number;
-  defaultRebateRate: number;
+  defaultReferralRateBps?: number;
+  defaultRebateRateBps?: number;
   rebateDeals?: RebateDeal[];
   offChainReferrals?: OffChainReferral[];
   points?: Point[];
@@ -103,8 +115,8 @@ export interface ProcessVaultParams {
   points?: Point[];
   fromBlock?: bigint;
   toBlock?: bigint;
-  defaultReferralRate?: number;
-  defaultRebateRate?: number;
+  defaultReferralRateBps?: number;
+  defaultRebateRateBps?: number;
   strictBlockNumberMatching?: boolean;
 }
 

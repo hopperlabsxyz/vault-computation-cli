@@ -9,13 +9,17 @@ import type {
 import type { OffChainReferral } from "parsing/parseOffchainReferrals";
 import type { RebateDeal } from "parsing/parseRebateDeals";
 
+// The preprocess of the events consist in filling them with the data we need to process them
+// and sorting them chronologically.
+// The last deal provided will override the previous ones.
 export function preprocessEvents({
   events,
   addresses,
   rebateDeals = [],
   offChainReferrals,
   points,
-  defaultReferralRate = 0,
+  defaultReferralRateBps,
+  defaultRebateRateBps,
 }: PreProcessingParams) {
   // Process all event types
   preprocessDeposits(events);
@@ -37,7 +41,8 @@ export function preprocessEvents({
   const referrals: ReferralEvent[] = preprocessReferrals({
     referrals: events.referrals,
     offChainReferrals,
-    defaultReferralRate,
+    defaultReferralRateBps: defaultReferralRateBps || 0,
+    defaultRebateRateBps: defaultRebateRateBps || 0,
   });
 
   // Combine all events and sort chronologically
@@ -176,14 +181,14 @@ function filterTransfers(
 function preprocessRebateDeals(deals: RebateDeal[]): RebateEvent[] {
   // Add __typename to deals and we inject the parameters of the deals
   // An otc deal is a deal on the fee rebate exclusively
-  // thus referral is the user and the feeRewardRate is 0
 
   // We create fake events for the deals to be able to process them like the other events
   // we give them a block number 0 and a timestamp 0 so that they are processed first
+
   return deals.map((e) => ({
     owner: e.owner,
-    blockNumber: 0,
-    blockTimestamp: 0,
+    blockNumber: -1,
+    blockTimestamp: 1,
     feeRebateRate: e.feeRebateRate,
     logIndex: 0,
     id: "0x",
@@ -210,11 +215,13 @@ function preprocessPoints(points: any, vaultAddress: string): PointEvent[] {
 function preprocessReferrals({
   referrals,
   offChainReferrals,
-  defaultReferralRate,
+  defaultReferralRateBps,
+  defaultRebateRateBps,
 }: {
   referrals: VaultEventsQuery["referrals"];
   offChainReferrals: OffChainReferral[] | undefined;
-  defaultReferralRate: number;
+  defaultReferralRateBps: number;
+  defaultRebateRateBps: number;
 }): ReferralEvent[] {
   const referralsArray: ReferralEvent[] = [];
   // Add offchain referrals to the referrals array
@@ -222,8 +229,10 @@ function preprocessReferrals({
     referralsArray.push({
       owner: referral.referred,
       referral: referral.referrer,
-      feeRewardRate: referral.reward,
+      rewardRateBps: referral.rewardRateBps,
+      rebateRateBps: referral.rebateRateBps,
       assets: BigInt(referral.assets),
+      offchain: true,
       blockNumber: 0,
       blockTimestamp: 0,
       logIndex: 0,
@@ -239,8 +248,10 @@ function preprocessReferrals({
     referralsArray.push({
       owner: referral.owner,
       referral: referral.referral,
-      feeRewardRate: defaultReferralRate,
+      rewardRateBps: defaultReferralRateBps,
+      rebateRateBps: defaultRebateRateBps,
       assets: BigInt(referral.assets),
+      offchain: false,
       blockNumber: Number(referral.blockNumber),
       blockTimestamp: Number(referral.blockTimestamp),
       logIndex: Number(referral.logIndex),

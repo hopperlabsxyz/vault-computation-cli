@@ -12,8 +12,8 @@ export async function processVault({
   offChainReferrals,
   toBlock,
   fromBlock,
-  defaultReferralRate = 0,
-  defaultRebateRate = 0,
+  defaultReferralRateBps,
+  defaultRebateRateBps,
   points,
   strictBlockNumberMatching = true,
 }: ProcessVaultParams): Promise<ProcessVaultReturn> {
@@ -42,8 +42,8 @@ export async function processVault({
       silo: vaultState.silo,
       vault: vault.address,
     },
-    defaultReferralRate,
-    defaultRebateRate,
+    defaultReferralRateBps,
+    defaultRebateRateBps,
     points,
     rebateDeals,
     offChainReferrals,
@@ -56,7 +56,7 @@ export async function processVault({
   // now we can compute the rebate users can get
   vaultState.distributeRebatesAndRewards();
 
-  const result = vaultState.getAccounts();
+  const accounts = vaultState.getAccounts();
   const sharesDecimals = readable ? vaultState.decimals : 0;
   const assetDecimals = readable ? vaultState.asset.decimals : 0;
 
@@ -70,13 +70,13 @@ export async function processVault({
     ),
     periodFees: vaultState.periodFees,
     data: Object.fromEntries(
-      Object.entries(result).map(([address, values]) => [
-        address,
+      accounts.map((account) => [
+        account.address,
         {
-          balance: Number(formatUnits(values.getBalance(), sharesDecimals)),
-          fees: Number(formatUnits(values.getFees(), sharesDecimals)),
-          cashback: Number(formatUnits(values.getCashback(), sharesDecimals)),
-          points: values.getAllPoints(),
+          balance: Number(formatUnits(account.getBalance(), sharesDecimals)),
+          fees: Number(formatUnits(account.getFees(), sharesDecimals)),
+          cashback: Number(formatUnits(account.getCashback(), sharesDecimals)),
+          points: account.getAllPoints(),
         },
       ])
     ),

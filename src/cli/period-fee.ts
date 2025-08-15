@@ -47,12 +47,8 @@ Example:
       const result = await processVault({
         fromBlock: BigInt(options!.fromBlock!),
         toBlock: BigInt(options!.toBlock!),
-        deals: {},
+        rebateDeals: [],
         readable: options!.readable!,
-        rates: {
-          feeRebateRate: 0,
-          feeRewardRate: 0,
-        },
         vault,
       });
 

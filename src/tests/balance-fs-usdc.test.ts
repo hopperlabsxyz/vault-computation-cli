@@ -50,7 +50,8 @@ test(
       events: events as { __typename: string; blockNumber: bigint }[],
       distributeFeesFromBlock: fromBlock,
       blockEndHook: async (blockNumber: bigint) => {
-        for (const [user, account] of Object.entries(vault.getAccounts())) {
+        for (const user of vault.getAccountsAddresses()) {
+          const account = vault.getAccount(user);
           if (user.toLowerCase() == vault.feeReceiver.toLowerCase()) continue;
           const balance = account.getBalance();
           const realTotal = historicBalance[blockNumber.toString()][user];

@@ -32,7 +32,6 @@ Examples:
     `
     )
     .action(async (args, options) => {
-      console.log(args);
       const fileName = args.split("/").slice(-1)[0].slice(0, -4);
       const pointsRaw = (await Bun.file(args).text()).split("\n").slice(1);
       const toTime = Number(options.toTimestamp);

@@ -1,3 +1,4 @@
+import { isWildCard } from "utils/various";
 import { isAddress, type Address } from "viem";
 
 // deals are done for a specific chain on a specific vault for a specific owner and a specific amount
@@ -12,19 +13,26 @@ export async function parseRebateDeals(
   filePath: string
 ): Promise<RebateDeal[]> {
   const dealsRaw = (await Bun.file(filePath).text()).split("\n");
-  const deals: RebateDeal[] = [];
+  const deals: Record<Address, RebateDeal> = {};
+
   for (const entry of dealsRaw.slice(1)) {
     const line = parseLine(entry);
     if (!line) continue;
     const { chainId, vault, owner, feeRebateRate } = line;
-    deals.push({
+
+    if (deals[owner] != undefined) {
+      if (!isWildCard(deals[owner].chainId, deals[owner].vault)) continue;
+    } // if the owner already has a deal, and it is not a wildcard, we skip the current deal
+
+    // if no deal or wildcard deal, we add the deal
+    deals[owner] = {
       chainId,
       vault,
       owner,
       feeRebateRate,
-    });
+    };
   }
-  return deals;
+  return Object.values(deals);
 }
 
 function parseLine(line: string):
@@ -63,19 +71,4 @@ function parseLine(line: string):
     owner: owner.toLowerCase() as Address,
     feeRebateRate: Number(feeRebateRate),
   };
-}
-
-// merge rebate deals
-// in case of conflict, the deal from deals2 will be used
-export function mergeRebateDeals(
-  deals1: Record<Address, number>,
-  deals2: Record<Address, number>
-): Record<Address, number> {
-  const merged: Record<Address, number> = { ...deals1 };
-  for (const [ownerAddress, deal] of Object.entries(deals2)) {
-    const ownerAddressLower = ownerAddress.toLowerCase() as Address;
-    merged[ownerAddressLower] = deal;
-  }
-
-  return merged;
 }
