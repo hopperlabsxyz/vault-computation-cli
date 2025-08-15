@@ -1,4 +1,4 @@
-import { parseArguments } from "utils/parseArguments";
+import { parseArguments } from "parsing/parseVault";
 import { publicClient } from "lib/publicClient";
 import type { Command } from "@commander-js/extra-typings";
 import { preprocessEvents } from "core/preprocessEvents";

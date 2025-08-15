@@ -9,7 +9,7 @@ test("check 0-0x0 works as a wildcard", async () => {
   const address = "0x07ed467acD4ffd13023046968b0859781cb90D9B";
   const chainId = 1;
   const fromBlock = 21142252n;
-  const toBlock = 22011758n;
+  const toBlock = 23105892n;
   const vaultEvents = await fetchVaultEvents({
     chainId,
     vaultAddress: address,
@@ -56,7 +56,7 @@ test("check matching chainId-address works", async () => {
   const address = "0x07ed467acD4ffd13023046968b0859781cb90D9B";
   const chainId = 1;
   const fromBlock = 21142252n;
-  const toBlock = 22011758n;
+  const toBlock = 23105892n;
   const vaultEvents = await fetchVaultEvents({
     chainId,
     vaultAddress: address,
@@ -103,7 +103,7 @@ test("check matching chainId-address overrides a wildcard deal", async () => {
   const address = "0x07ed467acD4ffd13023046968b0859781cb90D9B";
   const chainId = 1;
   const fromBlock = 21142252n;
-  const toBlock = 22011758n;
+  const toBlock = 23105892n;
   const vaultEvents = await fetchVaultEvents({
     chainId,
     vaultAddress: address,
@@ -145,7 +145,7 @@ test("check that an offchain rebate doesn't get overriden by a referral", async 
   const address = "0x07ed467acD4ffd13023046968b0859781cb90D9B";
   const chainId = 1;
   const fromBlock = 21142252n;
-  const toBlock = 22011758n;
+  const toBlock = 23105892n;
   const vaultEvents = await fetchVaultEvents({
     chainId,
     vaultAddress: address,
@@ -204,7 +204,7 @@ test("check that a user reabte doens't get overriden by the rebate of a referral
   const address = "0x07ed467acD4ffd13023046968b0859781cb90D9B";
   const chainId = 1;
   const fromBlock = 21142252n;
-  const toBlock = 22011758n;
+  const toBlock = 23105892n;
   const vaultEvents = await fetchVaultEvents({
     chainId,
     vaultAddress: address,
@@ -247,7 +247,6 @@ test("check that a user reabte doens't get overriden by the rebate of a referral
     distributeFeesFromBlock: fromBlock,
     blockEndHook: async (_: bigint) => {
       const userAccount = vault.getAccount(user);
-      // expect(userAccount.getReferral()).toBeUndefined();
       expect(userAccount.getRebateRateBps()).toBe(50);
     },
   });
@@ -257,7 +256,7 @@ test("check that a user referred has a rebate of defaultRebateRate", async () =>
   const address = "0x07ed467acD4ffd13023046968b0859781cb90D9B";
   const chainId = 1;
   const fromBlock = 21142252n;
-  const toBlock = 22011758n;
+  const toBlock = 23105892n;
   const vaultEvents = await fetchVaultEvents({
     chainId,
     vaultAddress: address,
@@ -287,14 +286,16 @@ test("check that a user referred has a rebate of defaultRebateRate", async () =>
     (ref) => ref.owner.toLowerCase() === user.toLowerCase()
   );
   expect(refferalEvent).not.toBe(undefined);
-
   await vault.processEvents({
     events: events as { __typename: string; blockNumber: bigint }[],
     distributeFeesFromBlock: fromBlock,
     blockEndHook: async (blockNumber: bigint) => {
       const userAccount = vault.getAccount(user);
-      if (blockNumber >= refferalEvent?.blockNumber)
-        expect(userAccount.getRebateRateBps()).toBe(500);
+      if (blockNumber >= refferalEvent?.blockNumber) {
+        const preRebate = vault.preRebate[user];
+        if (preRebate != undefined) expect(preRebate).toBe(500);
+        else expect(userAccount.getRebateRateBps()).toBe(500);
+      }
     },
   });
 });

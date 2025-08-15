@@ -1,5 +1,5 @@
 import { processVault } from "core/processVault";
-import { parseArguments } from "utils/parseArguments";
+import { parseVaultArgument } from "parsing/parseVault";
 import type { Command } from "@commander-js/extra-typings";
 import { publicClient } from "lib/publicClient";
 
@@ -7,9 +7,14 @@ export function setUserBalanceCommand(command: Command) {
   command
     .command("user-balance")
     .description(
-      "Calculate and generate a balance report for a specified vault, including all users balance. If no block is provided, the latest is used."
+      "Calculate and generate a balance report for a specified vault, including all users balance. \
+      If no block is provided, the latest is used."
     )
-    .argument("chainId:VaultAddress")
+    .argument(
+      "chainId:VaultAddress",
+      "The chain ID and vault address to find blocks for",
+      parseVaultArgument
+    )
     .option("-r, --readable", "Format the output in a human-readable format")
     .option(
       "-b, --block <number>",
@@ -31,11 +36,11 @@ Example:
   $ bun user-balance 1:0x07ed467acd4ffd13023046968b0859781cb90d9b -r -o --block 1000000
     `
     )
-    .action(async (args, options) => {
-      const vault = parseArguments(args);
+    .action(async (vault, options) => {
       const client = publicClient[vault.chainId];
       if (!options.block)
         options.block = (await client.getBlockNumber()).toString();
+
       const result = await processVault({
         readable: options.readable ?? false,
         vault,

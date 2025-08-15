@@ -1,5 +1,5 @@
 import { processVault } from "core/processVault";
-import { parseArguments } from "utils/parseArguments";
+import { parseVaultArgument } from "parsing/parseVault";
 import type { Command } from "@commander-js/extra-typings";
 import type { Point } from "core/types";
 import { parsePoints } from "parsing/parsePoints";
@@ -8,9 +8,15 @@ export function setUserPointsCommand(command: Command) {
   command
     .command("user-points")
     .description(
-      "Calculate and generate points repartitions for a specified vault. The output is a csv with the following columns: chainId, vault, wallet, points. For more accuracy, data timestamp should be right before totalAssets updates."
+      "Calculate and generate points repartitions for a specified vault. \
+      The output is a csv with the following columns: chainId, vault, wallet, points. \
+      For more accuracy, data timestamp should be right before totalAssets updates."
     )
-    .argument("chainId:VaultAddress")
+    .argument(
+      "chainId:VaultAddress",
+      "The chain ID and vault address to find blocks for",
+      parseVaultArgument
+    )
     .option("-r, --readable", "Format the output in a human-readable format")
     .option(
       "-o, --output",
@@ -23,13 +29,11 @@ export function setUserPointsCommand(command: Command) {
     )
     .requiredOption(
       "--points <string>",
-      "A path to a file containing the evolutions of points through time with the following format: timestamp,amount,name. For each line \
-       the program will distribute the new points proportionnaly to shareholders."
+      "A path to a file containing the evolutions of points through time with the following format: timestamp,amount,name. \
+      For each line the program will distribute the new points proportionnaly to shareholders."
     )
 
-    .action(async (args, options) => {
-      const vault = parseArguments(args);
-
+    .action(async (vault, options) => {
       let points: Point[] = [];
 
       if (options.points.slice(-4) != ".csv") throw new Error("");
