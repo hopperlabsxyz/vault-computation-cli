@@ -6,13 +6,8 @@ export type Vault = {
   address: Address;
 };
 
-export type ReferralCustom = Referral & {
-  feeRebateRate: number;
-  feeRewardRate: number;
-};
-
-export type ReferralConfig = {
-  referrer: Address;
-  feeRebateRate: number;
-  feeRewardRate: number;
-};
+// export type ReferralCustom = Referral & {
+//   rewardRateBps: number;
+//   rebateRateBps: number;
+//   offchain: boolean;
+// };

@@ -1,5 +1,5 @@
 import { processVault } from "core/processVault";
-import { parseArguments } from "utils/parseArguments";
+import { parseVaultArgument } from "parsing/parseVault";
 import type { Command } from "@commander-js/extra-typings";
 import type { PeriodFees } from "core/types";
 import { formatUnits } from "viem";
@@ -8,10 +8,14 @@ export function setPeriodFeeCommand(command: Command) {
   command
     .command("period-fee")
     .description(
-      "Calculate and generate fee reports for a specific period between 2 updates of totalAssets (period).\
- This command require precise block input. The fromBlock and the toBlock must correspond to totalAssets updates blockNumber."
+      "Calculate and generate fee reports for a specific period between 2 updates of totalAssets (period). \
+This command require precise block input. The fromBlock and the toBlock must correspond to totalAssets updates blockNumber.\n"
     )
-    .argument("chainId:VaultAddress")
+    .argument(
+      "chainId:VaultAddress",
+      "The chain ID and vault address to find blocks for",
+      parseVaultArgument
+    )
     .requiredOption(
       "-f, --from-block <number>",
       "Starting block number for fee computation (exclusive). Use 'find-blocks' command to find the appropriate block number"
@@ -31,7 +35,7 @@ export function setPeriodFeeCommand(command: Command) {
     )
     .option(
       "--silent",
-      "This will prevent the printing of the output in stdout",
+      "This will prevent the printing of the output on stdout",
       false
     )
     .addHelpText(
@@ -41,18 +45,12 @@ Example:
   $ bun period-fee 1:0x07ed467acd4ffd13023046968b0859781cb90d9b -f 1000000 -l 2000000 -r 
     `
     )
-    .action(async (args, options) => {
-      const vault = parseArguments(args);
-
+    .action(async (vault, options) => {
       const result = await processVault({
         fromBlock: BigInt(options!.fromBlock!),
         toBlock: BigInt(options!.toBlock!),
-        deals: {},
+        rebateDeals: [],
         readable: options!.readable!,
-        rates: {
-          feeRebateRate: 0,
-          feeRewardRate: 0,
-        },
         vault,
       });
 

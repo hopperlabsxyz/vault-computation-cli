@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { preprocessEvents } from "core/preprocessEvents";
-import { sanityChecks } from "core/sanityChecks";
+import { checkStrictBlockNumberMatching } from "core/strictBlockNumberMatching";
 import { generateVault } from "core/vault";
 import { totalBalanceOf } from "utils/onchain-calls";
 import { publicClient } from "lib/publicClient";
@@ -13,15 +13,17 @@ test(
   "check balance match real data after each block",
   async () => {
     const address = "0x07ed467acD4ffd13023046968b0859781cb90D9B";
+
     const chainId = 1;
     const fromBlock = 21142252n;
     const toBlock = 22624283n;
+
     const vaultEvents = await fetchVaultEvents({
       chainId,
       vaultAddress: address,
       toBlock,
     });
-    sanityChecks({ events: vaultEvents, fromBlock, toBlock });
+    checkStrictBlockNumberMatching({ events: vaultEvents, fromBlock, toBlock });
     const client = publicClient[chainId];
     const vault = await generateVault({
       vault: {
@@ -35,10 +37,8 @@ test(
         silo: vault.silo,
         vault: address,
       },
-      referralRates: {
-        feeRewardRate: 15,
-        feeRebateRate: 5,
-      },
+      defaultReferralRateBps: 500,
+      defaultRebateRateBps: 1500,
     });
 
     const historicBalance = await getHistoricBalances({
@@ -52,11 +52,13 @@ test(
       events: events as { __typename: string; blockNumber: bigint }[],
       distributeFeesFromBlock: fromBlock,
       blockEndHook: async (blockNumber: bigint) => {
-        for (const [user, account] of Object.entries(vault.getAccounts())) {
+        for (const user of vault.getAccountsAddresses()) {
+          const account = vault.getAccount(user);
           if (user.toLowerCase() == vault.feeReceiver.toLowerCase()) continue;
           const balance = account.getBalance();
 
           const realTotal = historicBalance[blockNumber.toString()][user];
+
           expect(Number(formatUnits(balance, vault.decimals))).toBeCloseTo(
             Number(formatUnits(realTotal, vault.decimals)),
             vault.decimals - 1

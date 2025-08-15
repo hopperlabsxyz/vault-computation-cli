@@ -6,7 +6,7 @@ export function setInterpolateCommand(command: Command) {
   command
     .command("interpolate")
     .argument("csv file")
-    .description("Interpolate data between two points.")
+    .description("Interpolate data between two points.\n")
     .option(
       "-o, --output",
       "Will save the result next to origin file with interpolate at the end of the name of the file"
@@ -32,7 +32,6 @@ Examples:
     `
     )
     .action(async (args, options) => {
-      console.log(args);
       const fileName = args.split("/").slice(-1)[0].slice(0, -4);
       const pointsRaw = (await Bun.file(args).text()).split("\n").slice(1);
       const toTime = Number(options.toTimestamp);

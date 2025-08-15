@@ -1,6 +1,6 @@
 import { formatUnits, maxUint256 } from "viem";
 import { generateVault } from "./vault";
-import { sanityChecks } from "./sanityChecks";
+import { checkStrictBlockNumberMatching } from "./strictBlockNumberMatching";
 import type { ProcessVaultParams, ProcessVaultReturn } from "./types";
 import { preprocessEvents } from "./preprocessEvents";
 import { fetchVaultEvents } from "utils/fetchVaultEvents";
@@ -8,13 +8,12 @@ import { fetchVaultEvents } from "utils/fetchVaultEvents";
 export async function processVault({
   vault,
   readable,
-  deals = {},
+  rebateDeals,
+  offChainReferrals,
   toBlock,
   fromBlock,
-  rates = {
-    feeRebateRate: 0,
-    feeRewardRate: 0,
-  },
+  defaultReferralRateBps,
+  defaultRebateRateBps,
   points,
   strictBlockNumberMatching = true,
 }: ProcessVaultParams): Promise<ProcessVaultReturn> {
@@ -27,7 +26,7 @@ export async function processVault({
   });
 
   if (strictBlockNumberMatching) {
-    sanityChecks({
+    checkStrictBlockNumberMatching({
       events: vaultEvents,
       fromBlock: fromBlock || 0n,
       toBlock: toBlock || BigInt(maxUint256),
@@ -37,18 +36,18 @@ export async function processVault({
   const vaultState = await generateVault({
     vault,
   });
-
   let events = preprocessEvents({
     events: vaultEvents,
     addresses: {
       silo: vaultState.silo,
       vault: vault.address,
     },
-    referralRates: rates,
+    defaultReferralRateBps,
+    defaultRebateRateBps,
     points,
-    deals,
+    rebateDeals,
+    offChainReferrals,
   });
-
   vaultState.processEvents({
     events: events as { __typename: string; blockNumber: bigint }[],
     distributeFeesFromBlock: fromBlock || 0n,
@@ -57,7 +56,7 @@ export async function processVault({
   // now we can compute the rebate users can get
   vaultState.distributeRebatesAndRewards();
 
-  const result = vaultState.getAccounts();
+  const accounts = vaultState.getAccounts();
   const sharesDecimals = readable ? vaultState.decimals : 0;
   const assetDecimals = readable ? vaultState.asset.decimals : 0;
 
@@ -70,16 +69,13 @@ export async function processVault({
       formatUnits(vaultState.pricePerShare(), assetDecimals)
     ),
     periodFees: vaultState.periodFees,
-    data: Object.fromEntries(
-      Object.entries(result).map(([address, values]) => [
-        address,
-        {
-          balance: Number(formatUnits(values.getBalance(), sharesDecimals)),
-          fees: Number(formatUnits(values.getFees(), sharesDecimals)),
-          cashback: Number(formatUnits(values.getCashback(), sharesDecimals)),
-          points: values.getAllPoints(),
-        },
-      ])
-    ),
+    data: accounts.map((account) => ({
+      balance: Number(formatUnits(account.getBalance(), sharesDecimals)),
+      fees: Number(formatUnits(account.getFees(), sharesDecimals)),
+      cashback: Number(formatUnits(account.getCashback(), sharesDecimals)),
+      points: account.getAllPoints(),
+      account: account.address,
+    })),
+    // ),
   };
 }
