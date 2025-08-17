@@ -62,15 +62,10 @@ export function preprocessEvents({
     ...referrals,
     ...transfers,
   ].sort((a, b) => {
-    // in this case it means it is not a real on chain event, we need to use the timestamp to order it.
-    if (a.blockNumber == -1 || b.blockNumber == -1)
-      if (a.blockTimestamp < b.blockTimestamp) return -1;
-      else return 1;
-    if (a.blockNumber < b.blockNumber) return -1;
-    if (a.blockNumber > b.blockNumber) return 1;
-    if (a.logIndex < b.logIndex) return -1;
-    if (a.logIndex > b.logIndex) return 1;
-    return 0;
+    // if blocktimestamp is the same we use the lgoIndex
+    if (a.blockTimestamp == b.blockTimestamp) return a.logIndex - b.logIndex;
+
+    return a.blockTimestamp - b.blockTimestamp;
   });
   return sorted;
 }
@@ -187,10 +182,10 @@ function preprocessRebateDeals(deals: RebateDeal[]): RebateEvent[] {
 
   return deals.map((e) => ({
     owner: e.owner,
-    blockNumber: -1,
-    blockTimestamp: 1,
+    blockNumber: 0, // ordering doesn't matter for offchain rebate deals
+    blockTimestamp: 0, // ordering doesn't matter for offchain rebate deals
     feeRebateRate: e.feeRebateRate,
-    logIndex: 0,
+    logIndex: 0, // ordering doesn't matter for offchain rebate deals
     id: "0x",
     transactionHash: "0x",
     vault: "0x",
@@ -203,9 +198,9 @@ function preprocessPoints(points: any, vaultAddress: string): PointEvent[] {
     points?.map((p: any) => ({
       __typename: "Point",
       amount: p.amount,
-      blockNumber: -1,
+      blockNumber: 0,
       blockTimestamp: p.timestamp,
-      logIndex: -1,
+      logIndex: 0,
       vault: vaultAddress,
       name: p.name,
     })) || []
@@ -233,9 +228,9 @@ function preprocessReferrals({
       rebateRateBps: referral.rebateRateBps,
       assets: BigInt(referral.assets),
       offchain: true,
-      blockNumber: 0,
-      blockTimestamp: 0,
-      logIndex: 0,
+      blockNumber: 0, // ordering doesn't matter for offchain referrals
+      blockTimestamp: 0, // ordering doesn't matter for offchain referrals
+      logIndex: 0, // ordering doesn't matter for offchain referrals
       requestId: 0n,
       id: "0x",
       transactionHash: "0x",

@@ -1,4 +1,4 @@
-import { BPS_DIVIDER } from "../constants";
+import { BPS_DIVIDER } from "../utils/constants";
 import type { Rates } from "./types";
 
 export class RatesManager {

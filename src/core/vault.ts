@@ -1,4 +1,4 @@
-import { BPS_DIVIDER, YEAR_IN_SECONDS } from "../constants";
+import { BPS_DIVIDER, YEAR_IN_SECONDS } from "../utils/constants";
 import type {
   Deposit,
   DepositRequest,
@@ -376,6 +376,8 @@ class Vault {
     const owner = this.getOrCreateAccount(event.owner);
 
     if (event.offchain) {
+      // if the referral is offchain, it is immediatly enforced
+      // it means also that 2 referrals with colliding config with overide each other
       owner.setReferral(event.referral, event.rewardRateBps);
       owner.setRebateRateBps(event.rebateRateBps);
       return;
@@ -435,24 +437,21 @@ class Vault {
   public distributeRebatesAndRewards() {
     const accountsArray = Object.values(this.accounts);
     accountsArray.forEach((account) => {
-      const address = account.address;
-      const referral = account.getReferral()?.referral;
       const fees = account.getFees();
       const rebate = account.getRebateRateBps() || 0;
       const reward = account.getReferral()?.rewardRateBps || 0;
+      const referral = account.getReferral()?.referral;
+
+      // we make sure that the rebate deals and referral rewards do not lead to an excessive distribution of cashback
       if (rebate + reward > Number(BPS_DIVIDER)) {
         throw new Error(
           `Fee rebate (${rebate / 100}%) + referral reward (${
             reward / 100
-          }%) is greater than 100% for ${address}`
+          }%) is greater than 100% for ${account.address}`
         );
       }
-      if (account) {
-        this.accounts[address].increaseCashback(
-          (fees * BigInt(rebate)) / BPS_DIVIDER
-        );
-      }
-      if (reward && referral) {
+      account.increaseCashback((fees * BigInt(rebate)) / BPS_DIVIDER);
+      if (referral) {
         const referrerAcc = this.getOrCreateAccount(referral);
         referrerAcc.increaseCashback((fees * BigInt(reward)) / BPS_DIVIDER);
       }

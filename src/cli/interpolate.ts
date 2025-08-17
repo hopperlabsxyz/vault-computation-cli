@@ -1,5 +1,5 @@
 import type { Command } from "@commander-js/extra-typings";
-import { DAY_IN_SECONDS } from "../constants";
+import { DAY_IN_SECONDS } from "../utils/constants";
 import type { Dot } from "core/pointTracker";
 
 export function setInterpolateCommand(command: Command) {
