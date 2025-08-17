@@ -84,7 +84,6 @@ Example:
     .action(async (vault, options) => {
       const rebateDeals = filterWildCard(await options.deals, vault);
       const offChainReferrals = filterWildCard(await options.referrals, vault);
-      console.log(options.readable);
       const result = await processVault({
         rebateDeals,
         offChainReferrals,
