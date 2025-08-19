@@ -1,147 +1,51 @@
-import type { Transfer } from "../../gql/graphql";
-import { type Address } from "viem";
+import type { Transfer, VaultEventsQuery } from "../../gql/graphql";
 import type {
-  DealEvent,
-  Deals,
+  RebateEvent,
   PointEvent,
   PreProcessingParams,
   ReferralEvent,
   VaultAddrresses,
 } from "./types";
+import type { OffChainReferral } from "parsing/parseOffchainReferrals";
+import type { RebateDeal } from "parsing/parseRebateDeals";
 
+// The preprocess of the events consist in filling them with the data we need to process them
+// and sorting them chronologically.
+// The last deal provided will override the previous ones.
 export function preprocessEvents({
   events,
-  referralRates = {
-    feeRebateRate: 0,
-    feeRewardRate: 0,
-  },
   addresses,
-  deals,
+  rebateDeals = [],
+  offChainReferrals,
   points,
+  defaultReferralRateBps,
+  defaultRebateRateBps,
 }: PreProcessingParams) {
-  // Add __typename to deposits and convert relevant fields to BigInt
-  events.deposits = events.deposits.map((e) => ({
-    ...e,
-    assets: BigInt(e.assets),
-    shares: BigInt(e.shares),
-    __typename: "Deposit",
-  }));
-  // Add __typename to depositRequestCanceleds
-  events.depositRequestCanceleds = events.depositRequestCanceleds.map((e) => ({
-    ...e,
-    __typename: "DepositRequestCanceled",
-  }));
-
-  // Add __typename to depositRequests and convert relevant fields to BigInt
-  events.depositRequests = events.depositRequests.map((e) => ({
-    ...e,
-    assets: BigInt(e.assets),
-    __typename: "DepositRequest",
-  }));
-
-  // Add __typename to redeemRequests and convert relevant fields to BigInt
-  events.redeemRequests = events.redeemRequests.map((e) => ({
-    ...e,
-    shares: BigInt(e.shares),
-    __typename: "RedeemRequest",
-  }));
-
-  // Add __typename to settleRedeems and convert relevant fields to BigInt
-  events.settleRedeems = events.settleRedeems.map((e) => ({
-    ...e,
-    assetsWithdrawed: BigInt(e.assetsWithdrawed),
-    sharesBurned: BigInt(e.sharesBurned),
-    totalAssets: BigInt(e.totalAssets),
-    totalSupply: BigInt(e.totalSupply),
-    __typename: "SettleRedeem",
-  }));
-
-  // Add __typename to settleDeposits and convert relevant fields to BigInt
-  events.settleDeposits = events.settleDeposits.map((e) => ({
-    ...e,
-    assetsDeposited: BigInt(e.assetsDeposited),
-    sharesMinted: BigInt(e.sharesMinted),
-    totalSupply: BigInt(e.totalSupply),
-    totalAssets: BigInt(e.totalAssets),
-    __typename: "SettleDeposit",
-  }));
-
-  // Add __typename to totalAssetsUpdateds and convert relevant fields to BigInt
-  events.totalAssetsUpdateds = events.totalAssetsUpdateds.map((e) => ({
-    ...e,
-    totalAssets: BigInt(e.totalAssets),
-    __typename: "TotalAssetsUpdated",
-  }));
-
-  // Add __typename to newTotalAssetsUpdateds and convert relevant fields to BigInt
-  events.newTotalAssetsUpdateds = events.newTotalAssetsUpdateds.map((e) => ({
-    ...e,
-    totalAssets: BigInt(e.totalAssets),
-    __typename: "NewTotalAssetsUpdated",
-  }));
-
-  // Add __typename to RatesUpdates
-  events.ratesUpdateds = events.ratesUpdateds.map((e) => ({
-    ...e,
-    __typename: "RatesUpdated",
-  }));
-
-  // Add __typename to RatesUpdates
-  events.feeReceiverUpdateds = events.feeReceiverUpdateds.map((e) => ({
-    ...e,
-    __typename: "FeeReceiverUpdated",
-  }));
+  // Process all event types
+  preprocessDeposits(events);
+  preprocessDepositRequestCanceleds(events);
+  preprocessDepositRequests(events);
+  preprocessRedeemRequests(events);
+  preprocessSettleRedeems(events);
+  preprocessSettleDeposits(events);
+  preprocessTotalAssetsUpdateds(events);
+  preprocessNewTotalAssetsUpdateds(events);
+  preprocessRatesUpdateds(events);
+  preprocessFeeReceiverUpdateds(events);
+  const transfers = preprocessTransfers(events.transfers, addresses);
 
   // Add offchain points events
-  const pointsEvents: PointEvent[] =
-    points?.map((p) => ({
-      __typename: "Point",
-      amount: p.amount,
-      blockNumber: -1,
-      blockTimestamp: p.timestamp,
-      logIndex: -1,
-      vault: addresses.vault,
-      name: p.name,
-    })) || [];
+  const pointsEvents = preprocessPoints(points, addresses.vault);
 
-  let dealsParsed: DealEvent[] = [];
-  if (deals) {
-    dealsParsed = parseDeals(deals);
-  }
+  const rebates: RebateEvent[] = preprocessRebateDeals(rebateDeals);
+  const referrals: ReferralEvent[] = preprocessReferrals({
+    referrals: events.referrals,
+    offChainReferrals,
+    defaultReferralRateBps: defaultReferralRateBps || 0,
+    defaultRebateRateBps: defaultRebateRateBps || 0,
+  });
 
-  let referrals: ReferralEvent[] = [];
-  const defaultRewardRate = referralRates.feeRewardRate;
-  const defaultRebateRate = referralRates.feeRebateRate;
-  // Add __typename to referrals and we inject the parameters of the referral
-  referrals = events.referrals
-    .map((e) => {
-      const rewardRate =
-        dealsParsed.find((deal) => deal.referral == e.referral)
-          ?.feeRewardRate || defaultRewardRate; // if there is a reward deal for this referrer it will be applied for all referral
-      const rebateRate =
-        dealsParsed.find((deal) => deal.owner == e.owner)?.feeRebateRate ||
-        defaultRebateRate; // if thes is a rebate deal for this user we use this value, otherwise we use the default rate
-      return {
-        ...e,
-        feeRewardRate: rewardRate,
-        feeRebateRate: rebateRate,
-        assets: BigInt(e.assets),
-        blockNumber: Number(e.blockNumber),
-        blockTimestamp: Number(e.blockTimestamp),
-        requestId: BigInt(e.requestId),
-        __typename: "Referral",
-      } satisfies ReferralEvent;
-    })
-    .filter((r) => r.owner !== r.referral);
-
-  // Add __typename to transfers, filter ignored addresses, and convert relevant fields to BigInt
-  events.transfers = filterTransfers(events.transfers, addresses).map((e) => ({
-    ...e,
-    value: BigInt(e.value),
-    __typename: "Transfer",
-  }));
-
-  // Combine all events and sort by chronogically
+  // Combine all events and sort chronologically
   const sorted = [
     ...events.newTotalAssetsUpdateds,
     ...events.depositRequests,
@@ -151,24 +55,107 @@ export function preprocessEvents({
     ...events.totalAssetsUpdateds,
     ...events.settleDeposits,
     ...events.settleRedeems,
-    ...events.transfers,
     ...events.ratesUpdateds,
     ...events.feeReceiverUpdateds,
-    ...referrals,
-    ...dealsParsed,
+    ...rebates,
     ...pointsEvents,
+    ...referrals,
+    ...transfers,
   ].sort((a, b) => {
-    // in this case it means it is not a real on chain event, we need to use the timestamp to order it.
-    if (a.blockNumber == -1 || b.blockNumber == -1)
-      if (a.blockTimestamp < b.blockTimestamp) return -1;
-      else return 1;
-    if (a.blockNumber < b.blockNumber) return -1;
-    if (a.blockNumber > b.blockNumber) return 1;
-    if (a.logIndex < b.logIndex) return -1;
-    if (a.logIndex > b.logIndex) return 1;
-    return 0;
+    // if blocktimestamp is the same we use the lgoIndex
+    if (a.blockTimestamp == b.blockTimestamp) return a.logIndex - b.logIndex;
+
+    return a.blockTimestamp - b.blockTimestamp;
   });
   return sorted;
+}
+
+function preprocessDeposits(events: any) {
+  events.deposits = events.deposits.map((e: any) => ({
+    ...e,
+    assets: BigInt(e.assets),
+    shares: BigInt(e.shares),
+    __typename: "Deposit",
+  }));
+}
+
+function preprocessDepositRequestCanceleds(events: any) {
+  events.depositRequestCanceleds = events.depositRequestCanceleds.map(
+    (e: any) => ({
+      ...e,
+      __typename: "DepositRequestCanceled",
+    })
+  );
+}
+
+function preprocessDepositRequests(events: any) {
+  events.depositRequests = events.depositRequests.map((e: any) => ({
+    ...e,
+    assets: BigInt(e.assets),
+    __typename: "DepositRequest",
+  }));
+}
+
+function preprocessRedeemRequests(events: any) {
+  events.redeemRequests = events.redeemRequests.map((e: any) => ({
+    ...e,
+    shares: BigInt(e.shares),
+    __typename: "RedeemRequest",
+  }));
+}
+
+function preprocessSettleRedeems(events: any) {
+  events.settleRedeems = events.settleRedeems.map((e: any) => ({
+    ...e,
+    assetsWithdrawed: BigInt(e.assetsWithdrawed),
+    sharesBurned: BigInt(e.sharesBurned),
+    totalAssets: BigInt(e.totalAssets),
+    totalSupply: BigInt(e.totalSupply),
+    __typename: "SettleRedeem",
+  }));
+}
+
+function preprocessSettleDeposits(events: any) {
+  events.settleDeposits = events.settleDeposits.map((e: any) => ({
+    ...e,
+    assetsDeposited: BigInt(e.assetsDeposited),
+    sharesMinted: BigInt(e.sharesMinted),
+    totalSupply: BigInt(e.totalSupply),
+    totalAssets: BigInt(e.totalAssets),
+    __typename: "SettleDeposit",
+  }));
+}
+
+function preprocessTotalAssetsUpdateds(events: any) {
+  events.totalAssetsUpdateds = events.totalAssetsUpdateds.map((e: any) => ({
+    ...e,
+    totalAssets: BigInt(e.totalAssets),
+    __typename: "TotalAssetsUpdated",
+  }));
+}
+
+function preprocessNewTotalAssetsUpdateds(events: any) {
+  events.newTotalAssetsUpdateds = events.newTotalAssetsUpdateds.map(
+    (e: any) => ({
+      ...e,
+      totalAssets: BigInt(e.totalAssets),
+      __typename: "NewTotalAssetsUpdated",
+    })
+  );
+}
+
+function preprocessRatesUpdateds(events: any) {
+  events.ratesUpdateds = events.ratesUpdateds.map((e: any) => ({
+    ...e,
+    __typename: "RatesUpdated",
+  }));
+}
+
+function preprocessFeeReceiverUpdateds(events: any) {
+  events.feeReceiverUpdateds = events.feeReceiverUpdateds.map((e: any) => ({
+    ...e,
+    __typename: "FeeReceiverUpdated",
+  }));
 }
 
 function filterTransfers(
@@ -186,36 +173,102 @@ function filterTransfers(
   );
 }
 
-function parseDeals(deals: Deals): DealEvent[] {
+function preprocessRebateDeals(deals: RebateDeal[]): RebateEvent[] {
   // Add __typename to deals and we inject the parameters of the deals
   // An otc deal is a deal on the fee rebate exclusively
-  // thus referral is the user and the feeRewardRate is 0
-
-  const dealsArray = Object.entries(deals).map((deal) => {
-    return {
-      owner: deal[0] as Address,
-      referral: deal[0] as Address,
-      feeRebateRate: deal[1].feeRebateRate,
-      feeRewardRate: deal[1].feeRewardRate,
-    };
-  });
 
   // We create fake events for the deals to be able to process them like the other events
   // we give them a block number 0 and a timestamp 0 so that they are processed first
-  return dealsArray.map((e) => ({
-    ...e,
-    blockNumber: 0,
-    blockTimestamp: 0,
+
+  return deals.map((e) => ({
+    owner: e.owner,
+    blockNumber: 0, // ordering doesn't matter for offchain rebate deals
+    blockTimestamp: 0, // ordering doesn't matter for offchain rebate deals
     feeRebateRate: e.feeRebateRate,
-    feeRewardRate: e.feeRewardRate,
-    assets: 0n,
-    logIndex: 0,
+    logIndex: 0, // ordering doesn't matter for offchain rebate deals
     id: "0x",
-    requestId: 0,
     transactionHash: "0x",
     vault: "0x",
-    __typename: "Deal",
+    __typename: "RebateDeal",
   }));
 }
 
-// function parsePoints(points: Point[]): PointsEvent {}
+function preprocessPoints(points: any, vaultAddress: string): PointEvent[] {
+  return (
+    points?.map((p: any) => ({
+      __typename: "Point",
+      amount: p.amount,
+      blockNumber: 0,
+      blockTimestamp: p.timestamp,
+      logIndex: 0,
+      vault: vaultAddress,
+      name: p.name,
+    })) || []
+  );
+}
+
+function preprocessReferrals({
+  referrals,
+  offChainReferrals,
+  defaultReferralRateBps,
+  defaultRebateRateBps,
+}: {
+  referrals: VaultEventsQuery["referrals"];
+  offChainReferrals: OffChainReferral[] | undefined;
+  defaultReferralRateBps: number;
+  defaultRebateRateBps: number;
+}): ReferralEvent[] {
+  const referralsArray: ReferralEvent[] = [];
+  // Add offchain referrals to the referrals array
+  offChainReferrals?.forEach((referral) => {
+    referralsArray.push({
+      owner: referral.referred,
+      referral: referral.referrer,
+      rewardRateBps: referral.rewardRateBps,
+      rebateRateBps: referral.rebateRateBps,
+      assets: BigInt(referral.assets),
+      offchain: true,
+      blockNumber: 1, // we put 1 so that referrals get handled after rebate deals
+      blockTimestamp: 0, // ordering doesn't matter for offchain referrals
+      logIndex: 0, // ordering doesn't matter for offchain referrals
+      requestId: 0n,
+      id: "0x",
+      transactionHash: "0x",
+      __typename: "Referral",
+    });
+  });
+
+  // Add onchain referrals to the referrals array
+  referrals?.forEach((referral) => {
+    referralsArray.push({
+      owner: referral.owner,
+      referral: referral.referral,
+      rewardRateBps: defaultReferralRateBps,
+      rebateRateBps: defaultRebateRateBps,
+      assets: BigInt(referral.assets),
+      offchain: false,
+      blockNumber: Number(referral.blockNumber),
+      blockTimestamp: Number(referral.blockTimestamp),
+      logIndex: Number(referral.logIndex),
+      requestId: BigInt(referral.requestId),
+      id: referral.id,
+      transactionHash: referral.transactionHash,
+      __typename: "Referral",
+    });
+  });
+
+  // Add __typename to referrals and we inject the parameters of the referral
+  return referralsArray;
+}
+
+function preprocessTransfers(
+  transfers: Transfer[],
+  addresses: VaultAddrresses
+): Transfer[] {
+  // Add __typename to transfers, filter ignored addresses, and convert relevant fields to BigInt
+  return filterTransfers(transfers, addresses).map((e) => ({
+    ...e,
+    value: BigInt(e.value),
+    __typename: "Transfer",
+  }));
+}

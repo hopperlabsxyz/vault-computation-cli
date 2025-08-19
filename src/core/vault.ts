@@ -1,4 +1,4 @@
-import { BPS_DIVIDER, YEAR_IN_SECONDS } from "../constants";
+import { BPS_DIVIDER, YEAR_IN_SECONDS } from "../utils/constants";
 import type {
   Deposit,
   DepositRequest,
@@ -13,23 +13,25 @@ import type {
 } from "../../gql/graphql";
 
 import { erc20Abi, maxUint256, zeroAddress, type Address } from "viem";
-import type { ReferralConfig, ReferralCustom } from "types/Vault";
 import { publicClient } from "lib/publicClient";
-import { convertBigIntToNumber, convertToShares } from "utils/convertTo";
+import { convertBigIntToNumber } from "utils/convertTo";
 import type {
-  DealEvent,
+  RebateEvent,
   PeriodFees,
   PointEvent,
   ProcessEventParams,
   ProcessEventsParams,
   Rates,
+  ReferralConfig,
+  ReferralEvent,
 } from "./types";
-import { SolidityMath } from "utils/math";
+// import { SolidityMath } from "utils/math";
 import { PointTracker } from "./pointTracker";
 import { UserAccount } from "./userAccount";
 import { RatesManager } from "./rates";
 import { fetchVault } from "utils/fetchVault";
 import { fetchVaultStateUpdateds } from "utils/fetchVaultStateUpdateds";
+import { MathLib } from "@morpho-org/blue-sdk";
 
 export async function generateVault({
   vault,
@@ -63,6 +65,7 @@ class Vault {
   public lastTotalAssetsUpdateTimestamp = 0;
   public nextManagementFees = 0n;
   public decimals: number;
+  public decimalsOffset: bigint;
   public feeReceiver: Address;
   public silo: Address;
   private pointTracker = new PointTracker();
@@ -82,7 +85,8 @@ class Vault {
   // We need a 2 step referral system here in case a user cancel his deposits.
   // In this case the referral is voided.
   public preReferrals: Record<Address, ReferralConfig | undefined> = {}; // first address is referee, second is referrer
-  public referrals: Record<Address, ReferralConfig | undefined> = {};
+  public preRebate: Record<Address, number | undefined> = {};
+  // public referrals: Record<Address, ReferralConfig | undefined> = {};
 
   private accounts: Record<Address, UserAccount> = {};
   private alternateZeroOne = this.createAlternateFunction();
@@ -113,6 +117,7 @@ class Vault {
     this.ratesManager = new RatesManager(rates, cooldown);
     this.asset = asset;
     this.silo = silo;
+    this.decimalsOffset = BigInt(decimals - asset.decimals);
   }
 
   private depositRequest(event: DepositRequest) {
@@ -137,32 +142,30 @@ class Vault {
   private handleTotalAssetsUpdated(event: TotalAssetsUpdated) {
     this.totalAssets = event.totalAssets;
 
-    // this is for usual computation
-    // compute 4% of annual fees value in shares
+    // compute the next management fees
     if (this.lastTotalAssetsUpdateTimestamp != 0) {
       const timepast =
         Number(event.blockTimestamp) - this.lastTotalAssetsUpdateTimestamp;
       const ratioOverAYear = YEAR_IN_SECONDS / Number(timepast);
       const percentToDeposit =
-        this.feeRates(event.blockNumber).management / ratioOverAYear;
+        this.feeRates(Number(event.blockTimestamp)).management / ratioOverAYear;
 
-      const assetsToDeposits = Math.trunc(
+      const feesInAsset = Math.trunc(
         percentToDeposit * Number(this.totalAssets)
       );
 
-      // this is to compute the repartition between management and performance fees
-      this.nextManagementFees = convertToShares({
-        assets: BigInt(assetsToDeposits),
-        totalAssets: this.totalAssets - BigInt(assetsToDeposits),
-        totalSupply: this.totalSupply,
-      });
+      this.nextManagementFees = MathLib.mulDivUp(
+        BigInt(feesInAsset),
+        this.totalSupply + 10n ** BigInt(this.decimalsOffset),
+        this.totalAssets - BigInt(feesInAsset) + 1n
+      );
     }
 
-    const rates = this.feeRates(event.blockTimestamp);
+    const rates = this.feeRates(Number(event.blockTimestamp));
     this.periodFees.push({
-      managementFees: "0",
+      managementFees: this.nextManagementFees.toString(),
       blockNumber: Number(event.blockNumber),
-      performanceFees: "0",
+      performanceFees: "0", // we will update this in handleFeeTransfer, because we don't know the performance fees yet
       period: this.periodFees.length,
       timestamp: Number(event.blockTimestamp),
       managementRate: rates.management,
@@ -204,46 +207,56 @@ class Vault {
     const { sender, owner, shares } = event;
     const receiver = owner;
     const controller = sender;
-    if (controller.toLowerCase() === receiver.toLowerCase()) return; // in this case the balance are already just
 
-    this.getAndCreateAccount(receiver).increaseBalance(shares);
-    this.getAndCreateAccount(controller).decreaseBalance(shares);
+    if (controller.toLowerCase() === receiver.toLowerCase()) return; // in this case the balance are already updated in the transfer event
+
+    this.getOrCreateAccount(receiver).increaseBalance(shares);
+    this.getOrCreateAccount(controller).decreaseBalance(shares);
   }
 
   private handleDepositRequestCanceled(event: DepositRequestCanceled) {
     this.prePendingDeposits[event.controller] = 0n;
     this.preReferrals[event.controller] = undefined;
+    this.preRebate[event.controller] = undefined;
   }
 
   private handleSettleDeposit(event: SettleDeposit) {
-    const { sharesMinted, assetsDeposited, totalSupply, totalAssets } = event;
+    const { totalSupply, totalAssets } = event;
 
     this.totalSupply = totalSupply;
     this.totalAssets = totalAssets;
+
     // for each users who has pending deposit:
     for (const [address, userRequest] of Object.entries(this.pendingDeposits)) {
       // we initiate his accounts
-      const acc = this.getAndCreateAccount(address as Address);
+      const acc = this.getOrCreateAccount(address as Address);
+
+      const shares = MathLib.mulDivDown(
+        userRequest!,
+        totalSupply + 10n ** this.decimalsOffset,
+        totalAssets + 1n
+      );
 
       // we increase it's balance (like if he claimed his shares)
-      acc.increaseBalance(
-        SolidityMath.mulDivRounding(
-          userRequest!,
-          sharesMinted,
-          assetsDeposited,
-          SolidityMath.Rounding.Ceil
-        )
-      );
+      acc.increaseBalance(shares);
       // we don't update total supply because it will naturally be updated via the transfer
     }
     this.pendingDeposits = {};
 
     for (const [referee, config] of Object.entries(this.preReferrals)) {
-      if (!this.referrals[referee as Address]) {
-        this.referrals[referee as Address] = config;
+      const refereeAcc = this.getOrCreateAccount(referee as Address);
+      if (refereeAcc.getReferral() == undefined && config) {
+        refereeAcc.setReferral(config.referral, config.rewardRateBps!);
+      }
+    }
+    for (const [referee, rebate] of Object.entries(this.preRebate)) {
+      const refereeAcc = this.getOrCreateAccount(referee as Address);
+      if (refereeAcc.getRebateRateBps() == undefined && rebate) {
+        refereeAcc.setRebateRateBps(rebate);
       }
     }
     this.preReferrals = {};
+    this.preRebate = {};
     const periodLength = this.periodFees.length;
     const lastPeriod = this.periodFees[periodLength - 1];
     lastPeriod.pricePerShare = convertBigIntToNumber(
@@ -258,7 +271,7 @@ class Vault {
 
     for (const [address, redeemed] of Object.entries(this.pendingRedeems)) {
       if (this.accounts[address as Address]) {
-        // why this check ?
+        // why this check ?\
         this.accounts[address as Address].decreaseBalance(redeemed || 0n);
       }
     }
@@ -300,8 +313,8 @@ class Vault {
 
   private handleTransfer(event: Transfer, distributeFees: boolean) {
     // we initiate the accounts if it is not
-    const to: UserAccount = this.getAndCreateAccount(event.to);
-    const from: UserAccount = this.getAndCreateAccount(event.from);
+    const to: UserAccount = this.getOrCreateAccount(event.to);
+    const from: UserAccount = this.getOrCreateAccount(event.from);
 
     // this is a fee transfer
     if (
@@ -325,10 +338,12 @@ class Vault {
     else to.increaseBalance(BigInt(event.value)); //transfer
   }
 
-  private getAndCreateAccount(address: Address): UserAccount {
-    if (!this.accounts[address])
-      this.accounts[address] = new UserAccount(address);
-    return this.accounts[address];
+  private getOrCreateAccount(address: Address): UserAccount {
+    if (!this.accounts[address.toLowerCase() as Address])
+      this.accounts[address.toLowerCase() as Address] = new UserAccount(
+        address
+      );
+    return this.accounts[address.toLowerCase() as Address];
   }
 
   private handleFeeTransfer(event: Transfer, distributeFees: boolean) {
@@ -337,30 +352,45 @@ class Vault {
     // we compute how much fees they paid for this epoch
     // we emulated the rounding system of openzeppelin by adding 0 or 1
     this.accumulatedFees += totalFees;
-    for (const acc of Object.values(this.accounts)) {
-      if (acc.address == zeroAddress) continue;
-      acc.increaseFees(
+
+    // let distributedFees = 0n;
+    const _accounts = Object.values(this.accounts).filter(
+      (acc) => acc.address != zeroAddress
+    );
+
+    for (const [_, acc] of _accounts.entries()) {
+      const fees =
         (acc.getBalance() * totalFees) / this.totalSupply +
-          this.alternateZeroOne()
-      );
-      // if (acc.address == zeroAddress) console.log(acc.getFees());
+        this.alternateZeroOne();
+
+      acc.increaseFees(fees);
     }
     const periodLength = this.periodFees.length;
     const lastPeriod = this.periodFees[periodLength - 1];
-    lastPeriod.managementFees = this.nextManagementFees.toString();
     lastPeriod.performanceFees = (
       totalFees - this.nextManagementFees
     ).toString();
   }
 
-  private handleReferral(event: ReferralCustom) {
-    if (event.owner === event.referral) return;
-    if (this.preReferrals[event.owner]) return;
-    else {
+  private handleReferral(event: ReferralEvent) {
+    const owner = this.getOrCreateAccount(event.owner);
+
+    if (event.offchain) {
+      // if the referral is offchain, it is immediatly enforced
+      // it means also that 2 referrals with colliding config with overide each other
+      owner.setReferral(event.referral, event.rewardRateBps);
+      owner.setRebateRateBps(event.rebateRateBps);
+      return;
+    }
+    // in a referral, the referrer (event.referral) get X% of the fees of the referee (event.owner) as a reward
+    // the referee gets a rebate of Y% on his fees
+    //
+    this.preRebate[event.owner] = event.rebateRateBps;
+    // we don't overwrite the referral if it is already set
+    if (this.preReferrals[event.owner] == undefined) {
       this.preReferrals[event.owner] = {
-        feeRewardRate: event.feeRewardRate,
-        feeRebateRate: event.feeRebateRate,
-        referrer: event.referral,
+        rewardRateBps: event.rewardRateBps,
+        referral: event.referral,
       };
     }
   }
@@ -373,12 +403,10 @@ class Vault {
     );
   }
 
-  private handleDeal(deal: DealEvent) {
-    this.preReferrals[deal.owner] = {
-      feeRewardRate: deal.feeRewardRate,
-      feeRebateRate: deal.feeRebateRate,
-      referrer: deal.referral,
-    };
+  private handleRebateDeal(deal: RebateEvent) {
+    // a rebate deal is automatically enforced
+    const account = this.getOrCreateAccount(deal.owner);
+    account.setRebateRateBps(deal.feeRebateRate);
   }
 
   protected handlePoint(point: PointEvent) {
@@ -409,21 +437,22 @@ class Vault {
   public distributeRebatesAndRewards() {
     const accountsArray = Object.values(this.accounts);
     accountsArray.forEach((account) => {
-      const address = account.address;
-
-      const referrer = this.referrals[address]?.referrer;
       const fees = account.getFees();
-      const rebate = this.referrals[address]?.feeRebateRate;
-      const reward = this.referrals[address]?.feeRewardRate;
+      const rebate = account.getRebateRateBps() || 0;
+      const reward = account.getReferral()?.rewardRateBps || 0;
+      const referral = account.getReferral()?.referral;
 
-      if (account)
-        if (rebate) {
-          this.accounts[address].increaseCashback(
-            (fees * BigInt(rebate)) / BPS_DIVIDER
-          );
-        }
-      if (reward && referrer) {
-        const referrerAcc = this.getAndCreateAccount(referrer);
+      // we make sure that the rebate deals and referral rewards do not lead to an excessive distribution of cashback
+      if (rebate + reward > Number(BPS_DIVIDER)) {
+        throw new Error(
+          `Fee rebate (${rebate / 100}%) + referral reward (${
+            reward / 100
+          }%) is greater than 100% for ${account.address}`
+        );
+      }
+      account.increaseCashback((fees * BigInt(rebate)) / BPS_DIVIDER);
+      if (referral) {
+        const referrerAcc = this.getOrCreateAccount(referral);
         referrerAcc.increaseCashback((fees * BigInt(reward)) / BPS_DIVIDER);
       }
     });
@@ -478,8 +507,10 @@ class Vault {
   /**
    * Process a list of events
    * @param events - The list of events to process, must be sorted by block number
+   *   @field RebateDeal Deals will override the previous ones
    * @param distributeFeesFromBlock - The block number from which to distribute fees
    * @param blockEndHook - A hook to call when the block is done, perfect for testing
+   * @param blockStartHook - A hook to call when the block is started, perfect for testing
    */
   public async processEvents({
     events,
@@ -523,9 +554,9 @@ class Vault {
         BigInt(distributeFeesFromBlock) < event.blockNumber
       );
     } else if (event.__typename === "Referral") {
-      this.handleReferral(event as ReferralCustom);
-    } else if (event.__typename === "Deal") {
-      this.handleDeal(event as any as DealEvent); // TODO: fix any
+      this.handleReferral(event as unknown as ReferralEvent);
+    } else if (event.__typename === "RebateDeal") {
+      this.handleRebateDeal(event as unknown as RebateEvent); // TODO: fix any
     } else if (event.__typename === "FeeReceiverUpdated") {
       this.handleFeeReceiverUpdateds(event as FeeReceiverUpdated);
     } else if (event.__typename === "RatesUpdated") {
@@ -555,8 +586,16 @@ class Vault {
     return acc;
   }
 
-  public getAccounts(): Record<Address, UserAccount> {
-    return this.accounts;
+  public getAccountsAddresses(): Address[] {
+    return Object.keys(this.accounts) as Address[];
+  }
+
+  public getAccount(address: Address): UserAccount {
+    return this.accounts[address.toLowerCase() as Address];
+  }
+
+  public getAccounts(): UserAccount[] {
+    return Object.values(this.accounts);
   }
 
   public async balanceOf(

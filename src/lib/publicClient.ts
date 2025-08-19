@@ -9,6 +9,7 @@ export const publicClient: Record<number, PublicClient> = {
     batch: {
       multicall: true,
     },
+    name: "mainnet",
   }) as unknown as PublicClient,
   [base.id]: createPublicClient({
     chain: base,
@@ -16,6 +17,7 @@ export const publicClient: Record<number, PublicClient> = {
     batch: {
       multicall: true,
     },
+    name: "base",
   }) as unknown as PublicClient,
   [arbitrum.id]: createPublicClient({
     chain: arbitrum,
@@ -23,6 +25,7 @@ export const publicClient: Record<number, PublicClient> = {
     batch: {
       multicall: true,
     },
+    name: "arbitrum",
   }) as unknown as PublicClient,
   [avalanche.id]: createPublicClient({
     chain: avalanche,
@@ -30,6 +33,7 @@ export const publicClient: Record<number, PublicClient> = {
     batch: {
       multicall: true,
     },
+    name: "avalanche",
   }) as unknown as PublicClient,
 };
 

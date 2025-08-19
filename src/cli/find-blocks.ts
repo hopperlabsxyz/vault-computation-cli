@@ -1,4 +1,4 @@
-import { parseArguments } from "utils/parseArguments";
+import { parseVaultArgument } from "parsing/parseVault";
 import { publicClient } from "lib/publicClient";
 import { LagoonVaultAbi } from "abis/VaultABI";
 import { fetchVaultTransfers } from "utils/fetchTransfer";
@@ -8,9 +8,13 @@ import type { Command } from "@commander-js/extra-typings";
 export function setBlocksCommand(command: Command) {
   command
     .command("find-blocks")
-    .argument("chainId:VaultAddress")
+    .argument(
+      "chainId:VaultAddress",
+      "The chain ID and vault address to find blocks for",
+      parseVaultArgument
+    )
     .description(
-      "Find all blocks where fee minting occurred for a specific vault. Use this command to determine the block range for fee computation."
+      "Find all blocks where fee minting occurred for a specific vault. Use this command to determine the block range for fee computation.\n"
     )
     .option(
       "--fromBlock <number>",
@@ -31,8 +35,7 @@ Examples:
   $ fees-computation-cli find-blocks 1:0x123... -d                 # Find blocks since last fee receiver transfer
     `
     )
-    .action(async (args, options) => {
-      const vault = parseArguments(args);
+    .action(async (vault, options) => {
       const client = publicClient[vault.chainId];
       if (!options.toBlock) {
         options.toBlock = (

@@ -1,4 +1,4 @@
-// this class is responsible to store the evolution of various points through time for one vault
+// this class is responsible for storing the evolution of various points through time for one vault
 
 import type { Point } from "./types";
 

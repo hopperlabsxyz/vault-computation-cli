@@ -11,7 +11,9 @@ export const computationProgram = new Command();
 
 computationProgram
   .name("fees-computation-cli")
-  .description("A general purpose cli to compute data of a vault using events")
+  .description(
+    "A general purpose cli to compute data of a Lagoon vault using its events."
+  )
   .version("0.0.1");
 
 setBlocksCommand(computationProgram);

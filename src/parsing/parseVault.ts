@@ -1,8 +1,7 @@
 import { type Vault } from "../types/Vault";
 import { isAddress } from "viem";
 
-export const parseArguments = (arg: string): Vault => {
-  // for (let arg of args) {
+export const parseVaultArgument = (arg: string): Vault => {
   let vaultData = arg.split(":");
 
   if (vaultData.length !== 2) {

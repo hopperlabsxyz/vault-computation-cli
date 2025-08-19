@@ -28,6 +28,8 @@ test("check balance match real data after each block", async () => {
       vault: address,
     },
     points: mock_points,
+    defaultReferralRateBps: 500,
+    defaultRebateRateBps: 1500,
   });
 
   vault.processEvents({

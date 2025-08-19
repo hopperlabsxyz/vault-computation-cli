@@ -31,7 +31,6 @@ export async function fetchVaultEvents({
   vaultAddress,
   toBlock = BigInt(maxUint256),
   skip = 0,
-  first = 1000,
 }: {
   chainId: number;
   vaultAddress: Address;
@@ -54,6 +53,7 @@ export async function fetchVaultEvents({
     ratesUpdateds: [],
   };
   let hasMore = true;
+  const first = 1000;
   while (hasMore) {
     const newEvents = await _fetchVaultEvents({
       chainId,
@@ -62,6 +62,8 @@ export async function fetchVaultEvents({
       skip,
       first,
     });
+
+    const newEventsLength = vaultEventsQueryLength(newEvents);
 
     events.depositRequests.push(...newEvents.depositRequests);
     events.deposits.push(...newEvents.deposits);
@@ -81,12 +83,11 @@ export async function fetchVaultEvents({
 
     events.ratesUpdateds.push(...newEvents.ratesUpdateds);
 
-    if (vaultEventsQueryLength(newEvents) < first) {
+    if (newEventsLength <= first) {
       hasMore = false;
     }
     skip += first;
   }
-  // vaultEventsQueryLength(newEvents);
   return events;
 }
 
