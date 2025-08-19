@@ -228,7 +228,7 @@ function preprocessReferrals({
       rebateRateBps: referral.rebateRateBps,
       assets: BigInt(referral.assets),
       offchain: true,
-      blockNumber: 0, // ordering doesn't matter for offchain referrals
+      blockNumber: 1, // we put 1 so that referrals get handled after rebate deals
       blockTimestamp: 0, // ordering doesn't matter for offchain referrals
       logIndex: 0, // ordering doesn't matter for offchain referrals
       requestId: 0n,
