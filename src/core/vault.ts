@@ -384,7 +384,7 @@ class Vault {
     }
     // in a referral, the referrer (event.referral) get X% of the fees of the referee (event.owner) as a reward
     // the referee gets a rebate of Y% on his fees
-    //
+
     this.preRebate[event.owner] = event.rebateRateBps;
     // we don't overwrite the referral if it is already set
     if (this.preReferrals[event.owner] == undefined) {
