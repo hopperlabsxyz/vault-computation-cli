@@ -133,7 +133,7 @@ function convertToCSV({
   const csvRows = [
     `chainId,vault,wallet,balance,fees,pricePerShare,cashback$`, // CSV header
     ...data.map(({ balance, fees, cashback, account }) => {
-      if (balance === 0) return "";
+      if (balance === 0 && cashback == 0 && fees == 0) return "";
       let str = `${vault.chainId},${vault.address},${account},${balance},${fees}`;
       str += `,${pricePerShare},${cashback}`;
       return str;
