@@ -29,8 +29,6 @@ test("events of same blocknumber must have growing logIndex", async () => {
       silo: vault.silo,
       vault: address,
     },
-    defaultReferralRateBps: 500,
-    defaultRebateRateBps: 1500,
   });
   const eventsByBlockNumber: Record<number, number[]> = {};
   for (let i = 0; i < events.length; i++) {

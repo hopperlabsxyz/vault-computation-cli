@@ -26,7 +26,7 @@ import type {
   ReferralEvent,
 } from "./types";
 // import { SolidityMath } from "utils/math";
-import { PointTracker } from "./pointTracker";
+import { PointTracker } from "./PointTracker";
 import { UserAccount } from "./userAccount";
 import { RatesManager } from "./rates";
 import { fetchVault } from "utils/fetchVault";
@@ -518,7 +518,7 @@ class Vault {
     blockEndHook,
   }: ProcessEventsParams) {
     for (let i = 0; i < events.length; i++) {
-      const currentBlock: bigint = events[i].blockNumber;
+      const currentBlock = events[i].blockNumber;
       const nextBlock = events[i + 1] ? events[i + 1].blockNumber : maxUint256;
       this.processEvent({
         event: events[i] as { __typename: string; blockNumber: bigint },
@@ -527,7 +527,7 @@ class Vault {
 
       // if we are done with the block, we can call the hook
       if (currentBlock != nextBlock && blockEndHook)
-        await blockEndHook(currentBlock);
+        await blockEndHook(currentBlock.toString());
     }
   }
 

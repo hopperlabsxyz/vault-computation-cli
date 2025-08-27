@@ -1,7 +1,7 @@
 import type { VaultEventsQuery } from "../../gql/graphql";
 import type { Address } from "viem";
 import type { Vault } from "types/Vault";
-import type { Dot } from "./pointTracker";
+import type { Dot } from "./PointTracker";
 import type { OffChainReferral } from "parsing/parseOffchainReferrals";
 import type { RebateDeal } from "parsing/parseRebateDeals";
 
@@ -104,7 +104,7 @@ export interface ProcessEventParams {
 export interface ProcessEventsParams {
   events: { __typename: string; blockNumber: bigint }[];
   distributeFeesFromBlock: bigint;
-  blockEndHook?: (blockNumber: bigint) => Promise<any>;
+  blockEndHook?: (blockNumber: string) => Promise<any>;
 }
 
 export interface ProcessVaultParams {
