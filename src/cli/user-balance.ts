@@ -8,31 +8,32 @@ import type { Vault } from "types/Vault";
 export function setUserBalanceCommand(command: Command) {
   command
     .command("user-balance")
+    .alias("ub")
     .description(
       "Calculate and generate a balance report for a specified vault, including all users balance. \
 If no block is provided, the latest is used.\n"
     )
     .argument(
       "chainId:VaultAddress",
-      "The chain ID and vault address to find blocks for",
+      "The chain ID and vault address to find blocks for\n",
       parseVaultArgument
     )
     .option(
       "-r, --readable",
-      "Format the output in a human-readable format",
+      "Format the output in a human-readable format\n",
       false
     )
     .option(
       "-b, --block <number>",
-      "Block number at which the snapshot is taken. If not provided, the latest is used"
+      "Block number at which the snapshot is taken. If not provided, the latest is used\n"
     )
     .option(
       "-o, --output",
-      "Will save the result in output/user-balance in a csv file with following name: <chainId>-<vaultAddress>-<to-block>.csv"
+      "Will save the result in output/user-balance in a csv file with following name: <chainId>-<vaultAddress>-<to-block>.csv\n"
     )
     .option(
       "--silent",
-      "This will prevent the printing of the output on stdout",
+      "This will prevent the printing of the output on stdout\n",
       false
     )
     .addHelpText(

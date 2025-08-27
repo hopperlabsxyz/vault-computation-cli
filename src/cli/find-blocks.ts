@@ -8,9 +8,10 @@ import type { Command } from "@commander-js/extra-typings";
 export function setBlocksCommand(command: Command) {
   command
     .command("find-blocks")
+    .alias("fb")
     .argument(
       "chainId:VaultAddress",
-      "The chain ID and vault address to find blocks for",
+      "The chain ID and vault address to find blocks for\n",
       parseVaultArgument
     )
     .description(
@@ -18,12 +19,12 @@ export function setBlocksCommand(command: Command) {
     )
     .option(
       "--fromBlock <number>",
-      "Start searching from this block number (inclusive). Defaults to 0",
+      "Start searching from this block number (inclusive). Defaults to 0\n",
       "0"
     )
     .option(
       "--toBlock <number>",
-      "Search up to this block number (inclusive). Defaults to the latest block"
+      "Search up to this block number (inclusive). Defaults to the latest block\n"
     )
     .addHelpText(
       "after",

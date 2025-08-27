@@ -7,35 +7,36 @@ import { formatUnits } from "viem";
 export function setPeriodFeeCommand(command: Command) {
   command
     .command("period-fee")
+    .alias("pf")
     .description(
       "Calculate and generate fee reports for a specific period between 2 updates of totalAssets (period). \
 This command require precise block input. The fromBlock and the toBlock must correspond to totalAssets updates blockNumber.\n"
     )
     .argument(
       "chainId:VaultAddress",
-      "The chain ID and vault address to find blocks for",
+      "The chain ID and vault address to find blocks for\n",
       parseVaultArgument
     )
     .requiredOption(
       "-f, --from-block <number>",
-      "Starting block number for fee computation (exclusive). Use 'find-blocks' command to find the appropriate block number"
+      "Starting block number for fee computation (exclusive). Use 'find-blocks' command to find the appropriate block number\n"
     )
     .requiredOption(
       "-t, --to-block <number>",
-      "Ending block number for fee computation (inclusive). Use 'find-blocks' command to find the appropriate block number"
+      "Ending block number for fee computation (inclusive). Use 'find-blocks' command to find the appropriate block number\n"
     )
     .option(
       "-r, --readable",
-      "Format the output in a human-readable format",
+      "Format the output in a human-readable format\n",
       false
     )
     .option(
       "-o, --output",
-      "Will save the result in output/period-fee in a file with following format: <chainId>-<vaultAddress>-<from-block>-<to-block>.csv"
+      "Will save the result in output/period-fee in a file with following format: <chainId>-<vaultAddress>-<from-block>-<to-block>.csv\n"
     )
     .option(
       "--silent",
-      "This will prevent the printing of the output on stdout",
+      "This will prevent the printing of the output on stdout\n",
       false
     )
     .addHelpText(

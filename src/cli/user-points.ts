@@ -8,6 +8,7 @@ import type { Vault } from "types/Vault";
 export function setUserPointsCommand(command: Command) {
   command
     .command("user-points")
+    .alias("up")
     .description(
       "Calculate and generate points repartitions for a specified vault. \
 The output is a csv with the following columns: chainId, vault, wallet, points. \
@@ -15,17 +16,16 @@ For more accuracy, data timestamp should be right before totalAssets updates.\n"
     )
     .argument(
       "chainId:VaultAddress",
-      "The chain ID and vault address to find blocks for",
+      "The chain ID and vault address to find blocks for\n",
       parseVaultArgument
     )
-
     .option(
       "-o, --output",
-      "Will save the result in output/user-points in a file with following format: <chainId>-<vaultAddress>-<inputFileName>.csv"
+      "Will save the result in output/user-points in a file with following format: <chainId>-<vaultAddress>-<inputFileName>.csv\n"
     )
     .option(
       "--silent",
-      "This will prevent the printing of the output on stdout",
+      "This will prevent the printing of the output on stdout\n",
       false
     )
     .requiredOption(

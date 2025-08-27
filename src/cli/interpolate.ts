@@ -5,19 +5,20 @@ import type { Dot } from "core/PointTracker";
 export function setInterpolateCommand(command: Command) {
   command
     .command("interpolate")
+    .alias("ip")
     .argument("csv file")
     .description("Interpolate data between two points.\n")
     .option(
       "-o, --output",
-      "Will save the result next to origin file with interpolate at the end of the name of the file"
+      "Will save the result next to origin file with interpolate at the end of the name of the file\n"
     )
     .requiredOption(
       "-f, --from-timestamp <number>",
-      "Perform the interpolation from this timestamp"
+      "Perform the interpolation from this timestamp\n"
     )
     .requiredOption(
       "-t, --to-timestamp <number>",
-      "Stop interpolation at this timestamp"
+      "Stop interpolation at this timestamp\n"
     )
     .option(
       "--frequency <number>",

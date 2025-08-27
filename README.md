@@ -75,7 +75,29 @@ You can list all available commands by running:
 bun run help
 ```
 
-### User Balance
+### Command Aliases
+
+For convenience, shorter aliases are available for all commands:
+
+| Full Command                 | Alias | Description                     |
+| ---------------------------- | ----- | ------------------------------- |
+| `user-fee`                   | `uf`  | Generate fee reports per user   |
+| `user-balance`               | `ub`  | Generate balance reports        |
+| `user-points`                | `up`  | Calculate and distribute points |
+| `period-fee`                 | `pf`  | Generate period fee reports     |
+| `find-blocks`                | `fb`  | Find blocks with fee events     |
+| `find-claimable-controllers` | `fcc` | Find claimable controllers      |
+| `interpolate`                | `ip`  | Perform linear interpolation    |
+
+Example usage with aliases:
+
+```bash
+bun run uf <chainId:VaultAddress> --to-block 12345678
+bun run ub <chainId:VaultAddress> --to-block 12345678
+bun run up <chainId:VaultAddress> --points points.csv
+```
+
+### User Balance (ub)
 
 ```bash
 bun run user-balance <chainId:VaultAddress> [options]
@@ -95,7 +117,7 @@ To know more:
 bun run user-balance --help
 ```
 
-### Find Blocks
+### Find Blocks (fb)
 
 ```bash
 bun run find-blocks <chainId:VaultAddress> [options]
@@ -113,7 +135,7 @@ To know more:
 bun run find-blocks --help
 ```
 
-### User Fee
+### User Fee (uf)
 
 ```bash
 bun run user-fee <chainId:VaultAddress> [options]
@@ -133,7 +155,7 @@ To know more:
 bun run user-fee --help
 ```
 
-### User Points
+### User Points (up)
 
 ```bash
 bun run user-points <chainId:VaultAddress> [options]
@@ -151,7 +173,7 @@ To know more:
 bun run user-points --help
 ```
 
-### Find Claimable Controllers
+### Find Claimable Controllers (fcc)
 
 ```bash
 bun run find-claimable-controllers <chainId:VaultAddress> [options]
@@ -177,7 +199,7 @@ You can pass this list of addresses as an argument to `claimSharesOnBehalf()` in
 
 Make sure the caller has the permission to claim on behalf of these addresses.
 
-### Period Fee
+### Period Fee (pf)
 
 ```bash
 bun run period-fee <chainId:VaultAddress> [options]
@@ -197,7 +219,7 @@ To know more:
 bun run period-fee --help
 ```
 
-### Interpolate
+### Interpolate (ip)
 
 ```bash
 bun run interpolate <csv file> [options]

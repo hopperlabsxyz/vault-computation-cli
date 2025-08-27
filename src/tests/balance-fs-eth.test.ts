@@ -43,7 +43,6 @@ test(
       events,
       address,
       client,
-      fromBlock,
     });
 
     vault.processEvents({

@@ -10,9 +10,10 @@ import { parseVaultArgument } from "parsing/parseVault";
 export function setControllersCommand(command: Command) {
   command
     .command("find-claimable-controllers")
+    .alias("fcc")
     .argument(
       "chainId:VaultAddress",
-      "The chain ID and vault address to find controllers for",
+      "The chain ID and vault address to find controllers for\n",
       parseVaultArgument
     )
     .description(
@@ -20,13 +21,13 @@ export function setControllersCommand(command: Command) {
     )
     .option(
       "--from-block <number>",
-      "Starting at block number. Default to the vault inception block"
+      "Starting at block number. Default to the vault inception block\n"
     )
     .addHelpText(
       "after",
       `
 Examples:
-  $ fees-computation-cli find-claimable-controllers 1:0x123...                    # Find all claimable controllers 
+  $ fees-computation-cli find-claimable-controllers 1:0x123...                    # Find all claimable controllers
     `
     )
     .action(async (vault, options) => {
