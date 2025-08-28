@@ -26,7 +26,7 @@ import type {
   ReferralEvent,
 } from "./types";
 // import { SolidityMath } from "utils/math";
-import { PointTracker } from "./PointTracker";
+import { PointTracker } from "./pointTracker";
 import { UserAccount } from "./userAccount";
 import { RatesManager } from "./rates";
 import { fetchVault } from "utils/fetchVault";

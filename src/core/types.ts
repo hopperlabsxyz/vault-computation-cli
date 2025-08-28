@@ -1,7 +1,7 @@
 import type { VaultEventsQuery } from "../../gql/graphql";
 import type { Address } from "viem";
 import type { Vault } from "types/Vault";
-import type { Dot } from "./PointTracker";
+import type { Dot } from "./pointTracker";
 import type { OffChainReferral } from "parsing/parseOffchainReferrals";
 import type { RebateDeal } from "parsing/parseRebateDeals";
 
