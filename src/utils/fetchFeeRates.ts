@@ -17,9 +17,9 @@ export async function fetchFeeRates({
 }): Promise<{ rates: Rates; oldRates: Rates }> {
   const slotData = await client.getStorageAt({
     address: vaultAddress,
-    slot: (
-      BigInt(FeeManagerStorageSlot) + feeRateOffset
-    ).toString() as `0x${string}`,
+    slot: (BigInt(FeeManagerStorageSlot) + feeRateOffset).toString(
+      16
+    ) as `0x${string}`,
     blockNumber,
   });
   if (slotData == undefined)

@@ -35,16 +35,19 @@ Examples:
       const toBlock = (
         await client.getBlock({ blockTag: "latest" })
       ).number.toString();
+      console.log(toBlock);
 
       const vaultEvents = await fetchVaultEvents({
         chainId: vault.chainId,
         vaultAddress: vault.address,
         toBlock: BigInt(toBlock),
       });
+      console.log(vaultEvents.depositRequestCanceleds.length);
 
       const vaultState = await generateVault({
         vault,
       });
+      console.log(vaultState.asset);
 
       let events = preprocessEvents({
         events: vaultEvents,

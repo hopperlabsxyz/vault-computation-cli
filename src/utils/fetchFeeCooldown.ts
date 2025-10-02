@@ -16,9 +16,9 @@ export async function fetchFeeCooldown({
 }): Promise<BigInt> {
   const cooldown = await client.getStorageAt({
     address: vaultAddress,
-    slot: (
-      BigInt(FeeManagerStorageSlot) + coolDownOffset
-    ).toString() as `0x${string}`,
+    slot: (BigInt(FeeManagerStorageSlot) + coolDownOffset).toString(
+      16
+    ) as `0x${string}`,
     blockNumber,
   });
   if (cooldown == undefined)
