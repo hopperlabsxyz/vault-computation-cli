@@ -19,8 +19,9 @@ export class RatesManager {
     this.cooldown = cooldown;
   }
 
-  public handleRatesUpdated(event: { blockTimestamp: number; rates: Rates }) {
-    this.newRatesTimestamp = event.blockTimestamp + this.cooldown;
+  public handleRatesUpdated(event: { blockTimestamp: number; rates: Rates, blockNumber: number }) {
+    this.newRatesTimestamp = Number(event.blockTimestamp) + Number(this.cooldown);
+  
 
     const currentRates = this._rates;
     this._rates = {
@@ -32,7 +33,9 @@ export class RatesManager {
   }
 
   public feeRates(blockTimestamp: number) {
-    if (this.newRatesTimestamp <= blockTimestamp) return this._rates;
+    
+    if (Number(this.newRatesTimestamp) <= Number(blockTimestamp)) return this._rates;
     return this._oldRates;
   }
 }
+

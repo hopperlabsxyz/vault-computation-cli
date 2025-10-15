@@ -24,7 +24,6 @@ export async function processVault({
     vaultAddress: vault.address,
     toBlock: toBlock ? BigInt(toBlock) : undefined,
   });
-
   if (strictBlockNumberMatching) {
     checkStrictBlockNumberMatching({
       events: vaultEvents,
@@ -68,7 +67,7 @@ export async function processVault({
     pricePerShare: Number(
       formatUnits(vaultState.pricePerShare(), assetDecimals)
     ),
-    periodFees: vaultState.periodFees,
+    periodFees: vaultState.periodFees.filter((period) => period.blockNumber >= Number(fromBlock) || 0),
     data: accounts.map((account) => ({
       balance: Number(formatUnits(account.getBalance(), sharesDecimals)),
       fees: Number(formatUnits(account.getFees(), sharesDecimals)),

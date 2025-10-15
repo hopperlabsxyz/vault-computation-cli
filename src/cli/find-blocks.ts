@@ -71,7 +71,7 @@ Examples:
           timestamp: t.blockTimestamp,
           type: "Fee receiver transfer",
         }))
-        .sort((a, b) => a.blockNumber - b.blockNumber);
+        .sort((a, b) => Number(a.blockNumber) - Number(b.blockNumber));
 
       let vaultData = (
         await fetchVaultTotalAssetsUpdated({
@@ -97,14 +97,14 @@ Examples:
 
       // Combine and sort all events chronologically
       const allEvents = [...events, ...feeReceiverTransfers].sort(
-        (a, b) => a.blockNumber - b.blockNumber
+        (a, b) => Number(a.blockNumber) - Number(b.blockNumber)
       );
 
       console.log(`From ${options.fromBlock}`);
       console.log("\nEvents in chronological order:");
       allEvents.forEach((event) =>
         console.log(
-          `${new Date(event.timestamp * 1000).toDateString()} - ${
+          `${new Date(Number(event.timestamp) * 1000).toDateString()} - ${
             event.blockNumber
           } - ${event.type}`
         )

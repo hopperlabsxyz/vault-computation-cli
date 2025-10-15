@@ -25,7 +25,6 @@ import type {
   ReferralConfig,
   ReferralEvent,
 } from "./types";
-// import { SolidityMath } from "utils/math";
 import { PointTracker } from "./pointTracker";
 import { UserAccount } from "./userAccount";
 import { RatesManager } from "./rates";
@@ -56,6 +55,7 @@ export async function generateVault({
     rates: vaultData.rates.rates,
     cooldown: vaultData.cooldown,
     silo: vaultData.silo,
+    address: vault.address,
   });
 }
 
@@ -68,6 +68,7 @@ class Vault {
   public decimalsOffset: bigint;
   public feeReceiver: Address;
   public silo: Address;
+  public address: Address;
   private pointTracker = new PointTracker();
 
   private ratesManager: RatesManager;
@@ -86,7 +87,6 @@ class Vault {
   // In this case the referral is voided.
   public preReferrals: Record<Address, ReferralConfig | undefined> = {}; // first address is referee, second is referrer
   public preRebate: Record<Address, number | undefined> = {};
-  // public referrals: Record<Address, ReferralConfig | undefined> = {};
 
   private accounts: Record<Address, UserAccount> = {};
   private alternateZeroOne = this.createAlternateFunction();
@@ -95,6 +95,7 @@ class Vault {
   public accumulatedFees = 0n;
 
   constructor({
+    address,
     feeReceiver,
     decimals,
     cooldown,
@@ -102,6 +103,7 @@ class Vault {
     asset,
     silo,
   }: {
+    address: Address;
     feeReceiver: Address;
     silo: Address;
     decimals: number;
@@ -111,7 +113,7 @@ class Vault {
   }) {
     this.feeReceiver = feeReceiver;
     this.decimals = decimals;
-
+    this.address = address;
     this.accounts[feeReceiver] = new UserAccount(feeReceiver);
 
     this.ratesManager = new RatesManager(rates, cooldown);
@@ -127,7 +129,7 @@ class Vault {
     if (this.prePendingDeposits[depositUser] === undefined)
       this.prePendingDeposits[depositUser] = 0n;
     // we put those assets in prePendingDeposit because users can still cancel
-    this.prePendingDeposits[depositUser] += depositRequest.assets;
+    this.prePendingDeposits[depositUser] += BigInt(depositRequest.assets);
   }
 
   private redeemRequest(event: RedeemRequest) {
@@ -136,20 +138,29 @@ class Vault {
     if (this.prePendingRedeems[redeemUser] === undefined)
       this.prePendingRedeems[redeemUser] = 0n;
 
-    this.prePendingRedeems[redeemUser] += redeemRequest.shares;
+    this.prePendingRedeems[redeemUser] += BigInt(redeemRequest.shares);
   }
 
   private handleTotalAssetsUpdated(event: TotalAssetsUpdated) {
-    this.totalAssets = event.totalAssets;
+    this.totalAssets = BigInt(event.totalAssets);
+    console.log({blocktimestamp: event.blockTimestamp});
+    
+    const rates = this.feeRates(Number(event.blockTimestamp));
 
     // compute the next management fees
+    // we do it here because it is at this moment that the computation happens in the smart contract
     if (this.lastTotalAssetsUpdateTimestamp != 0) {
       const timepast =
         Number(event.blockTimestamp) - this.lastTotalAssetsUpdateTimestamp;
-      const ratioOverAYear = YEAR_IN_SECONDS / Number(timepast);
+        const ratioOverAYear = YEAR_IN_SECONDS / Number(timepast);
+    
       const percentToDeposit =
-        this.feeRates(Number(event.blockTimestamp)).management / ratioOverAYear;
-
+        rates.management / ratioOverAYear;
+      // if (event.blockNumber == 22645839) {
+      //   console.log(this.feeRates(Number(event.blockTimestamp)).management);
+      //   console.log({blocktimestamp: event.blockTimestamp});
+      // }
+      // the percent of the total assets that will be collected as fees
       const feesInAsset = Math.trunc(
         percentToDeposit * Number(this.totalAssets)
       );
@@ -159,9 +170,11 @@ class Vault {
         this.totalSupply + 10n ** BigInt(this.decimalsOffset),
         this.totalAssets - BigInt(feesInAsset) + 1n
       );
+      // if (event.blockNumber == 22645839) {
+      //   console.log(this.nextManagementFees);
+      // }
     }
 
-    const rates = this.feeRates(Number(event.blockTimestamp));
     this.periodFees.push({
       managementFees: this.nextManagementFees.toString(),
       blockNumber: Number(event.blockNumber),
@@ -175,7 +188,7 @@ class Vault {
         this.asset.decimals
       ),
     });
-    this.lastTotalAssetsUpdateTimestamp = event.blockTimestamp;
+    this.lastTotalAssetsUpdateTimestamp = Number(event.blockTimestamp);
   }
 
   private handleNewTotalAssetsUpdated() {
@@ -210,8 +223,8 @@ class Vault {
 
     if (controller.toLowerCase() === receiver.toLowerCase()) return; // in this case the balance are already updated in the transfer event
 
-    this.getOrCreateAccount(receiver).increaseBalance(shares);
-    this.getOrCreateAccount(controller).decreaseBalance(shares);
+    this.getOrCreateAccount(receiver).increaseBalance(BigInt(shares));
+    this.getOrCreateAccount(controller).decreaseBalance(BigInt(shares));
   }
 
   private handleDepositRequestCanceled(event: DepositRequestCanceled) {
@@ -223,8 +236,8 @@ class Vault {
   private handleSettleDeposit(event: SettleDeposit) {
     const { totalSupply, totalAssets } = event;
 
-    this.totalSupply = totalSupply;
-    this.totalAssets = totalAssets;
+    this.totalSupply = BigInt(totalSupply);
+    this.totalAssets = BigInt(totalAssets);
 
     // for each users who has pending deposit:
     for (const [address, userRequest] of Object.entries(this.pendingDeposits)) {
@@ -233,8 +246,8 @@ class Vault {
 
       const shares = MathLib.mulDivDown(
         userRequest!,
-        totalSupply + 10n ** this.decimalsOffset,
-        totalAssets + 1n
+        BigInt(totalSupply) + 10n ** BigInt(this.decimalsOffset),
+        BigInt(totalAssets) + 1n
       );
 
       // we increase it's balance (like if he claimed his shares)
@@ -266,8 +279,8 @@ class Vault {
   }
 
   private handleSettleRedeem(event: SettleRedeem) {
-    this.totalSupply = event.totalSupply;
-    this.totalAssets = event.totalAssets;
+    this.totalSupply = BigInt(event.totalSupply);
+    this.totalAssets = BigInt(event.totalAssets);
 
     for (const [address, redeemed] of Object.entries(this.pendingRedeems)) {
       if (this.accounts[address as Address]) {
@@ -299,11 +312,12 @@ class Vault {
 
   private handleRatesUpdateds(event: RatesUpdated) {
     this.ratesManager.handleRatesUpdated({
-      blockTimestamp: event.blockTimestamp,
+      blockTimestamp: Number(event.blockTimestamp),
       rates: {
         management: event.newRate_managementRate,
         performance: event.newRate_performanceRate,
       },
+      blockNumber: Number(event.blockNumber),
     });
   }
 
@@ -349,15 +363,16 @@ class Vault {
   private handleFeeTransfer(event: Transfer, distributeFees: boolean) {
     if (!distributeFees) return;
     const totalFees = BigInt(event.value);
-    // we compute how much fees they paid for this epoch
-    // we emulated the rounding system of openzeppelin by adding 0 or 1
-    this.accumulatedFees += totalFees;
 
+    this.accumulatedFees += totalFees;
+    
     // let distributedFees = 0n;
     const _accounts = Object.values(this.accounts).filter(
       (acc) => acc.address != zeroAddress
     );
-
+    
+    // we compute how much fees they paid for this epoch
+    // we emulated the rounding system of openzeppelin by adding 0 or 1
     for (const [_, acc] of _accounts.entries()) {
       const fees =
         (acc.getBalance() * totalFees) / this.totalSupply +

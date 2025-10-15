@@ -48,10 +48,10 @@ Example:
     )
     .action(async (vault, options) => {
       const result = await processVault({
-        fromBlock: BigInt(options!.fromBlock!),
-        toBlock: BigInt(options!.toBlock!),
+        fromBlock: BigInt(options.fromBlock),
+        toBlock: BigInt(options.toBlock),
         rebateDeals: [],
-        readable: options!.readable!,
+        readable: options.readable,
         vault,
       });
 

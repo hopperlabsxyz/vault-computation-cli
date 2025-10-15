@@ -65,7 +65,7 @@ export function preprocessEvents({
     // if blocktimestamp is the same we use the lgoIndex
     if (a.blockTimestamp == b.blockTimestamp) return a.logIndex - b.logIndex;
 
-    return a.blockTimestamp - b.blockTimestamp;
+    return Number(a.blockTimestamp) - Number(b.blockTimestamp);
   });
   return sorted;
 }

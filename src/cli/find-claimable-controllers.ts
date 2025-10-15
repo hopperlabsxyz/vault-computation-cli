@@ -64,7 +64,7 @@ Examples:
 
       if (options.fromBlock) {
         const fromBlock = Number(options.fromBlock);
-        events = events.filter((e) => e.blockNumber >= fromBlock);
+        events = events.filter((e) => Number(e.blockNumber) >= fromBlock);
       }
 
       const controllersIntention = events.reduce((map, event) => {
