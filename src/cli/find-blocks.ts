@@ -15,7 +15,7 @@ export function setBlocksCommand(command: Command) {
       parseVaultArgument
     )
     .description(
-      "Find all blocks where fee minting occurred for a specific vault. Use this command to determine the block range for fee computation.\n"
+      "Find all blocks where a total assets update happened for a vault. Use this command to determine the block range for fee computation.\n"
     )
     .option(
       "--fromBlock <number>",
@@ -69,7 +69,7 @@ Examples:
         .map((t) => ({
           blockNumber: t.blockNumber,
           timestamp: t.blockTimestamp,
-          type: "Fee receiver transfer",
+          type: "Fee receiver transfered shares",
         }))
         .sort((a, b) => Number(a.blockNumber) - Number(b.blockNumber));
 
@@ -91,7 +91,7 @@ Examples:
         )
         .map((e) => ({
           blockNumber: e.blockNumber,
-          type: "Fee minting",
+          type: "Total assets updated",
           timestamp: e.blockTimestamp,
         }));
 

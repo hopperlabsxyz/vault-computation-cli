@@ -17,7 +17,7 @@ export function checkStrictBlockNumberMatching({
     return BigInt(event.blockNumber) === fromBlock;
   });
   if (!found) {
-    throw new Error(`invalid fromBlock, run bun find-blocks `);
+    throw new Error(`invalid fromBlock, run bun find-blocks. Make sure to use blocks referred as Total assets updated using "find-blocks" command`);
   }
   const lastBlock = BigInt(updatedTotalAssets[0].blockNumber);
   if (lastBlock != toBlock)
