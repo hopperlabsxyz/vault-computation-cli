@@ -132,6 +132,7 @@ export interface ProcessVaultReturn {
     fees: number;
     points: Record<string, number>;
     account: Address;
+    referrer: Address;
   }[];
 
   periodFees: PeriodFees;

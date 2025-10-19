@@ -74,7 +74,7 @@ export async function processVault({
       cashback: Number(formatUnits(account.getCashback(), sharesDecimals)),
       points: account.getAllPoints(),
       account: account.address,
+      referrer: account.getReferral()?.referral || "0x",
     })),
-    // ),
   };
 }
