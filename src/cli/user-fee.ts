@@ -13,10 +13,10 @@ export function setUserFeeCommand(command: Command) {
     .alias("uf")
     .description(
       "Calculate and generate fee reports for a specified vault, including referral rewards and rebates for all users. \
-The output is a csv with the following columns: chainId, vault, wallet, balance, fees, pricePerShare, cashback. \
+The output is a csv with the following columns: chainId, vault, wallet, referrer, balance, fees, pricePerShare, cashback. \
 This command require precise block input. The fromBlock and the toBlock must correspond to totalAssets updates blockNumber.\
-When a user refer another user, he become his lifetime referrer. We do not overwrite referals.\
-You can use the --referrals option to override the on-chain referrals.\n"
+When a referral is registered, the user become his lifetime referrer. We do not overwrite referals.\
+You can use the --referrals option to override the on-chain referrals, that's because we treat offchain referrals first.\n"
     )
     .argument(
       "chainId:VaultAddress",
