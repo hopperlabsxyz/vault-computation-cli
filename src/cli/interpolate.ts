@@ -21,6 +21,11 @@ export function setInterpolateCommand(command: Command) {
       "Stop interpolation at this timestamp\n"
     )
     .option(
+      "-p, --precision <number>",
+      "Number of decimals to use for the interpolated points. Default is 2",
+      "2"
+    )
+    .option(
       "--frequency <number>",
       "Time between each points added, in second. Default is one day",
       DAY_IN_SECONDS.toString()
@@ -58,9 +63,11 @@ Examples:
               'From timestamp doesn\'t exist or is higher than "to" timestamp'
             );
           const interpolatedPoints = interpolateEveryX(
-            fromDot,
-            toDot,
-            Number(options.frequency)
+           { start:fromDot,
+            end:toDot,
+            seconds: Number(options.frequency),
+            precision: Number(options.precision)
+          }
           );
           points.push(...interpolatedPoints);
         } else if (dot.timestamp < fromTime || dot.timestamp > toTime) {
@@ -92,9 +99,10 @@ Examples:
  * @param start The starting point [x, y]
  * @param end The ending point [x, y]
  * @param seconds Number of seconds between points
+ * @param precision Number of decimals to use for the interpolated points
  * @returns An array of interpolated points, including originals
  */
-function interpolateEveryX(start: Dot, end: Dot, seconds: number): Dot[] {
+function interpolateEveryX({start, end, seconds, precision}:{start: Dot, end: Dot, seconds: number, precision: number}): Dot[] {
   const { timestamp: timestamp0, amount: amount0 } = start;
   const { timestamp: timestamp1, amount: amount1 } = end;
   if (timestamp0 >= timestamp1) {
@@ -108,7 +116,7 @@ function interpolateEveryX(start: Dot, end: Dot, seconds: number): Dot[] {
     const amount = amount0 + slope * (x - timestamp0);
     points.push({
       timestamp: x,
-      amount: Number(amount.toFixed(0)),
+      amount: Number(amount.toFixed(precision)),
     });
 
     if (x + seconds > timestamp1) {
