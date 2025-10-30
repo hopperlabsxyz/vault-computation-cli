@@ -35,7 +35,7 @@ export class PointTracker {
     } else this.points[point.name] = [];
 
     this.pushPoint(point);
-    const diff = Number((point.amount - previousAmount).toFixed(0));
+    const diff = Number((point.amount - previousAmount));
     if (diff < 0)
       throw new Error(
         `New Point record decrease the amount of points: timestamp ${point.timestamp}`
