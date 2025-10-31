@@ -50,7 +50,7 @@ test("check 0-0x0 works as a wildcard", async () => {
   await vault.processEvents({
     events: events as { __typename: string; blockNumber: bigint }[],
     distributeFeesFromBlock: fromBlock,
-    blockEndHook: async (_: bigint) => {
+    blockEndHook: async (_: string) => {
       // we need to be sure that at least one deposit has been made
 
       if (vault.totalAssets == 0n) return;
@@ -107,7 +107,7 @@ test("check matching chainId-address works", async () => {
   await vault.processEvents({
     events: events as { __typename: string; blockNumber: bigint }[],
     distributeFeesFromBlock: fromBlock,
-    blockEndHook: async (_: bigint) => {
+    blockEndHook: async (_: string) => {
       // we need to be sure that at least one deposit has been made
       if (vault.totalAssets == 0n) return;
       const userAccount = vault.getAccount(user);
@@ -156,7 +156,7 @@ test("check matching chainId-address overrides a wildcard deal", async () => {
   await vault.processEvents({
     events: events as { __typename: string; blockNumber: bigint }[],
     distributeFeesFromBlock: fromBlock,
-    blockEndHook: async (_: bigint) => {
+    blockEndHook: async (_: string) => {
       if (vault.totalAssets == 0n) return;
       const referreeAccount = vault.getAccount(referree);
       expect(referreeAccount.getRebateRateBps()).toBe(26);
@@ -217,7 +217,7 @@ test("check that an offchain referral doesn't get overriden by another onchain r
   await vault.processEvents({
     events: events as { __typename: string; blockNumber: bigint }[],
     distributeFeesFromBlock: fromBlock,
-    blockEndHook: async (_: bigint) => {
+    blockEndHook: async (_: string) => {
       if (vault.totalAssets == 0n) return;
       const userAccount = vault.getAccount(user);
       expect(userAccount.getRebateRateBps()).toBe(28);
@@ -279,7 +279,7 @@ test("check that an offchain referral generates a cashback for the referral and 
   await vault.processEvents({
     events: events as { __typename: string; blockNumber: bigint }[],
     distributeFeesFromBlock: fromBlock,
-    blockEndHook: async (_: bigint) => {
+    blockEndHook: async (_: string) => {
       if (vault.totalAssets == 0n) return;
       const referreeAcc = vault.getAccount(userWithoutOnChainReferral);
       expect(referreeAcc.getRebateRateBps()).toBe(100);
@@ -354,7 +354,7 @@ test("check that an offchain referral does generate a cashback for the referral 
   await vault.processEvents({
     events: events as { __typename: string; blockNumber: bigint }[],
     distributeFeesFromBlock: fromBlock,
-    blockEndHook: async (_: bigint) => {
+    blockEndHook: async (_: string) => {
       if (vault.totalAssets == 0n) return;
       const referreeAcc = vault.getAccount(userWithOnchainReferral);
       expect(referreeAcc.getRebateRateBps()).toBe(100);
