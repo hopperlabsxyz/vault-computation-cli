@@ -48,6 +48,7 @@ export async function generateVault({
     block: BigInt(stateUpdateds.stateUpdateds[0].blockNumber),
   });
 
+
   return new Vault({
     feeReceiver: vaultData.feesReceiver,
     decimals: vaultData.decimals,
@@ -143,7 +144,6 @@ class Vault {
 
   private handleTotalAssetsUpdated(event: TotalAssetsUpdated) {
     this.totalAssets = BigInt(event.totalAssets);
-    console.log({blocktimestamp: event.blockTimestamp});
     
     const rates = this.feeRates(Number(event.blockTimestamp));
 
@@ -156,10 +156,7 @@ class Vault {
     
       const percentToDeposit =
         rates.management / ratioOverAYear;
-      // if (event.blockNumber == 22645839) {
-      //   console.log(this.feeRates(Number(event.blockTimestamp)).management);
-      //   console.log({blocktimestamp: event.blockTimestamp});
-      // }
+
       // the percent of the total assets that will be collected as fees
       const feesInAsset = Math.trunc(
         percentToDeposit * Number(this.totalAssets)
@@ -170,9 +167,7 @@ class Vault {
         this.totalSupply + 10n ** BigInt(this.decimalsOffset),
         this.totalAssets - BigInt(feesInAsset) + 1n
       );
-      // if (event.blockNumber == 22645839) {
-      //   console.log(this.nextManagementFees);
-      // }
+     
     }
 
     this.periodFees.push({
@@ -329,7 +324,6 @@ class Vault {
     // we initiate the accounts if it is not
     const to: UserAccount = this.getOrCreateAccount(event.to);
     const from: UserAccount = this.getOrCreateAccount(event.from);
-
     // this is a fee transfer
     if (
       this.feeReceiver.toLowerCase() == event.to.toLowerCase() &&

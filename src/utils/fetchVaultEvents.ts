@@ -5,27 +5,6 @@ import { graphql } from "../../gql";
 
 import { maxUint256, type Address } from "viem";
 
-async function _fetchVaultEvents({
-  chainId,
-  vaultAddress,
-  toBlock,
-  skip,
-  first,
-}: {
-  chainId: number;
-  vaultAddress: Address;
-  toBlock: bigint;
-  skip: number;
-  first: number;
-}): Promise<VaultEventsQuery> {
-  return request(SUBGRAPHS[chainId]!, query, {
-    first,
-    vaultAddress,
-    toBlock: toBlock.toString(),
-    skip,
-  });
-}
-
 export async function fetchVaultEvents({
   chainId,
   vaultAddress,
@@ -63,8 +42,6 @@ export async function fetchVaultEvents({
       first,
     });
 
-    const newEventsLength = vaultEventsQueryLength(newEvents);
-
     events.depositRequests.push(...newEvents.depositRequests);
     events.deposits.push(...newEvents.deposits);
     events.depositRequestCanceleds.push(...newEvents.depositRequestCanceleds);
@@ -82,21 +59,61 @@ export async function fetchVaultEvents({
     events.feeReceiverUpdateds.push(...newEvents.feeReceiverUpdateds);
 
     events.ratesUpdateds.push(...newEvents.ratesUpdateds);
-
-    if (newEventsLength <= first) {
-      hasMore = false;
+       hasMore = vaultEventsHasMore(newEvents, first);
+    const total = countEvents(events);
+    if (!hasMore) {
+      console.log("Done fetching events. Total: ", total);
+    }else {
+      console.log("Fetching more events. Total: ", total);
     }
     skip += first;
   }
   return events;
 }
 
-function vaultEventsQueryLength(query: VaultEventsQuery): number {
-  let length = 0;
-  Object.keys(query).forEach((k) => {
-    if (k != "__typename?") length += k.length;
+async function _fetchVaultEvents({
+  chainId,
+  vaultAddress,
+  toBlock,
+  skip,
+  first,
+}: {
+  chainId: number;
+  vaultAddress: Address;
+  toBlock: bigint;
+  skip: number;
+  first: number;
+}): Promise<VaultEventsQuery> {
+  return request(SUBGRAPHS[chainId]!, query, {
+    first,
+    vaultAddress,
+    toBlock: toBlock.toString(),
+    skip,
   });
-  return length;
+}
+
+
+function vaultEventsHasMore(query: VaultEventsQuery, first: number): boolean {
+  
+  const keys = Object.keys(query);
+  for (const key of keys) {
+    if (key != "__typename") {
+      if (query[key as keyof VaultEventsQuery]!.length == first) return true;
+    }
+  }
+  return false;
+}
+
+function countEvents(query: VaultEventsQuery): number {
+  
+  const keys = Object.keys(query);
+  let count = 0;
+  for (const key of keys) {
+    if (key != "__typename") {
+      count += query[key as keyof VaultEventsQuery]!.length;
+    }
+  }
+  return count;
 }
 
 export const query = graphql(`

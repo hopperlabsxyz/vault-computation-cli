@@ -249,7 +249,6 @@ test("check that an offchain referral generates a cashback for the referral and 
   const userWithoutOnChainReferral =
     "0xD408c5DdcBf297dcAa745009277007429719E205";
   const virginReferral = "0x1000000000000000000000000000000000000000"; // a user that has nether interacted with the vault ever
-  // console.log();
   const referral = vaultEvents.referrals.find(
     (ref) =>
       ref.owner.toLowerCase() === userWithoutOnChainReferral.toLowerCase()
