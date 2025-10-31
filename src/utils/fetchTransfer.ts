@@ -7,29 +7,22 @@ import type { Address } from "viem";
 import { fetchAll } from "./fetchAll";
 
 
-export async function fetchTransfers({
+export async function fetchAllTransfers({
   chainId,
   vaultAddress,
   toBlock,
-  skip,
-  first,
 }: {
   chainId: number;
   vaultAddress: Address;
   toBlock: bigint;
-  skip: number;
-  first: number;
 }): Promise<VaultTransfersQuery> {
   return fetchAll<VaultTransfersQuery>({
     chainId,
     vaultAddress,
     toBlock,
-    skip,
-    first,
     fetchEvents: _fetchTransfers,
   });
 }
-
 
  async function _fetchTransfers({
   chainId,

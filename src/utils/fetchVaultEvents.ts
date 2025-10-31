@@ -6,29 +6,25 @@ import { graphql } from "../../gql";
 import { maxUint256, type Address } from "viem";
 import { fetchAll } from "./fetchAll";
 
-export async function fetchVaultEvents({
+export async function fetchAllVaultEvents({
   chainId,
   vaultAddress,
   toBlock = BigInt(maxUint256),
-  skip = 0,
 }: {
   chainId: number;
   vaultAddress: Address;
   toBlock?: bigint;
-  skip?: number;
-  first?: number;
 }): Promise<VaultEventsQuery> {
   return fetchAll<VaultEventsQuery>({
     chainId,
     vaultAddress,
     toBlock,
-    skip,
-    fetchEvents: _fetchVaultEvents,
+    fetchEvents: _fetchAllVaultEvents,
   });
 }
 
 
-async function _fetchVaultEvents({
+async function _fetchAllVaultEvents({
   chainId,
   vaultAddress,
   toBlock,

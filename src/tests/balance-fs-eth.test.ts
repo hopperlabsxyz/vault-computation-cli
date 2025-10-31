@@ -3,7 +3,7 @@ import { preprocessEvents } from "core/preprocessEvents";
 import { checkStrictBlockNumberMatching } from "core/strictBlockNumberMatching";
 import { generateVault } from "core/vault";
 import { publicClient } from "lib/publicClient";
-import { fetchVaultEvents } from "utils/fetchVaultEvents";
+import { fetchAllVaultEvents } from "utils/fetchVaultEvents";
 import { formatUnits } from "viem";
 import { getHistoricBalances } from "./common/historic-balances";
 
@@ -16,7 +16,7 @@ test(
     const fromBlock = 21142252n;
     const toBlock = 22624283n;
 
-    const vaultEvents = await fetchVaultEvents({
+    const vaultEvents = await fetchAllVaultEvents({
       chainId,
       vaultAddress: address,
       toBlock,

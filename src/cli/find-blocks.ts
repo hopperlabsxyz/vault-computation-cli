@@ -1,8 +1,8 @@
 import { parseVaultArgument } from "parsing/parseVault";
 import { publicClient } from "lib/publicClient";
 import { LagoonVaultAbi } from "abis/VaultABI";
-import { fetchVaultTransfers } from "utils/fetchTransfer";
-import { fetchVaultTotalAssetsUpdated } from "utils/fetchVaultTotalAssetsUpdated";
+import { fetchAllTransfers } from "utils/fetchTransfer";
+import { fetchAllVaultTotalAssetsUpdated } from "utils/fetchVaultTotalAssetsUpdated";
 import type { Command } from "@commander-js/extra-typings";
 
 export function setBlocksCommand(command: Command) {
@@ -51,12 +51,10 @@ Examples:
       });
 
       // Fetch fee receiver transfers
-      const { transfers } = await fetchVaultTransfers({
-        address: vault.address,
+      const { transfers } = await fetchAllTransfers({
+        vaultAddress: vault.address,
         chainId: vault.chainId,
         toBlock: BigInt(options.toBlock),
-        skip: 0,
-        first: 1000,
       });
 
       const feeReceiverTransfers = transfers
@@ -74,12 +72,10 @@ Examples:
         .sort((a, b) => Number(a.blockNumber) - Number(b.blockNumber));
 
       let vaultData = (
-        await fetchVaultTotalAssetsUpdated({
-          address: vault.address,
+        await fetchAllVaultTotalAssetsUpdated({
+          vaultAddress: vault.address,
           chainId: vault.chainId,
           toBlock: BigInt(options.toBlock),
-          skip: 0,
-          first: 1000,
         })
       ).totalAssetsUpdateds;
 

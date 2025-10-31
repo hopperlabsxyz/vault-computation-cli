@@ -3,14 +3,14 @@ import { preprocessEvents } from "core/preprocessEvents";
 import { checkStrictBlockNumberMatching } from "core/strictBlockNumberMatching";
 import { generateVault } from "core/vault";
 import { parseRebateDeals } from "parsing/parseRebateDeals";
-import { fetchVaultEvents } from "utils/fetchVaultEvents";
+import { fetchAllVaultEvents } from "utils/fetchVaultEvents";
 
 test("check 0-0x0 works as a wildcard", async () => {
   const address = "0x07ed467acD4ffd13023046968b0859781cb90D9B";
   const chainId = 1;
   const fromBlock = 21142252n;
   const toBlock = 23105892n;
-  const vaultEvents = await fetchVaultEvents({
+  const vaultEvents = await fetchAllVaultEvents({
     chainId,
     vaultAddress: address,
     toBlock,
@@ -57,7 +57,7 @@ test("check matching chainId-address works", async () => {
   const chainId = 1;
   const fromBlock = 21142252n;
   const toBlock = 23105892n;
-  const vaultEvents = await fetchVaultEvents({
+  const vaultEvents = await fetchAllVaultEvents({
     chainId,
     vaultAddress: address,
     toBlock,
@@ -104,7 +104,7 @@ test("check matching chainId-address overrides a wildcard deal", async () => {
   const chainId = 1;
   const fromBlock = 21142252n;
   const toBlock = 23105892n;
-  const vaultEvents = await fetchVaultEvents({
+  const vaultEvents = await fetchAllVaultEvents({
     chainId,
     vaultAddress: address,
     toBlock,
@@ -146,7 +146,7 @@ test("check that an offchain rebate doesn't get overriden by a referral", async 
   const chainId = 1;
   const fromBlock = 21142252n;
   const toBlock = 23105892n;
-  const vaultEvents = await fetchVaultEvents({
+  const vaultEvents = await fetchAllVaultEvents({
     chainId,
     vaultAddress: address,
     toBlock,
@@ -205,7 +205,7 @@ test("check that a user reabte doens't get overriden by the rebate of a referral
   const chainId = 1;
   const fromBlock = 21142252n;
   const toBlock = 23105892n;
-  const vaultEvents = await fetchVaultEvents({
+  const vaultEvents = await fetchAllVaultEvents({
     chainId,
     vaultAddress: address,
     toBlock,
@@ -257,7 +257,7 @@ test("check that a user referred has a rebate of defaultRebateRate", async () =>
   const chainId = 1;
   const fromBlock = 21142252n;
   const toBlock = 23105892n;
-  const vaultEvents = await fetchVaultEvents({
+  const vaultEvents = await fetchAllVaultEvents({
     chainId,
     vaultAddress: address,
     toBlock,
@@ -305,7 +305,7 @@ test("check that a a user.referral.rewardRate + user.rebateRate < 100%", async (
   const chainId = 1;
   const fromBlock = 21142252n;
   const toBlock = 23105892n;
-  const vaultEvents = await fetchVaultEvents({
+  const vaultEvents = await fetchAllVaultEvents({
     chainId,
     vaultAddress: address,
     toBlock,

@@ -5,28 +5,21 @@ import { graphql } from "../../gql";
 import type { Address } from "viem";
 import { fetchAll } from "./fetchAll";
 
-export async function fetchVaultTotalAssetsUpdated({
+export async function fetchAllVaultTotalAssetsUpdated({
   chainId,
   vaultAddress,
   toBlock,
-  skip,
-  first,
 }: {
   chainId: number;
   vaultAddress: Address;
   toBlock: bigint;
-  skip: number;
-  first: number;
 }): Promise<VaultTotalAssetsUpdatedQuery> {
   return fetchAll<VaultTotalAssetsUpdatedQuery>({
     chainId,
     vaultAddress,
     toBlock,
-    skip,
-    first,
     fetchEvents: _fetchVaultTotalAssetsUpdated,
   });
-  
 }
 
 async function _fetchVaultTotalAssetsUpdated({

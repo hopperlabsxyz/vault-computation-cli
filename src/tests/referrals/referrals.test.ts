@@ -4,14 +4,14 @@ import { preprocessEvents } from "core/preprocessEvents";
 import { checkStrictBlockNumberMatching } from "core/strictBlockNumberMatching";
 import { generateVault } from "core/vault";
 import { parseOffchainReferrals } from "parsing/parseOffchainReferrals";
-import { fetchVaultEvents } from "utils/fetchVaultEvents";
+import { fetchAllVaultEvents } from "utils/fetchVaultEvents";
 
 test("check 0-0x0 works as a wildcard", async () => {
   const vaultAddress = "0x07ed467acD4ffd13023046968b0859781cb90D9B";
   const chainId = 1;
   const fromBlock = 21142252n;
   const toBlock = 23105892n;
-  const vaultEvents = await fetchVaultEvents({
+  const vaultEvents = await fetchAllVaultEvents({
     chainId,
     vaultAddress,
     toBlock,
@@ -68,7 +68,7 @@ test("check matching chainId-address works", async () => {
   const chainId = 1;
   const fromBlock = 21142252n;
   const toBlock = 23105892n;
-  const vaultEvents = await fetchVaultEvents({
+  const vaultEvents = await fetchAllVaultEvents({
     chainId,
     vaultAddress,
     toBlock,
@@ -124,7 +124,7 @@ test("check matching chainId-address overrides a wildcard deal", async () => {
   const chainId = 1;
   const fromBlock = 21142252n;
   const toBlock = 23105892n;
-  const vaultEvents = await fetchVaultEvents({
+  const vaultEvents = await fetchAllVaultEvents({
     chainId,
     vaultAddress,
     toBlock,
@@ -172,7 +172,7 @@ test("check that an offchain referral doesn't get overriden by another onchain r
   const chainId = 1;
   const fromBlock = 21142252n;
   const toBlock = 23105892n;
-  const vaultEvents = await fetchVaultEvents({
+  const vaultEvents = await fetchAllVaultEvents({
     chainId,
     vaultAddress,
     toBlock,
@@ -233,7 +233,7 @@ test("check that an offchain referral generates a cashback for the referral and 
   const chainId = 1;
   const fromBlock = 21142252n;
   const toBlock = 23105892n;
-  const vaultEvents = await fetchVaultEvents({
+  const vaultEvents = await fetchAllVaultEvents({
     chainId,
     vaultAddress,
     toBlock,
@@ -309,7 +309,7 @@ test("check that an offchain referral does generate a cashback for the referral 
   const chainId = 1;
   const fromBlock = 21142252n;
   const toBlock = 23105892n;
-  const vaultEvents = await fetchVaultEvents({
+  const vaultEvents = await fetchAllVaultEvents({
     chainId,
     vaultAddress,
     toBlock,
@@ -384,7 +384,7 @@ test("check that the total % of redistribution cannot be > 100% via an offchain 
   const chainId = 1;
   const fromBlock = 21142252n;
   const toBlock = 23105892n;
-  const vaultEvents = await fetchVaultEvents({
+  const vaultEvents = await fetchAllVaultEvents({
     chainId,
     vaultAddress,
     toBlock,
