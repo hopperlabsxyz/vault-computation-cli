@@ -89,6 +89,8 @@ class Vault {
   public preReferrals: Record<Address, ReferralConfig | undefined> = {}; // first address is referee, second is referrer
   public preRebate: Record<Address, number | undefined> = {};
 
+  public feeReceiverTransfersFrom: Transfer[] = [];
+
   private accounts: Record<Address, UserAccount> = {};
   private alternateZeroOne = this.createAlternateFunction();
 
@@ -324,12 +326,20 @@ class Vault {
     // we initiate the accounts if it is not
     const to: UserAccount = this.getOrCreateAccount(event.to);
     const from: UserAccount = this.getOrCreateAccount(event.from);
+    
     // this is a fee transfer
     if (
       this.feeReceiver.toLowerCase() == event.to.toLowerCase() &&
       event.from == zeroAddress
     ) {
       this.handleFeeTransfer(event, distributeFees);
+    }
+
+    // the fee receiver is doing transfer of shares
+    if (
+      this.feeReceiver.toLowerCase() == event.from.toLowerCase()
+    ) {
+      this.feeReceiverTransfersFrom.push(event);
     }
 
     // we decrement the balance of the sender

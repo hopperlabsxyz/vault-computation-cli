@@ -64,6 +64,8 @@ export async function processVault({
     address: vault.address,
     decimals: Number(vaultState.decimals),
     pointNames: vaultState.pointNames(),
+    events: vaultEvents,
+    feeReceiverTransfersFrom: vaultState.feeReceiverTransfersFrom,
     pricePerShare: Number(
       formatUnits(vaultState.pricePerShare(), assetDecimals)
     ),
