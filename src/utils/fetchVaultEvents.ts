@@ -17,59 +17,55 @@ export async function fetchVaultEvents({
   skip?: number;
   first?: number;
 }): Promise<VaultEventsQuery> {
-  const events: VaultEventsQuery = {
-    depositRequestCanceleds: [],
-    deposits: [],
-    newTotalAssetsUpdateds: [],
-    referrals: [],
-    settleDeposits: [],
-    settleRedeems: [],
-    totalAssetsUpdateds: [],
-    transfers: [],
-    depositRequests: [],
-    redeemRequests: [],
-    feeReceiverUpdateds: [],
-    ratesUpdateds: [],
-  };
+  return fetchAllEvents({
+    chainId,
+    vaultAddress,
+    toBlock,
+    skip,
+    fetchEvents: _fetchVaultEvents,
+  });
+}
+
+export async function fetchAllEvents<T extends Query>({
+  chainId,
+  vaultAddress,
+  toBlock = BigInt(maxUint256),
+  skip = 0,
+  fetchEvents,
+  first = 1000,
+}: {
+  chainId: number;
+  vaultAddress: Address;
+  toBlock?: bigint;
+  skip?: number;
+  first?: number;
+  fetchEvents: (args: {chainId: number, vaultAddress: Address, toBlock: bigint, skip: number, first: number}) => Promise<T>;
+}): Promise<T> {
+  let events: T | undefined;
   let hasMore = true;
-  const first = 1000;
   while (hasMore) {
-    const newEvents = await _fetchVaultEvents({
-      chainId,
-      vaultAddress,
-      toBlock,
-      skip,
-      first,
-    });
+    const newEvents: T = await fetchEvents({ chainId, vaultAddress, toBlock, skip, first });
+    if (events == undefined) {
+      events = newEvents;
+    } else {
+      const keys = Object.keys(newEvents) as (keyof T)[];
+      for (const key of keys) {
+        if (key != "__typename") {
+          (events[key] as any[]).push(...(newEvents[key] as any[]));
+        }
+      }
+    }
 
-    events.depositRequests.push(...newEvents.depositRequests);
-    events.deposits.push(...newEvents.deposits);
-    events.depositRequestCanceleds.push(...newEvents.depositRequestCanceleds);
-    events.settleDeposits.push(...newEvents.settleDeposits);
-
-    events.redeemRequests.push(...newEvents.redeemRequests);
-    events.settleRedeems.push(...newEvents.settleRedeems);
-
-    events.newTotalAssetsUpdateds.push(...newEvents.newTotalAssetsUpdateds);
-    events.totalAssetsUpdateds.push(...newEvents.totalAssetsUpdateds);
-
-    events.transfers.push(...newEvents.transfers);
-    events.referrals.push(...newEvents.referrals);
-
-    events.feeReceiverUpdateds.push(...newEvents.feeReceiverUpdateds);
-
-    events.ratesUpdateds.push(...newEvents.ratesUpdateds);
-       hasMore = vaultEventsHasMore(newEvents, first);
-    const total = countEvents(events);
-    if (!hasMore) {
-      console.log("Done fetching events. Total: ", total);
-    }else {
+    hasMore = vaultEventsHasMore(newEvents as Query, first);
+    const total = countEvents(events as Query);
+    if (hasMore) {
       console.log("Fetching more events. Total: ", total);
     }
     skip += first;
   }
-  return events;
+  return events!;
 }
+
 
 async function _fetchVaultEvents({
   chainId,
@@ -93,24 +89,27 @@ async function _fetchVaultEvents({
 }
 
 
-function vaultEventsHasMore(query: VaultEventsQuery, first: number): boolean {
+
+type Query = Record<string, any[] | string>;
+function vaultEventsHasMore(query: Query, first: number): boolean {
   
   const keys = Object.keys(query);
   for (const key of keys) {
     if (key != "__typename") {
-      if (query[key as keyof VaultEventsQuery]!.length == first) return true;
+      const length = query[key as keyof Query]!.length;
+      if (length == first) return true;
     }
   }
   return false;
 }
 
-function countEvents(query: VaultEventsQuery): number {
+function countEvents(query: Query): number {
   
   const keys = Object.keys(query);
   let count = 0;
   for (const key of keys) {
     if (key != "__typename") {
-      count += query[key as keyof VaultEventsQuery]!.length;
+      count += query[key as keyof Query]!.length;
     }
   }
   return count;
