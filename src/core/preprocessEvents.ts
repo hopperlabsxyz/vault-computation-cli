@@ -44,7 +44,6 @@ export function preprocessEvents({
     defaultReferralRateBps: defaultReferralRateBps || 0,
     defaultRebateRateBps: defaultRebateRateBps || 0,
   });
-
   // Combine all events and sort chronologically
   const sorted = [
     ...events.newTotalAssetsUpdateds,
@@ -67,6 +66,7 @@ export function preprocessEvents({
 
     return Number(a.blockTimestamp) - Number(b.blockTimestamp);
   });
+
   return sorted;
 }
 

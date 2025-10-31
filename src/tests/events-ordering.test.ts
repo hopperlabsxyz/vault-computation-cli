@@ -32,10 +32,10 @@ test("events of same blocknumber must have growing logIndex", async () => {
   });
   const eventsByBlockNumber: Record<number, number[]> = {};
   for (let i = 0; i < events.length; i++) {
-    if (!eventsByBlockNumber[events[i].blockNumber])
-      eventsByBlockNumber[events[i].blockNumber] = [];
+    if (!eventsByBlockNumber[Number(events[i].blockNumber)])
+      eventsByBlockNumber[Number(events[i].blockNumber)] = [];
 
-    eventsByBlockNumber[events[i].blockNumber].push(events[i].logIndex);
+    eventsByBlockNumber[Number(events[i].blockNumber)].push(events[i].logIndex);
   }
   const blockNumbers = Object.keys(eventsByBlockNumber);
   // Some general rules
