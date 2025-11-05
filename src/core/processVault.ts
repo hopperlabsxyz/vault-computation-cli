@@ -3,7 +3,7 @@ import { generateVault } from "./vault";
 import { checkStrictBlockNumberMatching } from "./strictBlockNumberMatching";
 import type { ProcessVaultParams, ProcessVaultReturn } from "./types";
 import { preprocessEvents } from "./preprocessEvents";
-import { fetchVaultEvents } from "utils/fetchVaultEvents";
+import { fetchAllVaultEvents } from "utils/fetchVaultEvents";
 
 export async function processVault({
   vault,
@@ -19,7 +19,7 @@ export async function processVault({
 }: ProcessVaultParams): Promise<ProcessVaultReturn> {
   console.log(`Loading vault ${vault.address} on chain ${vault.chainId}`);
 
-  const vaultEvents = await fetchVaultEvents({
+  const vaultEvents = await fetchAllVaultEvents({
     chainId: vault.chainId,
     vaultAddress: vault.address,
     toBlock: toBlock ? BigInt(toBlock) : undefined,
@@ -64,6 +64,8 @@ export async function processVault({
     address: vault.address,
     decimals: Number(vaultState.decimals),
     pointNames: vaultState.pointNames(),
+    events: vaultEvents,
+    feeReceiverTransfersFrom: vaultState.feeReceiverTransfersFrom,
     pricePerShare: Number(
       formatUnits(vaultState.pricePerShare(), assetDecimals)
     ),

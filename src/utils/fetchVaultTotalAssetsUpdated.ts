@@ -2,31 +2,49 @@ import { SUBGRAPHS } from "environnement";
 import type { VaultTotalAssetsUpdatedQuery } from "../../gql/graphql";
 import request from "graphql-request";
 import { graphql } from "../../gql";
-
 import type { Address } from "viem";
+import { fetchAll } from "./fetchAll";
 
-export async function fetchVaultTotalAssetsUpdated({
+export async function fetchAllVaultTotalAssetsUpdated({
   chainId,
-  address,
+  vaultAddress,
+  toBlock,
+}: {
+  chainId: number;
+  vaultAddress: Address;
+  toBlock: bigint;
+}): Promise<VaultTotalAssetsUpdatedQuery> {
+  return fetchAll<VaultTotalAssetsUpdatedQuery>({
+    chainId,
+    vaultAddress,
+    toBlock,
+    fetchEvents: _fetchVaultTotalAssetsUpdated,
+  });
+}
+
+async function _fetchVaultTotalAssetsUpdated({
+  chainId,
+  vaultAddress,
   toBlock,
   skip,
   first,
 }: {
   chainId: number;
-  address: Address;
+  vaultAddress: Address;
   toBlock: bigint;
   skip: number;
   first: number;
 }): Promise<VaultTotalAssetsUpdatedQuery> {
-  const url = SUBGRAPHS[chainId];
-  if (!url) throw new Error("Vault undefined");
-  return request(url, query, {
+  return request(SUBGRAPHS[chainId]!, query, {
     first,
-    vaultAddress: address,
+    vaultAddress,
     toBlock: toBlock.toString(),
     skip,
   });
 }
+
+
+
 
 export const query = graphql(`
   query VaultTotalAssetsUpdated(

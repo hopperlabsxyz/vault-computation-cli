@@ -4,16 +4,35 @@ import request from "graphql-request";
 import { graphql } from "../../gql";
 
 import type { Address } from "viem";
+import { fetchAll } from "./fetchAll";
 
-export async function fetchVaultTransfers({
+
+export async function fetchAllTransfers({
   chainId,
-  address,
+  vaultAddress,
+  toBlock,
+}: {
+  chainId: number;
+  vaultAddress: Address;
+  toBlock: bigint;
+}): Promise<VaultTransfersQuery> {
+  return fetchAll<VaultTransfersQuery>({
+    chainId,
+    vaultAddress,
+    toBlock,
+    fetchEvents: _fetchTransfers,
+  });
+}
+
+ async function _fetchTransfers({
+  chainId,
+  vaultAddress,
   toBlock,
   skip,
   first,
 }: {
   chainId: number;
-  address: Address;
+  vaultAddress: Address;
   toBlock: bigint;
   skip: number;
   first: number;
@@ -25,7 +44,7 @@ export async function fetchVaultTransfers({
     );
   return request(subgraph, query, {
     first,
-    vaultAddress: address,
+    vaultAddress,
     toBlock: toBlock.toString(),
     skip,
   });

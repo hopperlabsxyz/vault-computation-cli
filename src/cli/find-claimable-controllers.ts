@@ -3,7 +3,7 @@ import type { Command } from "@commander-js/extra-typings";
 import { preprocessEvents } from "core/preprocessEvents";
 import type { DepositRequest, DepositRequestCanceled } from "../../gql/graphql";
 import type { Address } from "viem";
-import { fetchVaultEvents } from "utils/fetchVaultEvents";
+import { fetchAllVaultEvents } from "utils/fetchVaultEvents";
 import { generateVault } from "core/vault";
 import { parseVaultArgument } from "parsing/parseVault";
 
@@ -37,7 +37,7 @@ Examples:
       ).number.toString();
       console.log(toBlock);
 
-      const vaultEvents = await fetchVaultEvents({
+      const vaultEvents = await fetchAllVaultEvents({
         chainId: vault.chainId,
         vaultAddress: vault.address,
         toBlock: BigInt(toBlock),

@@ -1,9 +1,7 @@
 import { parseVaultArgument } from "parsing/parseVault";
 import { publicClient } from "lib/publicClient";
-import { LagoonVaultAbi } from "abis/VaultABI";
-import { fetchVaultTransfers } from "utils/fetchTransfer";
-import { fetchVaultTotalAssetsUpdated } from "utils/fetchVaultTotalAssetsUpdated";
 import type { Command } from "@commander-js/extra-typings";
+import { processVault } from "core/processVault";
 
 export function setBlocksCommand(command: Command) {
   command
@@ -44,46 +42,24 @@ Examples:
         ).number.toString();
       }
 
-      const roles = await client.readContract({
-        address: vault.address,
-        abi: LagoonVaultAbi,
-        functionName: "getRolesStorage",
-      });
-
-      // Fetch fee receiver transfers
-      const { transfers } = await fetchVaultTransfers({
-        address: vault.address,
-        chainId: vault.chainId,
+      const result = await processVault({
+        fromBlock: BigInt(options.fromBlock),
         toBlock: BigInt(options.toBlock),
-        skip: 0,
-        first: 1000,
+        rebateDeals: [],
+        readable: false,
+        vault,
+        strictBlockNumberMatching: false,
       });
 
-      const feeReceiverTransfers = transfers
-        .filter(
-          (t) =>
-            t.from.toLowerCase() === roles.feeReceiver.toLowerCase() &&
-            t.blockNumber >= options.fromBlock! &&
-            t.blockNumber <= options.toBlock!
-        )
-        .map((t) => ({
+      const feeReceiverTransfersFrom = result.feeReceiverTransfersFrom.map((t) => {
+        return {
           blockNumber: t.blockNumber,
-          timestamp: t.blockTimestamp,
-          type: "Fee receiver transfered shares",
-        }))
-        .sort((a, b) => Number(a.blockNumber) - Number(b.blockNumber));
+          type: "Fee receiver sent shares",
+          blockTimestamp: t.blockTimestamp,
+        };
+      });
 
-      let vaultData = (
-        await fetchVaultTotalAssetsUpdated({
-          address: vault.address,
-          chainId: vault.chainId,
-          toBlock: BigInt(options.toBlock),
-          skip: 0,
-          first: 1000,
-        })
-      ).totalAssetsUpdateds;
-
-      const events = vaultData
+      const totalAssetsUpdateds = result.events.totalAssetsUpdateds
         .filter(
           (ev) =>
             ev.blockNumber >= options.fromBlock! &&
@@ -92,11 +68,11 @@ Examples:
         .map((e) => ({
           blockNumber: e.blockNumber,
           type: "Total assets updated",
-          timestamp: e.blockTimestamp,
+          blockTimestamp: e.blockTimestamp,
         }));
 
       // Combine and sort all events chronologically
-      const allEvents = [...events, ...feeReceiverTransfers].sort(
+      const allEvents = [...totalAssetsUpdateds, ...feeReceiverTransfersFrom].sort(
         (a, b) => Number(a.blockNumber) - Number(b.blockNumber)
       );
 
@@ -104,7 +80,7 @@ Examples:
       console.log("\nEvents in chronological order:");
       allEvents.forEach((event) =>
         console.log(
-          `${new Date(Number(event.timestamp) * 1000).toDateString()} - ${
+          `${new Date(Number(event.blockTimestamp) * 1000).toDateString()} - ${
             event.blockNumber
           } - ${event.type}`
         )

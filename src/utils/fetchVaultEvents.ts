@@ -4,74 +4,27 @@ import request from "graphql-request";
 import { graphql } from "../../gql";
 
 import { maxUint256, type Address } from "viem";
+import { fetchAll } from "./fetchAll";
 
-export async function fetchVaultEvents({
+export async function fetchAllVaultEvents({
   chainId,
   vaultAddress,
   toBlock = BigInt(maxUint256),
-  skip = 0,
 }: {
   chainId: number;
   vaultAddress: Address;
   toBlock?: bigint;
-  skip?: number;
-  first?: number;
 }): Promise<VaultEventsQuery> {
-  const events: VaultEventsQuery = {
-    depositRequestCanceleds: [],
-    deposits: [],
-    newTotalAssetsUpdateds: [],
-    referrals: [],
-    settleDeposits: [],
-    settleRedeems: [],
-    totalAssetsUpdateds: [],
-    transfers: [],
-    depositRequests: [],
-    redeemRequests: [],
-    feeReceiverUpdateds: [],
-    ratesUpdateds: [],
-  };
-  let hasMore = true;
-  const first = 1000;
-  while (hasMore) {
-    const newEvents = await _fetchVaultEvents({
-      chainId,
-      vaultAddress,
-      toBlock,
-      skip,
-      first,
-    });
-
-    events.depositRequests.push(...newEvents.depositRequests);
-    events.deposits.push(...newEvents.deposits);
-    events.depositRequestCanceleds.push(...newEvents.depositRequestCanceleds);
-    events.settleDeposits.push(...newEvents.settleDeposits);
-
-    events.redeemRequests.push(...newEvents.redeemRequests);
-    events.settleRedeems.push(...newEvents.settleRedeems);
-
-    events.newTotalAssetsUpdateds.push(...newEvents.newTotalAssetsUpdateds);
-    events.totalAssetsUpdateds.push(...newEvents.totalAssetsUpdateds);
-
-    events.transfers.push(...newEvents.transfers);
-    events.referrals.push(...newEvents.referrals);
-
-    events.feeReceiverUpdateds.push(...newEvents.feeReceiverUpdateds);
-
-    events.ratesUpdateds.push(...newEvents.ratesUpdateds);
-       hasMore = vaultEventsHasMore(newEvents, first);
-    const total = countEvents(events);
-    if (!hasMore) {
-      console.log("Done fetching events. Total: ", total);
-    }else {
-      console.log("Fetching more events. Total: ", total);
-    }
-    skip += first;
-  }
-  return events;
+  return fetchAll<VaultEventsQuery>({
+    chainId,
+    vaultAddress,
+    toBlock,
+    fetchEvents: _fetchAllVaultEvents,
+  });
 }
 
-async function _fetchVaultEvents({
+
+async function _fetchAllVaultEvents({
   chainId,
   vaultAddress,
   toBlock,
@@ -93,28 +46,8 @@ async function _fetchVaultEvents({
 }
 
 
-function vaultEventsHasMore(query: VaultEventsQuery, first: number): boolean {
-  
-  const keys = Object.keys(query);
-  for (const key of keys) {
-    if (key != "__typename") {
-      if (query[key as keyof VaultEventsQuery]!.length == first) return true;
-    }
-  }
-  return false;
-}
 
-function countEvents(query: VaultEventsQuery): number {
-  
-  const keys = Object.keys(query);
-  let count = 0;
-  for (const key of keys) {
-    if (key != "__typename") {
-      count += query[key as keyof VaultEventsQuery]!.length;
-    }
-  }
-  return count;
-}
+
 
 export const query = graphql(`
   query VaultEvents(

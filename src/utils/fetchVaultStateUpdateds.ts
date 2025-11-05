@@ -12,7 +12,7 @@ export async function fetchVaultStateUpdateds({
   chainId: number;
   vaultAddress: Address;
 }): Promise<VaultStateUpdatedEventsQuery> {
-  const newEvents = await _fetchVaultEvents({
+  const newEvents = await _fetchAllVaultEvents({
     chainId,
     vaultAddress,
   });
@@ -20,7 +20,7 @@ export async function fetchVaultStateUpdateds({
   return newEvents;
 }
 
-async function _fetchVaultEvents({
+async function _fetchAllVaultEvents({
   chainId,
   vaultAddress,
 }: {
