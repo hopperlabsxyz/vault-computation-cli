@@ -84,7 +84,7 @@ function convertToCSV({
   );
   const csvRows = [
     `chainId,vault,wallet${pointNamesString}`, // CSV header
-    ...data.map(({ points, account }) => {
+    ...data.sort((a, b) => a.account.localeCompare(b.account)).map(({ points, account }) => {
       let str = `${vault.chainId},${vault.address},${account}`;
       str += pointsToCsv(points, pointNames);
       return str;

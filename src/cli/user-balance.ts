@@ -88,7 +88,7 @@ function convertToCSV({
 }) {
   const csvRows = [
     `chainId,vault,wallet,balance`, // CSV header
-    ...data.map(({ balance, account }) => {
+    ...data.sort((a, b) => a.account.localeCompare(b.account)).map(({ balance, account }) => {
       if (balance === 0) return "";
       let balanceStr = balance.toString();
       balanceStr = balance.toLocaleString("fullwide", {
