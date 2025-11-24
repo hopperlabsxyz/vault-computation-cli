@@ -18,7 +18,7 @@ export function setControllersCommand(command: Command) {
       parseVaultArgument
     )
     .description(
-      "Finds all controllers that made a deposit request. Use this command if you want to get the args for claimSharesOnBehalf().\n"
+      "Finds all controllers that have a claimable deposit request. Use this command if you want to get the args for claimSharesOnBehalf().\n"
     )
     .option(
       "--from-block <number>",
