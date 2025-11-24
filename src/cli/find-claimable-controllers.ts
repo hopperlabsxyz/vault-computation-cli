@@ -2,10 +2,11 @@ import { publicClient } from "lib/publicClient";
 import type { Command } from "@commander-js/extra-typings";
 import { preprocessEvents } from "core/preprocessEvents";
 import type { DepositRequest, DepositRequestCanceled } from "../../gql/graphql";
-import type { Address } from "viem";
+import { getAddress, type Address } from "viem";
 import { fetchAllVaultEvents } from "utils/fetchVaultEvents";
 import { generateVault } from "core/vault";
 import { parseVaultArgument } from "parsing/parseVault";
+import { LagoonVaultAbi } from "abis/VaultABI";
 
 export function setControllersCommand(command: Command) {
   command
@@ -35,19 +36,16 @@ Examples:
       const toBlock = (
         await client.getBlock({ blockTag: "latest" })
       ).number.toString();
-      console.log(toBlock);
 
       const vaultEvents = await fetchAllVaultEvents({
         chainId: vault.chainId,
         vaultAddress: vault.address,
         toBlock: BigInt(toBlock),
       });
-      console.log(vaultEvents.depositRequestCanceleds.length);
 
       const vaultState = await generateVault({
         vault,
       });
-      console.log(vaultState.asset);
 
       let events = preprocessEvents({
         events: vaultEvents,
@@ -79,7 +77,19 @@ Examples:
       const controllers = Object.entries(controllersIntention)
         .filter(([, value]) => value)
         .map(([address]) => address);
+      
+      const controllersToClaim = (await Promise.all(controllers.map(async (c) => {
+        const claimableDepositRequest = await client.readContract({
+          address: vault.address,
+          abi: LagoonVaultAbi,
+          functionName: "claimableDepositRequest",
+          args: [0n, getAddress(c)],
+          blockTag: "latest",
+        });
+        return { address: c, claimableDepositRequest };
+      }))).filter((c) => c.claimableDepositRequest > 0n).map((c) => c.address);
 
-      console.log("[" + controllers.map((c) => '"' + c + '"').join(", ") + "]");
+      
+      console.log("[" + controllersToClaim.map((c) => '"' + c + '"').join(", ") + "]");
     });
 }
