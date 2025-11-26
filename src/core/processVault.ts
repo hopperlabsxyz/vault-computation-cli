@@ -60,6 +60,10 @@ export async function processVault({
   const assetDecimals = readable ? vaultState.asset.decimals : 0;
 
   return {
+    asset: {
+      decimals: vaultState.asset.decimals,
+      address: vaultState.asset.address,
+    },
     chainId: vault.chainId,
     address: vault.address,
     decimals: Number(vaultState.decimals),

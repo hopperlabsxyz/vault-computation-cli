@@ -121,6 +121,10 @@ export interface ProcessVaultParams {
 }
 
 export interface ProcessVaultReturn {
+  asset: {
+    decimals: number;
+    address: Address;
+  }
   chainId: number;
   address: Address;
   decimals: number;
@@ -148,7 +152,9 @@ export type PeriodFees = Array<{
   timestamp: number;
   managementRate: number;
   performanceRate: number;
-  pricePerShare: number;
+  pricePerShare: string;
+  totalAssets: string;
+  totalSupply: string;
 }>;
 
 export type Rates = {

@@ -12,9 +12,8 @@ import type {
   FeeReceiverUpdated,
 } from "../../gql/graphql";
 
-import { erc20Abi, maxUint256, zeroAddress, type Address } from "viem";
+import { erc20Abi, formatUnits, maxUint256, zeroAddress, type Address } from "viem";
 import { publicClient } from "lib/publicClient";
-import { convertBigIntToNumber } from "utils/convertTo";
 import type {
   RebateEvent,
   PeriodFees,
@@ -180,7 +179,9 @@ class Vault {
       timestamp: Number(event.blockTimestamp),
       managementRate: rates.management,
       performanceRate: rates.performance,
-      pricePerShare: convertBigIntToNumber(
+      totalAssets: this.totalAssets.toString(),
+      totalSupply: this.totalSupply.toString(),
+      pricePerShare: formatUnits(
         this.pricePerShare(),
         this.asset.decimals
       ),
@@ -269,7 +270,7 @@ class Vault {
     this.preRebate = {};
     const periodLength = this.periodFees.length;
     const lastPeriod = this.periodFees[periodLength - 1];
-    lastPeriod.pricePerShare = convertBigIntToNumber(
+    lastPeriod.pricePerShare = formatUnits(
       this.pricePerShare(),
       this.asset.decimals
     );
@@ -288,7 +289,7 @@ class Vault {
     this.pendingRedeems = {};
     const periodLength = this.periodFees.length;
     const lastPeriod = this.periodFees[periodLength - 1];
-    lastPeriod.pricePerShare = convertBigIntToNumber(
+    lastPeriod.pricePerShare = formatUnits(
       this.pricePerShare(),
       Number(this.asset.decimals)
     );
