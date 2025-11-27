@@ -10,6 +10,8 @@ import type {
   Transfer,
   RatesUpdated,
   FeeReceiverUpdated,
+  CustomRateUpdated,
+  DefaultRateUpdated,
 } from "../../gql/graphql";
 
 import { erc20Abi, formatUnits, maxUint256, zeroAddress, type Address } from "viem";
@@ -168,7 +170,12 @@ class Vault {
         this.totalSupply + 10n ** BigInt(this.decimalsOffset),
         this.totalAssets - BigInt(feesInAsset) + 1n
       );
-     
+      const protocolManagementFeesCut = MathLib.mulDivUp(
+        this.nextManagementFees,
+        BigInt(this.ratesManager.getProtocolRate()),
+        BPS_DIVIDER
+      )
+      this.nextManagementFees -= protocolManagementFeesCut;
     }
 
     this.periodFees.push({
@@ -428,7 +435,16 @@ class Vault {
     const account = this.getOrCreateAccount(deal.owner);
     account.setRebateRateBps(deal.feeRebateRate);
   }
+  
+  private handleDefaultRateUpdated(protocolRateUpdate: DefaultRateUpdated) {
+    this.ratesManager.handleDefaultRateUpdated(
+       protocolRateUpdate.newRate
+    );
+  }
 
+  private handleCustomRateUpdated(customRateUpdated: CustomRateUpdated) {
+    this.ratesManager.handleCustomRateUpdated(customRateUpdated);
+  }
   protected handlePoint(point: PointEvent) {
     const diff = this.pointTracker.registerPoint({
       amount: point.amount,
@@ -583,6 +599,10 @@ class Vault {
       this.handleRatesUpdateds(event as RatesUpdated);
     } else if (event.__typename === "Point") {
       this.handlePoint(event as any as PointEvent); // TODO: fix any
+    } else if (event.__typename === "DefaultRateUpdated") {
+      this.handleDefaultRateUpdated(event as DefaultRateUpdated);
+    } else if (event.__typename === "CustomRateUpdated") {
+      this.handleCustomRateUpdated(event as CustomRateUpdated);
     } else {
       throw new Error(`Unknown event ${event.__typename} : ${event}`);
     }

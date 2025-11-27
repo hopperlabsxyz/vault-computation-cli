@@ -11,6 +11,12 @@ export class RatesManager {
   private cooldown: number;
   private newRatesTimestamp = 0;
 
+  private protocolDefaultRate: number = 0;
+
+  private protocolCustomRate: number = 0;
+
+  private customRateActivated: boolean = false;
+
   constructor(rates: Rates, cooldown: number) {
     this._rates = {
       management: rates.management / Number(BPS_DIVIDER),
@@ -37,5 +43,20 @@ export class RatesManager {
     if (Number(this.newRatesTimestamp) <= Number(blockTimestamp)) return this._rates;
     return this._oldRates;
   }
+
+  public handleDefaultRateUpdated(rate: number ) {
+    this.protocolDefaultRate = rate;
+  }
+
+  public handleCustomRateUpdated(event: {rate: number, isActivated: boolean }) {
+    this.protocolCustomRate = event.rate;
+    this.customRateActivated = event.isActivated;
+  }
+
+  public getProtocolRate(): number {
+    return this.customRateActivated ? this.protocolCustomRate : this.protocolDefaultRate;
+  }
+
+  
 }
 
