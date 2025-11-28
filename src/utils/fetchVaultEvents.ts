@@ -263,5 +263,35 @@ export const query = graphql(`
       newRate_performanceRate
       timestamp
     }
+    defaultRateUpdateds(
+      first: $first
+      skip: $skip
+      orderBy: blockTimestamp
+      orderDirection: desc
+      where: { blockNumber_lte: $toBlock }
+    ) {
+      newRate
+      oldRate
+      transactionHash
+      logIndex
+      blockNumber
+      blockTimestamp
+    }
+    customRateUpdateds(
+      first: $first
+      skip: $skip
+      orderBy: blockTimestamp
+      orderDirection: desc
+      where: { vault: $vaultAddress, blockNumber_lte: $toBlock }
+    ) {
+      id
+      vault
+      isActivated
+      logIndex
+      rate
+      transactionHash
+      blockNumber
+      blockTimestamp
+    }
   }
 `);

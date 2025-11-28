@@ -32,6 +32,8 @@ export function preprocessEvents({
   preprocessNewTotalAssetsUpdateds(events);
   preprocessRatesUpdateds(events);
   preprocessFeeReceiverUpdateds(events);
+  preprocessDefaultRateUpdateds(events);
+  preprocessCustomRateUpdateds(events);
   const transfers = preprocessTransfers(events.transfers, addresses);
 
   // Add offchain points events
@@ -60,6 +62,8 @@ export function preprocessEvents({
     ...pointsEvents,
     ...referrals,
     ...transfers,
+    ...events.defaultRateUpdateds,
+    ...events.customRateUpdateds,
   ].sort((a, b) => {
     // if blocktimestamp is the same we use the lgoIndex
     if (a.blockTimestamp == b.blockTimestamp) return a.logIndex - b.logIndex;
@@ -158,6 +162,20 @@ function preprocessFeeReceiverUpdateds(events: any) {
   }));
 }
 
+function preprocessDefaultRateUpdateds(events: any) {
+  events.defaultRateUpdateds = events.defaultRateUpdateds.map((e: any) => ({
+    ...e,
+    __typename: "DefaultRateUpdated",
+  }));
+}
+
+function preprocessCustomRateUpdateds(events: any) {
+  events.customRateUpdateds = events.customRateUpdateds.map((e: any) => ({
+    ...e,
+    __typename: "CustomRateUpdated",
+    rate: BigInt(e.rate),
+  }));
+}
 function filterTransfers(
   transfers: Transfer[],
   addresses: VaultAddrresses
