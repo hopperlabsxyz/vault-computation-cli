@@ -11,12 +11,11 @@ import {
   optimism,
   polygon,
   berachain,
-sonic,
-tac,
-unichain,
-worldchain,
-katana,
-
+  sonic,
+  tac,
+  unichain,
+  worldchain,
+  katana
 } from "viem/chains";
 
 export const SUBGRAPHS: Record<CHAIN_IDS, string | undefined> = {
