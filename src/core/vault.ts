@@ -170,6 +170,7 @@ class Vault {
         this.totalSupply + 10n ** BigInt(this.decimalsOffset),
         this.totalAssets - BigInt(feesInAsset) + 1n
       );
+      // we do not store this value because we will compute the whole protocol fees later
       const protocolManagementFeesCut = MathLib.mulDivUp(
         this.nextManagementFees,
         BigInt(this.ratesManager.getProtocolRate()),
@@ -182,6 +183,7 @@ class Vault {
       managementFees: this.nextManagementFees.toString(),
       blockNumber: Number(event.blockNumber),
       performanceFees: "0", // we will update this in handleFeeTransfer, because we don't know the performance fees yet
+      protocolFees: "0", // we will update this in handleFeeTransfer
       period: this.periodFees.length,
       timestamp: Number(event.blockTimestamp),
       managementRate: rates.management,
@@ -374,11 +376,10 @@ class Vault {
 
   private handleFeeTransfer(event: Transfer, distributeFees: boolean) {
     if (!distributeFees) return;
-    const totalFees = BigInt(event.value);
+    const fees = BigInt(event.value);
 
-    this.accumulatedFees += totalFees;
-    
-    // let distributedFees = 0n;
+    this.accumulatedFees += fees;
+
     const _accounts = Object.values(this.accounts).filter(
       (acc) => acc.address != zeroAddress
     );
@@ -386,17 +387,23 @@ class Vault {
     // we compute how much fees they paid for this epoch
     // we emulated the rounding system of openzeppelin by adding 0 or 1
     for (const [_, acc] of _accounts.entries()) {
-      const fees =
-        (acc.getBalance() * totalFees) / this.totalSupply +
+      const userFees =
+        (acc.getBalance() * fees) / this.totalSupply +
         this.alternateZeroOne();
 
-      acc.increaseFees(fees);
+      acc.increaseFees(userFees);
     }
     const periodLength = this.periodFees.length;
     const lastPeriod = this.periodFees[periodLength - 1];
     lastPeriod.performanceFees = (
-      totalFees - this.nextManagementFees
+      fees - this.nextManagementFees
     ).toString();
+
+    // we compute the amount of protocol fees using the following formula
+    // ProtocolFees = fees * 100 / (100 - ProtocolRate)
+    const protocolRate = this.ratesManager.getProtocolRate();
+    const feesBeforeProtocolFees = MathLib.mulDivUp(fees, BPS_DIVIDER, BPS_DIVIDER - BigInt(protocolRate));
+    lastPeriod.protocolFees = (feesBeforeProtocolFees - fees).toString();
   }
 
   private handleReferral(event: ReferralEvent) {

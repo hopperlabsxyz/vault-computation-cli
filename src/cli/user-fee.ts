@@ -1,4 +1,4 @@
-import { processVault } from "core/processVault";
+import { processEvents } from "core/processEvents";
 import { parseRebateDeals } from "parsing/parseRebateDeals";
 import { parseOffchainReferrals } from "parsing/parseOffchainReferrals";
 import { parseVaultArgument } from "parsing/parseVault";
@@ -88,7 +88,7 @@ Example:
     .action(async (vault, options) => {
       const rebateDeals = filterWildCard(await options.deals, vault);
       const offChainReferrals = filterWildCard(await options.referrals, vault);
-      const result = await processVault({
+      const result = await processEvents({
         rebateDeals,
         offChainReferrals,
         readable: options.readable,

@@ -1,4 +1,4 @@
-import { processVault } from "core/processVault";
+import { processEvents } from "core/processEvents";
 import { parseVaultArgument } from "parsing/parseVault";
 import type { Command } from "@commander-js/extra-typings";
 import type { PeriodFees } from "core/types";
@@ -47,7 +47,7 @@ Example:
     `
     )
     .action(async (vault, options) => {
-      const result = await processVault({
+      const result = await processEvents({
         fromBlock: BigInt(options.fromBlock),
         toBlock: BigInt(options.toBlock),
         rebateDeals: [],
@@ -99,7 +99,7 @@ export function convertToCSVPeriodFees(
   },
   readable: boolean
 ) {
-  const header = `chainId,vault,period,blockNumber,managementFees,performanceFees,timestamp,managementRate,performanceRate,pricePerShare,totalAssets,totalSupply`; // CSV header
+  const header = `chainId,vault,period,blockNumber,managementFees,performanceFees,protocolFees,timestamp,managementRate,performanceRate,pricePerShare,totalAssets,totalSupply`; // CSV header
   const csvRows = vault.periodFees.map(
     ({
       managementFees,
@@ -112,14 +112,16 @@ export function convertToCSVPeriodFees(
       pricePerShare,
       totalAssets,
       totalSupply,
+      protocolFees
     }) => {
       if (readable) {
         managementFees = formatUnits(BigInt(managementFees), vault.decimals);
         performanceFees = formatUnits(BigInt(performanceFees), vault.decimals);
+        protocolFees =  formatUnits(BigInt(protocolFees), vault.decimals);
         totalAssets = formatUnits(BigInt(totalAssets), vault.asset.decimals);
         totalSupply = formatUnits(BigInt(totalSupply), vault.decimals);
       }
-      return `${vault.chainId},${vault.address},${period},${blockNumber},${managementFees},${performanceFees},${timestamp},${managementRate},${performanceRate},${pricePerShare},${totalAssets},${totalSupply}`;
+      return `${vault.chainId},${vault.address},${period},${blockNumber},${managementFees},${performanceFees},${protocolFees},${timestamp},${managementRate},${performanceRate},${pricePerShare},${totalAssets},${totalSupply}`;
     }
   );
 
