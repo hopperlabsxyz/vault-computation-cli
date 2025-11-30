@@ -9,8 +9,9 @@ export function setPeriodFeeCommand(command: Command) {
     .command("period-fee")
     .alias("pf")
     .description(
-      "Calculate and generate fee reports for a specific period between 2 updates of totalAssets (period). \
-This command require precise block input. The fromBlock and the toBlock must correspond to totalAssets updates blockNumber.\n"
+      `Calculate and generate fee reports for a specific period between 2 updates of totalAssets (period). \
+The output is a csv with the following columns: ${csvHeader}. \
+This command require precise block input. The fromBlock and the toBlock must correspond to totalAssets updates blockNumber.\n`
     )
     .argument(
       "chainId:VaultAddress",
@@ -87,6 +88,8 @@ Example:
     });
 }
 
+const csvHeader = "chainId,vault,period,blockNumber,managementFees,performanceFees,protocolFees,timestamp,managementRate,performanceRate,pricePerShare,totalAssets,totalSupply";
+
 export function convertToCSVPeriodFees(
   vault: {
     chainId: number;
@@ -99,7 +102,6 @@ export function convertToCSVPeriodFees(
   },
   readable: boolean
 ) {
-  const header = `chainId,vault,period,blockNumber,managementFees,performanceFees,protocolFees,timestamp,managementRate,performanceRate,pricePerShare,totalAssets,totalSupply`; // CSV header
   const csvRows = vault.periodFees.map(
     ({
       managementFees,
@@ -125,5 +127,5 @@ export function convertToCSVPeriodFees(
     }
   );
 
-  return [header, ...csvRows].join("\n");
+  return [csvHeader, ...csvRows].join("\n");
 }
