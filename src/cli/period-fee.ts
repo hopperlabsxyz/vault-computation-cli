@@ -9,7 +9,7 @@ export function setPeriodFeeCommand(command: Command) {
     .command("period-fee")
     .alias("pf")
     .description(
-      `Calculate and generate fee reports for a specific period between 2 updates of totalAssets (period). \
+      `Calculate and generate fee reports for specific periods between 2 updates of totalAssets (period). \
 The output is a csv with the following columns: ${csvHeader}. \
 This command require precise block input. The fromBlock and the toBlock must correspond to totalAssets updates blockNumber.\n`
     )
