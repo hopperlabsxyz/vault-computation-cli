@@ -147,6 +147,7 @@ export interface ProcessVaultReturn {
 export type PeriodFees = Array<{
   managementFees: string;
   performanceFees: string;
+  protocolFees: string;
   blockNumber: number;
   period: number;
   timestamp: number;

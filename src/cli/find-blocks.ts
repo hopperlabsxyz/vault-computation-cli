@@ -1,7 +1,7 @@
 import { parseVaultArgument } from "parsing/parseVault";
 import { publicClient } from "lib/publicClient";
 import type { Command } from "@commander-js/extra-typings";
-import { processVault } from "core/processVault";
+import { processEvents } from "core/processEvents";
 
 export function setBlocksCommand(command: Command) {
   command
@@ -42,7 +42,7 @@ Examples:
         ).number.toString();
       }
 
-      const result = await processVault({
+      const result = await processEvents({
         fromBlock: BigInt(options.fromBlock),
         toBlock: BigInt(options.toBlock),
         rebateDeals: [],

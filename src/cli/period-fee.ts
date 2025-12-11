@@ -1,4 +1,4 @@
-import { processVault } from "core/processVault";
+import { processEvents } from "core/processEvents";
 import { parseVaultArgument } from "parsing/parseVault";
 import type { Command } from "@commander-js/extra-typings";
 import type { PeriodFees } from "core/types";
@@ -9,8 +9,9 @@ export function setPeriodFeeCommand(command: Command) {
     .command("period-fee")
     .alias("pf")
     .description(
-      "Calculate and generate fee reports for a specific period between 2 updates of totalAssets (period). \
-This command require precise block input. The fromBlock and the toBlock must correspond to totalAssets updates blockNumber.\n"
+      `Calculate and generate fee reports for specific periods between 2 updates of totalAssets (period). \
+The output is a csv with the following columns: ${csvHeader}. \
+This command require precise block input. The fromBlock and the toBlock must correspond to totalAssets updates blockNumber.\n`
     )
     .argument(
       "chainId:VaultAddress",
@@ -47,7 +48,7 @@ Example:
     `
     )
     .action(async (vault, options) => {
-      const result = await processVault({
+      const result = await processEvents({
         fromBlock: BigInt(options.fromBlock),
         toBlock: BigInt(options.toBlock),
         rebateDeals: [],
@@ -87,6 +88,8 @@ Example:
     });
 }
 
+const csvHeader = "chainId,vault,period,blockNumber,managementFees,performanceFees,protocolFees,timestamp,managementRate,performanceRate,pricePerShare,totalAssets,totalSupply";
+
 export function convertToCSVPeriodFees(
   vault: {
     chainId: number;
@@ -99,7 +102,6 @@ export function convertToCSVPeriodFees(
   },
   readable: boolean
 ) {
-  const header = `chainId,vault,period,blockNumber,managementFees,performanceFees,timestamp,managementRate,performanceRate,pricePerShare,totalAssets,totalSupply`; // CSV header
   const csvRows = vault.periodFees.map(
     ({
       managementFees,
@@ -112,16 +114,18 @@ export function convertToCSVPeriodFees(
       pricePerShare,
       totalAssets,
       totalSupply,
+      protocolFees
     }) => {
       if (readable) {
         managementFees = formatUnits(BigInt(managementFees), vault.decimals);
         performanceFees = formatUnits(BigInt(performanceFees), vault.decimals);
+        protocolFees =  formatUnits(BigInt(protocolFees), vault.decimals);
         totalAssets = formatUnits(BigInt(totalAssets), vault.asset.decimals);
         totalSupply = formatUnits(BigInt(totalSupply), vault.decimals);
       }
-      return `${vault.chainId},${vault.address},${period},${blockNumber},${managementFees},${performanceFees},${timestamp},${managementRate},${performanceRate},${pricePerShare},${totalAssets},${totalSupply}`;
+      return `${vault.chainId},${vault.address},${period},${blockNumber},${managementFees},${performanceFees},${protocolFees},${timestamp},${managementRate},${performanceRate},${pricePerShare},${totalAssets},${totalSupply}`;
     }
   );
 
-  return [header, ...csvRows].join("\n");
+  return [csvHeader, ...csvRows].join("\n");
 }

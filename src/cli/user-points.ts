@@ -1,4 +1,4 @@
-import { processVault } from "core/processVault";
+import { processEvents } from "core/processEvents";
 import { parseVaultArgument } from "parsing/parseVault";
 import type { Command } from "@commander-js/extra-typings";
 import type { ProcessVaultReturn } from "core/types";
@@ -38,7 +38,7 @@ For each line the program will distribute the new points proportionnaly to share
     .action(async (vault, options) => {
       const { points, filename } = await options.points;
 
-      const result = await processVault({
+      const result = await processEvents({
         readable: false,
         strictBlockNumberMatching: false,
         vault,

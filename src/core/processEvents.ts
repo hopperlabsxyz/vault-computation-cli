@@ -5,7 +5,7 @@ import type { ProcessVaultParams, ProcessVaultReturn } from "./types";
 import { preprocessEvents } from "./preprocessEvents";
 import { fetchAllVaultEvents } from "utils/fetchVaultEvents";
 
-export async function processVault({
+export async function processEvents({
   vault,
   readable,
   rebateDeals,

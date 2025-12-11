@@ -1,4 +1,4 @@
-import { processVault } from "core/processVault";
+import { processEvents } from "core/processEvents";
 import { parseVaultArgument } from "parsing/parseVault";
 import type { Command } from "@commander-js/extra-typings";
 import { publicClient } from "lib/publicClient";
@@ -48,7 +48,7 @@ Example:
       if (!options.block)
         options.block = (await client.getBlockNumber()).toString();
 
-      const result = await processVault({
+      const result = await processEvents({
         readable: options.readable,
         vault,
         toBlock: BigInt(options.block),
