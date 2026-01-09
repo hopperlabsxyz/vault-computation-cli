@@ -67,6 +67,8 @@ MAINNET_SUBGRAPH_URL=
 BASE_SUBGRAPH_URL=
 ```
 
+You can find the subgraph URLs [here](https://docs.lagoon.finance/resources/networks-and-addresses).
+
 ## Available Commands
 
 You can list all available commands by running:
