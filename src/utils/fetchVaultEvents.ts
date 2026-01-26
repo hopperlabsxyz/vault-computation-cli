@@ -18,7 +18,7 @@ export async function fetchAllVaultEvents({
   return fetchAll<VaultEventsQuery>({
     chainId,
     vaultAddress,
-    toBlock,
+    toBlock: toBlock.toString() as unknown as bigint,
     fetchEvents: _fetchAllVaultEvents,
   });
 }
