@@ -34,6 +34,7 @@ export function preprocessEvents({
   preprocessFeeReceiverUpdateds(events);
   preprocessDefaultRateUpdateds(events);
   preprocessCustomRateUpdateds(events);
+  preprocessPeriodSummaries(events);
   const transfers = preprocessTransfers(events.transfers, addresses);
 
   // Add offchain points events
@@ -65,7 +66,7 @@ export function preprocessEvents({
     ...events.defaultRateUpdateds,
     ...events.customRateUpdateds,
   ].sort((a, b) => {
-    // if blocktimestamp is the same we use the lgoIndex
+    // if blocktimestamp is the same we use the logIndex
     if (a.blockTimestamp == b.blockTimestamp) return a.logIndex - b.logIndex;
 
     return Number(a.blockTimestamp) - Number(b.blockTimestamp);
@@ -174,6 +175,14 @@ function preprocessCustomRateUpdateds(events: any) {
     ...e,
     __typename: "CustomRateUpdated",
     rate: BigInt(e.rate),
+  }));
+}
+
+function preprocessPeriodSummaries(events: any) {
+  events.periodSummaries = events.periodSummaries.map((e: any) => ({
+    ...e,
+    logIndex: Infinity,
+    __typename: "PeriodSummary",
   }));
 }
 function filterTransfers(

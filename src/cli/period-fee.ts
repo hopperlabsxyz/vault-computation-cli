@@ -74,6 +74,9 @@ Example:
         vault,
       });
       
+      result.monthlyPerformance.forEach(monthlyPerformance => {
+        console.log(monthlyPerformance);
+      });
 
       const csv = convertToCSVPeriodFees(
         {

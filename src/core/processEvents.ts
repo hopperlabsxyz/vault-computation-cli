@@ -82,5 +82,6 @@ export async function processEvents({
       account: account.address,
       referrer: account.getReferral()?.referral || "0x",
     })),
+    monthlyPerformance: vaultState.monthlyPerformance.getMonthlyData(),
   };
 }

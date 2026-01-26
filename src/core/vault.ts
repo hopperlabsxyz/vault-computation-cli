@@ -12,6 +12,7 @@ import type {
   FeeReceiverUpdated,
   CustomRateUpdated,
   DefaultRateUpdated,
+  PeriodSummary,
 } from "../../gql/graphql";
 
 import { erc20Abi, formatUnits, maxUint256, zeroAddress, type Address } from "viem";
@@ -31,7 +32,11 @@ import { UserAccount } from "./userAccount";
 import { RatesManager } from "./rates";
 import { fetchVault } from "utils/fetchVault";
 import { fetchVaultStateUpdateds } from "utils/fetchVaultStateUpdateds";
-import { MathLib } from "@morpho-org/blue-sdk";
+import { MathLib} from "@morpho-org/blue-sdk";
+import {
+  MonthlyPerformanceTracker,
+  type MonthlyPerformanceData,
+} from "./monthlyPerformance";
 
 export async function generateVault({
   vault,
@@ -98,6 +103,8 @@ class Vault {
   // DEBUG //
   public accumulatedFees = 0n;
 
+  public monthlyPerformance: MonthlyPerformanceTracker;
+
   constructor({
     address,
     feeReceiver,
@@ -124,6 +131,11 @@ class Vault {
     this.asset = asset;
     this.silo = silo;
     this.decimalsOffset = BigInt(decimals - asset.decimals);
+    
+    // Initialize monthly performance tracker
+    this.monthlyPerformance = new MonthlyPerformanceTracker({
+      decimals,
+    });
   }
 
   private depositRequest(event: DepositRequest) {
@@ -442,6 +454,22 @@ class Vault {
     const account = this.getOrCreateAccount(deal.owner);
     account.setRebateRateBps(deal.feeRebateRate);
   }
+
+  private handlePeriodSummary(periodSummary: PeriodSummary) {
+    this.monthlyPerformance.processPeriodSummary(
+      periodSummary
+    );
+    
+  }
+
+
+
+  /**
+   * Get monthly performance data
+   */
+  public getMonthlyPerformanceData(): MonthlyPerformanceData[] {
+    return this.monthlyPerformance.getMonthlyData();
+  }
   
   private handleDefaultRateUpdated(protocolRateUpdate: DefaultRateUpdated) {
     this.ratesManager.handleDefaultRateUpdated(
@@ -610,7 +638,10 @@ class Vault {
       this.handleDefaultRateUpdated(event as DefaultRateUpdated);
     } else if (event.__typename === "CustomRateUpdated") {
       this.handleCustomRateUpdated(event as CustomRateUpdated);
-    } else {
+    } else if (event.__typename === "PeriodSummary") {
+      this.handlePeriodSummary(event as PeriodSummary);
+    }
+    else {
       throw new Error(`Unknown event ${event.__typename} : ${event}`);
     }
   }

@@ -18,7 +18,7 @@ export async function fetchAllVaultEvents({
   return fetchAll<VaultEventsQuery>({
     chainId,
     vaultAddress,
-    toBlock,
+    toBlock: toBlock.toString() as unknown as bigint,
     fetchEvents: _fetchAllVaultEvents,
   });
 }
@@ -40,7 +40,7 @@ async function _fetchAllVaultEvents({
   return request(SUBGRAPHS[chainId]!, query, {
     first,
     vaultAddress,
-    toBlock: toBlock.toString(),
+    toBlock,
     skip,
   });
 }
@@ -293,5 +293,21 @@ export const query = graphql(`
       blockNumber
       blockTimestamp
     }
+    periodSummaries(
+      first: $first
+      skip: $skip
+      orderBy: blockTimestamp
+      orderDirection: desc
+      where: { vault: $vaultAddress, blockNumber_lte: $toBlock }
+    ) {
+      blockNumber
+      blockTimestamp
+      duration
+      netTotalSupplyAtEnd
+      totalAssetsAtEnd
+      totalAssetsAtStart
+      totalSupplyAtEnd
+      totalSupplyAtStart
+   }
   }
 `);

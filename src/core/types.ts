@@ -4,6 +4,7 @@ import type { Vault } from "types/Vault";
 import type { Dot } from "./pointTracker";
 import type { OffChainReferral } from "parsing/parseOffchainReferrals";
 import type { RebateDeal } from "parsing/parseRebateDeals";
+import type { MonthlyPerformanceData } from "./monthlyPerformance";
 
 export interface EventBase {
   blockNumber: number;
@@ -142,6 +143,7 @@ export interface ProcessVaultReturn {
   }[];
 
   periodFees: PeriodFees;
+  monthlyPerformance: MonthlyPerformanceData[];
 }
 
 export type PeriodFees = Array<{
