@@ -73,10 +73,9 @@ Example:
         readable: options.readable,
         vault,
       });
-      
-      result.monthlyPerformance.forEach(monthlyPerformance => {
-        console.log(monthlyPerformance);
-      });
+      // result.monthlyPerformance.forEach(monthlyPerformance => {
+      //   console.log(monthlyPerformance);
+      // });
 
       const csv = convertToCSVPeriodFees(
         {

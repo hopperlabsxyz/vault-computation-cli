@@ -1,5 +1,5 @@
 import { SharesMath } from "@morpho-org/blue-sdk";
-import { PeriodCount_OrderBy, type PeriodSummary } from "../../gql/graphql";
+import { type PeriodSummary } from "../../gql/graphql";
 import { formatUnits, parseUnits } from "viem";
 import { YEAR_IN_SECONDS } from "utils/constants";
 
@@ -8,7 +8,7 @@ import { YEAR_IN_SECONDS } from "utils/constants";
  */
 export interface MonthlyPerformanceData {
   month: string; // Format: "MM/YY"
-  pricePerShareAtMonthEnd: bigint;
+  ppsEndOfTheMonth: bigint;
   duration: number; // Duration in seconds
   timestamp: number; // Timestamp of the monthly summary
   blockNumber: number;
@@ -41,48 +41,65 @@ export class MonthlyPerformanceTracker {
     periodSummary: PeriodSummary,
   ): void {
         
-    
-        const startMonth = this.getTimestampMonth(Number(periodSummary.blockTimestamp));
-        const startDate = this.getTimestampDate(Number(periodSummary.blockTimestamp));
-        const currentTimestampMonth = this.getTimestampMonth(Number(periodSummary.blockTimestamp + periodSummary.duration));
-        if (startMonth !== currentTimestampMonth) {
-            const pricePerShareAtStart = SharesMath.toAssets(
+        const startDate = new Date(periodSummary.blockTimestamp * 1000);
+        const endOfPeriodDate = new Date((Number(periodSummary.blockTimestamp) + Number(periodSummary.duration)) * 1000);
+        if (startDate.getUTCMonth() !== endOfPeriodDate.getUTCMonth()) { // it means the periodSummary happens over a month change
+
+
+            // first we need to compute the pricePerShare at the end of the period by doing
+            // a linear interpolation between the pricePerShare at the start and the end of the period
+
+            const pricePerShareAtPeriodStart = SharesMath.toAssets(
               BigInt(10 ** this.decimals),
               periodSummary.totalAssetsAtStart,
               periodSummary.totalSupplyAtStart,
               "Up"
             );
-            const pricePerShareAtEnd = SharesMath.toAssets(
+            const pricePerShareAtPeriodEnd = SharesMath.toAssets(
               BigInt(10 ** this.decimals),
               periodSummary.totalAssetsAtEnd,
               periodSummary.netTotalSupplyAtEnd,
               "Up"
             );
-            const monthEndTimestamp = this.getMonthEndTimestamp({year: startDate.year, month: startDate.month});
-            const duration = monthEndTimestamp - periodSummary.blockTimestamp;
-            const percentage = duration / periodSummary.duration;
-            const totalEvolution = pricePerShareAtEnd - pricePerShareAtStart;
-            const adjustedEvolution = Number(formatUnits(totalEvolution, this.decimals)) * percentage;
-            const pricePerShareAtMonthEnd = pricePerShareAtStart + (parseUnits(adjustedEvolution.toString(), this.decimals));
+            // this is the timestamp of the end of the month
+            const monthEndTimestamp = this.getMonthEndTimestamp({year: startDate.getUTCFullYear(), month: startDate.getUTCMonth()});
+  
+            // we do the interpolation
+            const timeToEndOfMonth = monthEndTimestamp - Number(periodSummary.blockTimestamp);
+            const interpolationFactor = timeToEndOfMonth / periodSummary.duration;
+            const totalEvolution = pricePerShareAtPeriodEnd - pricePerShareAtPeriodStart;
+            const adjustedEvolution = Number(formatUnits(totalEvolution, this.decimals)) * interpolationFactor;
+            const ppsEndOfTheMonth = pricePerShareAtPeriodStart + (parseUnits(adjustedEvolution.toString(), this.decimals));
 
 
-            let startTimestamp = periodSummary.blockTimestamp;
+            // now we want to compute the performance of the month
+            let startTimestamp = this.getMonthStartTimestamp({year: startDate.getUTCFullYear(), month: startDate.getUTCMonth()});
+            // if the inceptionTimestamp is not set, set it to the blockTimestamp of the first periodSummary
+            // it means the period started after the beginning of the month
             if (this.inceptionTimestamp === null) {
               startTimestamp = periodSummary.blockTimestamp;
               this.inceptionTimestamp = periodSummary.blockTimestamp;
             }
-            const pricePerShareAtBeginningOfMonth = this.monthlyData[this.monthlyData.length - 1].pricePerShareAtMonthEnd;
-            const performance =  Number(formatUnits(pricePerShareAtMonthEnd - pricePerShareAtBeginningOfMonth, this.decimals)) / Number(formatUnits(pricePerShareAtBeginningOfMonth, this.decimals));
-            const monthDuration = this.getMonthDuration(startDate.month, startDate.year);
-            const apr = performance * YEAR_IN_SECONDS / monthDuration;
+            // if it is not the first month we can use the ppsEndOfTheMonth of the previous month
+            // otherwise we use 1 share = 1 asset
+            let pricePerShareAtBeginningOfMonth = BigInt(10 ** this.decimals);
+            if (this.monthlyData.length > 0) {
+              pricePerShareAtBeginningOfMonth = BigInt(this.monthlyData[this.monthlyData.length - 1].ppsEndOfTheMonth);
+            }
+
+            const performance =  Number(formatUnits(ppsEndOfTheMonth - pricePerShareAtBeginningOfMonth, this.decimals)) / Number(formatUnits(pricePerShareAtBeginningOfMonth, this.decimals));
+            const periodDurationOverTheMonth = monthEndTimestamp - startTimestamp;
+            
+            // we annualize the performance
+            const apr = performance * YEAR_IN_SECONDS / periodDurationOverTheMonth;
 
             this.monthlyData.push({
-              month: `${startDate.month}/${startDate.year}`,
-              pricePerShareAtMonthEnd: pricePerShareAtMonthEnd,
-              timestamp: startTimestamp,
-              duration: duration,
-              apr: apr,
-              blockNumber: periodSummary.blockNumber,
+              month: `${startDate.getUTCMonth() + 1}/${startDate.getUTCFullYear()}`,
+              ppsEndOfTheMonth,
+              timestamp: Number(startTimestamp),
+              duration: periodDurationOverTheMonth,
+              apr,
+              blockNumber: Number(periodSummary.blockNumber),
             });
         }
     
@@ -100,44 +117,15 @@ export class MonthlyPerformanceTracker {
    * Get Unix timestamp for the start of a month (00:00:00 UTC)
    */
   private getMonthStartTimestamp({year, month}: {year: number, month: number}): number {
-    const date = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0));
+    const date = new Date(Date.UTC(year, month, 1, 0, 0, 0, 0));
     return Math.floor(date.getTime() / 1000);
   }
 
   private getMonthEndTimestamp({year, month}: {year: number, month: number}): number {
-    const date = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999));
+    // Day 0 of next month is the last day of current month, at 23:59:59 UTC
+    const date = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 0));
     return Math.floor(date.getTime() / 1000);
   }
 
-  private getMonthDuration(month: number, year: number): number {
-    const startTimestamp = this.getMonthStartTimestamp({year, month});
-    const endTimestamp = this.getMonthEndTimestamp({year, month});
-    return endTimestamp - startTimestamp;
-  }
 
-  private getTimestampMonth(timestamp: number): number {
-    const date = new Date(timestamp * 1000);
-    const year = date.getUTCFullYear();
-    const month = date.getUTCMonth(); // 0-11
-    return year * 12 + month;
-  }
-
-  private getTimestampDate(timestamp: number): {
-    year: number;
-    month: number;
-    day: number;
-    hour: number;
-    minute: number;
-    second: number;
-  } {
-    const date = new Date(timestamp * 1000);
-    return {
-      year: date.getUTCFullYear(),
-      month: date.getUTCMonth(),
-      day: date.getUTCDate(),
-      hour: date.getUTCHours(),
-      minute: date.getUTCMinutes(),
-      second: date.getUTCSeconds(),
-    };
-  }
 }

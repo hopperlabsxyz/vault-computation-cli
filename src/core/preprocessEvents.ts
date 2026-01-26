@@ -65,6 +65,7 @@ export function preprocessEvents({
     ...transfers,
     ...events.defaultRateUpdateds,
     ...events.customRateUpdateds,
+    ...events.periodSummaries as (typeof events.periodSummaries) & { logIndex: number }[],
   ].sort((a, b) => {
     // if blocktimestamp is the same we use the logIndex
     if (a.blockTimestamp == b.blockTimestamp) return a.logIndex - b.logIndex;
