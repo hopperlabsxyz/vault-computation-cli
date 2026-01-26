@@ -3,6 +3,7 @@ import { parseVaultArgument } from "parsing/parseVault";
 import type { Command } from "@commander-js/extra-typings";
 import type { PeriodFees } from "core/types";
 import { formatUnits } from "viem";
+import { getTotalAssetsUpdatedBlockRange } from "utils/getTotalAssetsUpdatedBlockRange";
 
 export function setPeriodFeeCommand(command: Command) {
   command
@@ -11,20 +12,21 @@ export function setPeriodFeeCommand(command: Command) {
     .description(
       `Calculate and generate fee reports for specific periods between 2 updates of totalAssets (period). \
 The output is a csv with the following columns: ${csvHeader}. \
-This command require precise block input. The fromBlock and the toBlock must correspond to totalAssets updates blockNumber.\n`
+If fromBlock and toBlock are not provided, uses the oldest and newest totalAssetsUpdated blocks. \
+The fromBlock and the toBlock must correspond to totalAssets updates blockNumber.\n`
     )
     .argument(
       "chainId:VaultAddress",
       "The chain ID and vault address to find blocks for\n",
       parseVaultArgument
     )
-    .requiredOption(
+    .option(
       "-f, --from-block <number>",
-      "Starting block number for fee computation (exclusive). Use 'find-blocks' command to find the appropriate block number\n"
+      "Starting block number for fee computation (exclusive). If not provided, uses the oldest totalAssetsUpdated block. Use 'find-blocks' command to find the appropriate block number\n"
     )
-    .requiredOption(
+    .option(
       "-t, --to-block <number>",
-      "Ending block number for fee computation (inclusive). Use 'find-blocks' command to find the appropriate block number\n"
+      "Ending block number for fee computation (inclusive). If not provided, uses the newest totalAssetsUpdated block. Use 'find-blocks' command to find the appropriate block number\n"
     )
     .option(
       "-r, --readable",
@@ -48,9 +50,25 @@ Example:
     `
     )
     .action(async (vault, options) => {
+      // Get default block range from totalAssetsUpdated events if not provided
+      let fromBlock: bigint;
+      let toBlock: bigint;
+      
+      if (!options.fromBlock || !options.toBlock) {
+        const blockRange = await getTotalAssetsUpdatedBlockRange(vault);
+        if (!blockRange) {
+          throw new Error("No totalAssetsUpdated events found for this vault. Cannot determine default block range.");
+        }
+        fromBlock = options.fromBlock ? BigInt(options.fromBlock) : blockRange.oldestBlock;
+        toBlock = options.toBlock ? BigInt(options.toBlock) : blockRange.newestBlock;
+      } else {
+        fromBlock = BigInt(options.fromBlock);
+        toBlock = BigInt(options.toBlock);
+      }
+
       const result = await processEvents({
-        fromBlock: BigInt(options.fromBlock),
-        toBlock: BigInt(options.toBlock),
+        fromBlock,
+        toBlock,
         rebateDeals: [],
         readable: options.readable,
         vault,
@@ -75,7 +93,7 @@ Example:
       if (options.output) {
         try {
           const file = Bun.file(
-            `./output/period-fee/${vault.chainId}-${vault.address}-${options.fromBlock}-${options.toBlock}.csv`
+            `./output/period-fee/${vault.chainId}-${vault.address}-${fromBlock}-${toBlock}.csv`
           );
           await file.write(csv);
           console.log(`CSV report written to: ${file.name}`);

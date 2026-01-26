@@ -11,7 +11,7 @@ export function setUserBalanceCommand(command: Command) {
     .alias("ub")
     .description(
       "Calculate and generate a balance report for a specified vault, including all users balance. \
-If no block is provided, the latest is used.\n"
+If no block range is provided, uses the oldest and newest totalAssetsUpdated blocks.\n"
     )
     .argument(
       "chainId:VaultAddress",

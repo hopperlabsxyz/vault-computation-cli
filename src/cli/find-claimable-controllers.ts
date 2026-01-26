@@ -21,8 +21,8 @@ export function setControllersCommand(command: Command) {
       "Finds all controllers that have a claimable deposit request. Use this command if you want to get the args for claimSharesOnBehalf().\n"
     )
     .option(
-      "--from-block <number>",
-      "Starting at block number. Default to the vault inception block\n"
+      "-b, --block <number>",
+      "Block number at which the snapshot is taken. If not provided, the latest is used\n"
     )
     .addHelpText(
       "after",
@@ -33,14 +33,14 @@ Examples:
     )
     .action(async (vault, options) => {
       const client = publicClient[vault.chainId];
-      const toBlock = (
+      const toBlock = options.block ? BigInt(options.block) : (
         await client.getBlock({ blockTag: "latest" })
-      ).number.toString();
+      ).number;
 
       const vaultEvents = await fetchAllVaultEvents({
         chainId: vault.chainId,
         vaultAddress: vault.address,
-        toBlock: BigInt(toBlock),
+        toBlock: toBlock,
       });
 
       const vaultState = await generateVault({
@@ -59,11 +59,6 @@ Examples:
           e.__typename === "DepositRequestCanceled" ||
           e.__typename === "TotalAssetsUpdated"
       ) as (DepositRequest | DepositRequestCanceled)[];
-
-      if (options.fromBlock) {
-        const fromBlock = Number(options.fromBlock);
-        events = events.filter((e) => Number(e.blockNumber) >= fromBlock);
-      }
 
       const controllersIntention = events.reduce((map, event) => {
         const controller = (event as DepositRequest | DepositRequestCanceled)

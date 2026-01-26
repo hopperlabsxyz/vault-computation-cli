@@ -4,6 +4,7 @@ import { parseOffchainReferrals } from "parsing/parseOffchainReferrals";
 import { parseVaultArgument } from "parsing/parseVault";
 import type { Command } from "@commander-js/extra-typings";
 import { filterWildCard } from "utils/various";
+import { getTotalAssetsUpdatedBlockRange } from "utils/getTotalAssetsUpdatedBlockRange";
 import type { ProcessVaultReturn } from "core/types";
 import type { Vault } from "types/Vault";
 
@@ -23,13 +24,13 @@ You can use the --referrals option to override the on-chain referrals, that's be
       "The chain ID and vault address to find blocks for\n",
       parseVaultArgument
     )
-    .requiredOption(
+    .option(
       "-f, --from-block <number>",
-      "Starting block number for fee computation (exclusive). Use 'find-blocks' command to find the appropriate block number\n"
+      "Starting block number for fee computation (exclusive). If not provided, uses the oldest totalAssetsUpdated block. Use 'find-blocks' command to find the appropriate block number\n"
     )
-    .requiredOption(
+    .option(
       "-t, --to-block <number>",
-      "Ending block number for fee computation (inclusive). Use 'find-blocks' command to find the appropriate block number\n"
+      "Ending block number for fee computation (inclusive). If not provided, uses the newest totalAssetsUpdated block. Use 'find-blocks' command to find the appropriate block number\n"
     )
     .option(
       "-r, --readable",
@@ -88,6 +89,23 @@ Example:
     .action(async (vault, options) => {
       const rebateDeals = filterWildCard(await options.deals, vault);
       const offChainReferrals = filterWildCard(await options.referrals, vault);
+
+      // Get default block range from totalAssetsUpdated events if not provided
+      let fromBlock: bigint;
+      let toBlock: bigint;
+      
+      if (!options.fromBlock || !options.toBlock) {
+        const blockRange = await getTotalAssetsUpdatedBlockRange(vault);
+        if (!blockRange) {
+          throw new Error("No totalAssetsUpdated events found for this vault. Cannot determine default block range.");
+        }
+        fromBlock = options.fromBlock ? BigInt(options.fromBlock) : blockRange.oldestBlock;
+        toBlock = options.toBlock ? BigInt(options.toBlock) : blockRange.newestBlock;
+      } else {
+        fromBlock = BigInt(options.fromBlock);
+        toBlock = BigInt(options.toBlock);
+      }
+
       const result = await processEvents({
         rebateDeals,
         offChainReferrals,
@@ -95,8 +113,8 @@ Example:
         defaultReferralRateBps: Number(options.feeRewardRate),
         defaultRebateRateBps: Number(options.feeRebateRate),
         vault,
-        fromBlock: BigInt(options.fromBlock),
-        toBlock: BigInt(options.toBlock),
+        fromBlock,
+        toBlock,
         strictBlockNumberMatching: true,
       });
 
@@ -112,7 +130,7 @@ Example:
       if (options.output) {
         try {
           const file = Bun.file(
-            `./output/user-fee/${vault.chainId}-${vault.address}-${options.fromBlock}-${options.toBlock}.csv`
+            `./output/user-fee/${vault.chainId}-${vault.address}-${fromBlock}-${toBlock}.csv`
           );
           await file.write(csv);
           console.log(`CSV report written to: ${file.name}`);
