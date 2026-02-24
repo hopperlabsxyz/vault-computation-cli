@@ -409,13 +409,25 @@ class Vault {
   private handleReferral(event: ReferralEvent) {
     const owner = this.getOrCreateAccount(event.owner);
 
+    // if the rebate rate is already set, we don't allow to set it again
+    if (owner.hasADeal) {
+      const referalType = event.offchain ? "Offchain" : "Onchain";
+      // please print in orange
+          console.warn(`\x1b[33mThe address ${owner.address} already has a deal with the vault. ${referalType} referral 
+            of ${event.referral} won't be set.\x1b[0m`);
+          return;
+    }
+
     if (event.offchain) {
+
       // if the referral is offchain, it is immediatly enforced
-      // it means also that 2 referrals with colliding config with overide each other
+      // it means also that 2 referrals with colliding config will override each other
+
+        
       owner.setReferral(event.referral, event.rewardRateBps);
       owner.setRebateRateBps(event.rebateRateBps);
-      return;
-    }
+      
+    } else {
     // in a referral, the referrer (event.referral) get X% of the fees of the referee (event.owner) as a reward
     // the referee gets a rebate of Y% on his fees
 
@@ -426,6 +438,7 @@ class Vault {
         rewardRateBps: event.rewardRateBps,
         referral: event.referral,
       };
+    }
     }
   }
 
@@ -440,7 +453,12 @@ class Vault {
   private handleRebateDeal(deal: RebateEvent) {
     // a rebate deal is automatically enforced
     const account = this.getOrCreateAccount(deal.owner);
+    if (account.hasADeal) {
+      console.warn(`\x1b[33mAddress ${account.address} already has a deal with the vault\x1b[0m`);
+      return;
+    }
     account.setRebateRateBps(deal.feeRebateRate);
+    account.defineHasADeal();
   }
   
   private handleDefaultRateUpdated(protocolRateUpdate: DefaultRateUpdated) {

@@ -20,7 +20,10 @@ export class UserAccount {
   protected referral: ReferralConfig | undefined;
   // The rebate rate in basis points
   protected rebateRateBps: number | undefined;
-  // The address of the user
+
+  // Whether the user has a deal with the vault
+  public hasADeal: boolean = false;
+
 
   constructor(address: Address) {
     this.address = address;
@@ -94,5 +97,9 @@ export class UserAccount {
 
   public getReferral(): ReferralConfig | undefined {
     return this.referral;
+  }
+
+  public defineHasADeal() {
+    this.hasADeal = true;
   }
 }
