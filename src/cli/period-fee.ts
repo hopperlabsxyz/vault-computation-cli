@@ -112,6 +112,29 @@ Example:
 
 const csvHeader = "chainId,vault,period,blockNumber,managementFees,performanceFees,protocolFees,timestamp,managementRate,performanceRate,pricePerShare,totalAssets,totalSupply,vpps";
 
+function getEndOfMonthTimestamps(t1: number, t2: number): number[] {
+  const eoms: number[] = [];
+  const d = new Date(t1 * 1000);
+  // move to end of current month
+  let year = d.getUTCFullYear();
+  let month = d.getUTCMonth();
+  while (true) {
+    // last second of this month: next month day 0 = last day of current month
+    const eom = Date.UTC(year, month + 1, 0, 23, 59, 59) / 1000;
+    if (eom >= t2) break;
+    if (eom > t1) eoms.push(eom);
+    month++;
+    if (month > 11) { month = 0; year++; }
+  }
+  return eoms;
+}
+
+function computeAirdropSum(airdrops: Airdrop[], timestamp: number): number {
+  return airdrops
+    .filter((a) => a.distributionTimestamp <= timestamp)
+    .reduce((sum, a) => sum + a.ppsIncrease, 0);
+}
+
 export function convertToCSVPeriodFees(
   vault: {
     chainId: number;
@@ -125,8 +148,11 @@ export function convertToCSVPeriodFees(
   readable: boolean,
   airdrops: Airdrop[] = []
 ) {
-  const csvRows = vault.periodFees.map(
-    ({
+  const fees = vault.periodFees;
+  const csvRows: string[] = [];
+
+  for (let i = 0; i < fees.length; i++) {
+    let {
       managementFees,
       performanceFees,
       period,
@@ -138,21 +164,37 @@ export function convertToCSVPeriodFees(
       totalAssets,
       totalSupply,
       protocolFees
-    }) => {
-      if (readable) {
-        managementFees = formatUnits(BigInt(managementFees), vault.decimals);
-        performanceFees = formatUnits(BigInt(performanceFees), vault.decimals);
-        protocolFees =  formatUnits(BigInt(protocolFees), vault.decimals);
-        totalAssets = formatUnits(BigInt(totalAssets), vault.asset.decimals);
-        totalSupply = formatUnits(BigInt(totalSupply), vault.decimals);
-      }
-      const airdropSum = airdrops
-        .filter((a) => a.distributionTimestamp <= timestamp)
-        .reduce((sum, a) => sum + a.ppsIncrease, 0);
-      const vpps = (Number(pricePerShare) + airdropSum).toFixed(10);
-      return `${vault.chainId},${vault.address},${period},${blockNumber},${managementFees},${performanceFees},${protocolFees},${timestamp},${managementRate},${performanceRate},${pricePerShare},${totalAssets},${totalSupply},${vpps}`;
+    } = fees[i];
+
+    if (readable) {
+      managementFees = formatUnits(BigInt(managementFees), vault.decimals);
+      performanceFees = formatUnits(BigInt(performanceFees), vault.decimals);
+      protocolFees = formatUnits(BigInt(protocolFees), vault.decimals);
+      totalAssets = formatUnits(BigInt(totalAssets), vault.asset.decimals);
+      totalSupply = formatUnits(BigInt(totalSupply), vault.decimals);
     }
-  );
+
+    const airdropSum = computeAirdropSum(airdrops, timestamp);
+    const vpps = (Number(pricePerShare) + airdropSum).toFixed(10);
+    csvRows.push(`${vault.chainId},${vault.address},${period},${blockNumber},${managementFees},${performanceFees},${protocolFees},${timestamp},${managementRate},${performanceRate},${pricePerShare},${totalAssets},${totalSupply},${vpps}`);
+
+    // Insert interpolated end-of-month rows between this row and the next
+    if (i < fees.length - 1) {
+      const nextFee = fees[i + 1];
+      const t1 = timestamp;
+      const t2 = nextFee.timestamp;
+      const pps1 = Number(pricePerShare);
+      const pps2 = Number(nextFee.pricePerShare);
+
+      for (const eomTs of getEndOfMonthTimestamps(t1, t2)) {
+        const ratio = (eomTs - t1) / (t2 - t1);
+        const interpPps = (pps1 + (pps2 - pps1) * ratio).toFixed(10);
+        const eomAirdropSum = computeAirdropSum(airdrops, eomTs);
+        const interpVpps = (pps1 + (pps2 - pps1) * ratio + eomAirdropSum).toFixed(10);
+        csvRows.push(`${vault.chainId},${vault.address},${period},,,,,${eomTs},,,${interpPps},,,${interpVpps}`);
+      }
+    }
+  }
 
   return [csvHeader, ...csvRows].join("\n");
 }
