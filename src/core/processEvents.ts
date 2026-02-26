@@ -1,5 +1,6 @@
 import { formatUnits, maxUint256 } from "viem";
 import { generateVault } from "./vault";
+import { PRICE_EXTRA_PRECISION } from "../utils/constants";
 import { checkStrictBlockNumberMatching } from "./strictBlockNumberMatching";
 import type { ProcessVaultParams, ProcessVaultReturn } from "./types";
 import { preprocessEvents } from "./preprocessEvents";
@@ -71,7 +72,7 @@ export async function processEvents({
     events: vaultEvents,
     feeReceiverTransfersFrom: vaultState.feeReceiverTransfersFrom,
     pricePerShare: Number(
-      formatUnits(vaultState.pricePerShare(), assetDecimals)
+      formatUnits(vaultState.pricePerShare(), assetDecimals + PRICE_EXTRA_PRECISION)
     ),
     periodFees: vaultState.periodFees.filter((period) => period.blockNumber >= Number(fromBlock) || 0),
     data: accounts.map((account) => ({
