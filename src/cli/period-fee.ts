@@ -4,6 +4,7 @@ import type { Command } from "@commander-js/extra-typings";
 import type { PeriodFees } from "core/types";
 import { formatUnits } from "viem";
 import { getTotalAssetsUpdatedBlockRange } from "utils/getTotalAssetsUpdatedBlockRange";
+import { fetchAirdrops, type Airdrop } from "utils/fetchAirdrops";
 
 export function setPeriodFeeCommand(command: Command) {
   command
@@ -75,6 +76,8 @@ Example:
       });
       
 
+      const airdrops = await fetchAirdrops(vault.chainId, vault.address);
+
       const csv = convertToCSVPeriodFees(
         {
           address: vault.address,
@@ -85,7 +88,8 @@ Example:
             decimals: result.asset.decimals,
           },
         },
-        options.readable
+        options.readable,
+        airdrops
       );
       if (!options.silent) {
         console.log(csv);
@@ -106,7 +110,7 @@ Example:
     });
 }
 
-const csvHeader = "chainId,vault,period,blockNumber,managementFees,performanceFees,protocolFees,timestamp,managementRate,performanceRate,pricePerShare,totalAssets,totalSupply";
+const csvHeader = "chainId,vault,period,blockNumber,managementFees,performanceFees,protocolFees,timestamp,managementRate,performanceRate,pricePerShare,totalAssets,totalSupply,vpps";
 
 export function convertToCSVPeriodFees(
   vault: {
@@ -118,7 +122,8 @@ export function convertToCSVPeriodFees(
       decimals: number;
     };
   },
-  readable: boolean
+  readable: boolean,
+  airdrops: Airdrop[] = []
 ) {
   const csvRows = vault.periodFees.map(
     ({
@@ -141,7 +146,11 @@ export function convertToCSVPeriodFees(
         totalAssets = formatUnits(BigInt(totalAssets), vault.asset.decimals);
         totalSupply = formatUnits(BigInt(totalSupply), vault.decimals);
       }
-      return `${vault.chainId},${vault.address},${period},${blockNumber},${managementFees},${performanceFees},${protocolFees},${timestamp},${managementRate},${performanceRate},${pricePerShare},${totalAssets},${totalSupply}`;
+      const airdropSum = airdrops
+        .filter((a) => a.distributionTimestamp <= timestamp)
+        .reduce((sum, a) => sum + a.ppsIncrease, 0);
+      const vpps = (Number(pricePerShare) + airdropSum).toFixed(10);
+      return `${vault.chainId},${vault.address},${period},${blockNumber},${managementFees},${performanceFees},${protocolFees},${timestamp},${managementRate},${performanceRate},${pricePerShare},${totalAssets},${totalSupply},${vpps}`;
     }
   );
 
