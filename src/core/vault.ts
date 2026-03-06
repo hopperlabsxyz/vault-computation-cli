@@ -1,4 +1,4 @@
-import { BPS_DIVIDER, YEAR_IN_SECONDS, PRICE_EXTRA_PRECISION } from "../utils/constants";
+import { BPS_DIVIDER, YEAR_IN_SECONDS } from "../utils/constants";
 import type {
   Deposit,
   DepositRequest,
@@ -192,7 +192,7 @@ class Vault {
       totalSupply: this.totalSupply.toString(),
       pricePerShare: formatUnits(
         this.pricePerShare(),
-        this.asset.decimals + PRICE_EXTRA_PRECISION
+        this.asset.decimals
       ),
     });
     this.lastTotalAssetsUpdateTimestamp = Number(event.blockTimestamp);
@@ -281,7 +281,7 @@ class Vault {
     const lastPeriod = this.periodFees[periodLength - 1];
     lastPeriod.pricePerShare = formatUnits(
       this.pricePerShare(),
-      this.asset.decimals + PRICE_EXTRA_PRECISION
+      this.asset.decimals
     );
   }
 
@@ -300,7 +300,7 @@ class Vault {
     const lastPeriod = this.periodFees[periodLength - 1];
     lastPeriod.pricePerShare = formatUnits(
       this.pricePerShare(),
-      Number(this.asset.decimals) + PRICE_EXTRA_PRECISION
+      Number(this.asset.decimals)
     );
   }
 
@@ -445,7 +445,7 @@ class Vault {
   public pricePerShare(): bigint {
     const decimalsOffset = this.decimals - this.asset.decimals;
     return (
-      ((this.totalAssets + 1n) * 10n ** BigInt(this.decimals + PRICE_EXTRA_PRECISION)) /
+      ((this.totalAssets + 1n) * 10n ** BigInt(this.decimals)) /
       (this.totalSupply + 10n ** BigInt(decimalsOffset))
     );
   }
