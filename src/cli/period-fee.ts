@@ -4,6 +4,8 @@ import type { Command } from "@commander-js/extra-typings";
 import type { PeriodFees } from "core/types";
 import { formatUnits } from "viem";
 import { getTotalAssetsUpdatedBlockRange } from "utils/getTotalAssetsUpdatedBlockRange";
+import { fetchAirdrops, type Airdrop } from "utils/fetchAirdrops";
+import { getEndOfMonthTimestamps } from "utils/time";
 
 export function setPeriodFeeCommand(command: Command) {
   command
@@ -75,6 +77,8 @@ Example:
       });
       
 
+      const airdrops = await fetchAirdrops(vault.chainId, vault.address);
+
       const csv = convertToCSVPeriodFees(
         {
           address: vault.address,
@@ -85,7 +89,8 @@ Example:
             decimals: result.asset.decimals,
           },
         },
-        options.readable
+        options.readable,
+        airdrops
       );
       if (!options.silent) {
         console.log(csv);
@@ -106,7 +111,7 @@ Example:
     });
 }
 
-const csvHeader = "chainId,vault,period,blockNumber,managementFees,performanceFees,protocolFees,timestamp,managementRate,performanceRate,pricePerShare,totalAssets,totalSupply";
+const csvHeader = "chainId,vault,period,blockNumber,managementFees,performanceFees,protocolFees,timestamp,managementRate,performanceRate,pricePerShare,totalAssets,totalSupply,vpps";
 
 export function convertToCSVPeriodFees(
   vault: {
@@ -118,10 +123,14 @@ export function convertToCSVPeriodFees(
       decimals: number;
     };
   },
-  readable: boolean
+  readable: boolean,
+  airdrops: Airdrop[] = []
 ) {
-  const csvRows = vault.periodFees.map(
-    ({
+  const fees = vault.periodFees;
+  const csvRows: string[] = [];
+
+  for (let i = 0; i < fees.length; i++) {
+    let {
       managementFees,
       performanceFees,
       period,
@@ -133,17 +142,50 @@ export function convertToCSVPeriodFees(
       totalAssets,
       totalSupply,
       protocolFees
-    }) => {
-      if (readable) {
-        managementFees = formatUnits(BigInt(managementFees), vault.decimals);
-        performanceFees = formatUnits(BigInt(performanceFees), vault.decimals);
-        protocolFees =  formatUnits(BigInt(protocolFees), vault.decimals);
-        totalAssets = formatUnits(BigInt(totalAssets), vault.asset.decimals);
-        totalSupply = formatUnits(BigInt(totalSupply), vault.decimals);
-      }
-      return `${vault.chainId},${vault.address},${period},${blockNumber},${managementFees},${performanceFees},${protocolFees},${timestamp},${managementRate},${performanceRate},${pricePerShare},${totalAssets},${totalSupply}`;
+    } = fees[i];
+
+    if (readable) {
+      managementFees = formatUnits(BigInt(managementFees), vault.decimals);
+      performanceFees = formatUnits(BigInt(performanceFees), vault.decimals);
+      protocolFees = formatUnits(BigInt(protocolFees), vault.decimals);
+      totalAssets = formatUnits(BigInt(totalAssets), vault.asset.decimals);
+      totalSupply = formatUnits(BigInt(totalSupply), vault.decimals);
     }
-  );
+
+    const airdropSum = computeAirdropSum(airdrops, timestamp);
+    const vpps = (Number(pricePerShare) + airdropSum).toFixed(10);
+    csvRows.push(`${vault.chainId},${vault.address},${period},${blockNumber},${managementFees},${performanceFees},${protocolFees},${timestamp},${managementRate},${performanceRate},${pricePerShare},${totalAssets},${totalSupply},${vpps}`);
+
+    // Insert interpolated end-of-month rows between this row and the next
+    if (i < fees.length - 1) {
+      const nextFee = fees[i + 1];
+      const t1 = timestamp;
+      const t2 = nextFee.timestamp;
+      const pps1 = Number(pricePerShare);
+      const pps2 = Number(nextFee.pricePerShare);
+
+      for (const eomTs of getEndOfMonthTimestamps(t1, t2)) {
+        const ratio = (eomTs - t1) / (t2 - t1);
+        const interpPps = (pps1 + (pps2 - pps1) * ratio).toFixed(10);
+        const eomAirdropSum = computeAirdropSum(airdrops, eomTs);
+        const interpVpps = (pps1 + (pps2 - pps1) * ratio + eomAirdropSum).toFixed(10);
+        csvRows.push(`${vault.chainId},${vault.address},${period},,,,,${eomTs},,,${interpPps},,,${interpVpps}`);
+      }
+    }
+  }
 
   return [csvHeader, ...csvRows].join("\n");
+}
+
+/**
+ * Computes the sum of airdrop increases up to a given timestamp.
+ *
+ * @param airdrops - Array of airdrop objects.
+ * @param timestamp - Timestamp in seconds (Unix epoch, UTC).
+ * @returns Sum of airdrop increases up to the timestamp.
+ */
+function computeAirdropSum(airdrops: Airdrop[], timestamp: number): number {
+  return airdrops
+    .filter((a) => a.distributionTimestamp <= timestamp)
+    .reduce((sum, a) => sum + a.ppsIncrease, 0);
 }

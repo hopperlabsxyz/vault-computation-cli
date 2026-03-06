@@ -12,6 +12,8 @@ A command-line tool for computing lagoon v0 vault data on multiple blockchain ne
 - CSV report generation
 - Points repartition
 - Points interpolation
+- Airdrop-aware performance reporting with virtual price-per-share (vPPS)
+- Interpolated end-of-month performance snapshots
 - Fee receiver transfer tracking
 - User balance tracking
 
@@ -214,6 +216,36 @@ Generates detailed fee reports for specific periods between totalAssets updates.
 - Management and performance rates
 - Price per share
 - Timestamps for each period
+- Virtual price per share (vpps), including the effect of airdrops
+- Interpolated end-of-month snapshots with price per share and vpps
+
+The generated CSV has the following columns:
+
+- `chainId`
+- `vault`
+- `period`
+- `blockNumber`
+- `managementFees`
+- `performanceFees`
+- `protocolFees`
+- `timestamp`
+- `managementRate`
+- `performanceRate`
+- `pricePerShare`
+- `totalAssets`
+- `totalSupply`
+- `vpps` (price per share including all airdrop pps increases distributed up to `timestamp`)
+
+For rows that correspond to interpolated **end-of-month** snapshots (i.e. not actual vault updates), only the following columns are populated:
+
+- `chainId`
+- `vault`
+- `period`
+- `timestamp` (end-of-month timestamp in seconds)
+- `pricePerShare` (linearly interpolated between surrounding totalAssets updates)
+- `vpps` (interpolated vpps including airdrops up to that timestamp)
+
+All airdrop information is fetched from the Lagoon public API (`https://api.lagoon.finance/query`), so running this command requires network access.
 
 To know more:
 
