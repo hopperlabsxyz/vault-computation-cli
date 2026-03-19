@@ -2,11 +2,11 @@ import { publicClient } from "lib/publicClient";
 import type { Command } from "@commander-js/extra-typings";
 import { preprocessEvents } from "core/preprocessEvents";
 import { getAddress, type Address } from "viem";
-import { createSubgraphClient, fetchAllVaultEvents } from "@lagoon-protocol/internal-subgraph";
+import { fetchAllVaultEvents } from "@lagoon-protocol/internal-subgraph";
+import { getSubgraphClientForChain } from "lib/subgraphClient";
 import { generateVault } from "core/vault";
 import { parseVaultArgument } from "parsing/parseVault";
 import { LagoonVaultAbi } from "abis/VaultABI";
-import { SUBGRAPHS } from "environnement";
 
 export function setControllersCommand(command: Command) {
   command
@@ -37,10 +37,7 @@ Examples:
         await rpcClient.getBlock({ blockTag: "latest" })
       ).number;
 
-      const subgraphUrl = SUBGRAPHS[vault.chainId];
-      if (!subgraphUrl) throw new Error(`No subgraph URL for chainId ${vault.chainId}`);
-
-      const sgClient = createSubgraphClient({ urls: { [vault.chainId]: subgraphUrl } });
+      const sgClient = getSubgraphClientForChain(vault.chainId);
       const vaultEvents = await fetchAllVaultEvents({
         client: sgClient,
         chainId: vault.chainId,

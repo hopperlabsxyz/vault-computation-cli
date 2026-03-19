@@ -1,5 +1,5 @@
-import { createSubgraphClient, fetchAllVaultEvents } from "@lagoon-protocol/internal-subgraph";
-import { SUBGRAPHS } from "environnement";
+import { fetchAllVaultEvents } from "@lagoon-protocol/internal-subgraph";
+import { getSubgraphClientForChain } from "lib/subgraphClient";
 import type { Vault } from "types/Vault";
 
 /**
@@ -12,10 +12,7 @@ export async function getTotalAssetsUpdatedBlockRange(
   vault: Vault,
   toBlock?: bigint
 ): Promise<{ oldestBlock: bigint; newestBlock: bigint } | null> {
-  const subgraphUrl = SUBGRAPHS[vault.chainId];
-  if (!subgraphUrl) throw new Error(`No subgraph URL for chainId ${vault.chainId}`);
-
-  const client = createSubgraphClient({ urls: { [vault.chainId]: subgraphUrl } });
+  const client = getSubgraphClientForChain(vault.chainId);
   const events = await fetchAllVaultEvents({
     client,
     chainId: vault.chainId,

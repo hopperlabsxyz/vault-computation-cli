@@ -1,9 +1,8 @@
-import { SUBGRAPHS } from "environnement";
 import {
-  createSubgraphClient,
   fetchStateUpdateds,
   type StateUpdatedsResponse,
 } from "@lagoon-protocol/internal-subgraph";
+import { getSubgraphClientForChain } from "lib/subgraphClient";
 import type { Address } from "viem";
 
 export async function fetchVaultStateUpdateds({
@@ -13,10 +12,7 @@ export async function fetchVaultStateUpdateds({
   chainId: number;
   vaultAddress: Address;
 }): Promise<StateUpdatedsResponse> {
-  const subgraphUrl = SUBGRAPHS[chainId];
-  if (!subgraphUrl) throw new Error(`No subgraph URL for chainId ${chainId}`);
-
-  const client = createSubgraphClient({ urls: { [chainId]: subgraphUrl } });
+  const client = getSubgraphClientForChain(chainId);
   return fetchStateUpdateds({
     client,
     chainId,

@@ -3,8 +3,8 @@ import type { ProcessVaultParams, ProcessVaultReturn } from "./types";
 import { preprocessEvents } from "./preprocessEvents";
 import { generateVault } from "./vault";
 import { checkStrictBlockNumberMatching } from "./strictBlockNumberMatching";
-import { createSubgraphClient, fetchAllVaultEvents } from "@lagoon-protocol/internal-subgraph";
-import { SUBGRAPHS } from "environnement";
+import { fetchAllVaultEvents } from "@lagoon-protocol/internal-subgraph";
+import { getSubgraphClientForChain } from "lib/subgraphClient";
 
 export async function processEvents({
   vault,
@@ -20,10 +20,7 @@ export async function processEvents({
 }: ProcessVaultParams): Promise<ProcessVaultReturn> {
   console.log(`Loading vault ${vault.address} on chain ${vault.chainId}`);
 
-  const subgraphUrl = SUBGRAPHS[vault.chainId];
-  if (!subgraphUrl) throw new Error(`No subgraph URL for chainId ${vault.chainId}`);
-
-  const client = createSubgraphClient({ urls: { [vault.chainId]: subgraphUrl } });
+  const client = getSubgraphClientForChain(vault.chainId);
   const vaultEvents = await fetchAllVaultEvents({
     client,
     chainId: vault.chainId,

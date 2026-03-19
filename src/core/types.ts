@@ -3,6 +3,10 @@ import type { Vault } from "types/Vault";
 import type { OffChainReferral } from "parsing/parseOffchainReferrals";
 import type { RebateDeal } from "parsing/parseRebateDeals";
 import type { VaultEventsResponse } from "@lagoon-protocol/internal-subgraph";
+import type {
+  PeriodFees as _PeriodFees,
+  TransferEvent as _TransferEvent,
+} from "@lagoon-protocol/internal-computation";
 
 // Re-export SDK types used by CLI commands
 export type {
@@ -57,7 +61,7 @@ export interface ProcessVaultReturn {
   pricePerShare: number;
   pointNames: string[];
   events: VaultEventsResponse;
-  feeReceiverTransfersFrom: import("@lagoon-protocol/internal-computation").TransferEvent[];
+  feeReceiverTransfersFrom: _TransferEvent[];
   data: {
     balance: number;
     cashback: number;
@@ -67,5 +71,5 @@ export interface ProcessVaultReturn {
     referrer: Address;
   }[];
 
-  periodFees: import("@lagoon-protocol/internal-computation").PeriodFees;
+  periodFees: _PeriodFees;
 }

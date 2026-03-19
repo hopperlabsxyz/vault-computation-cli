@@ -1,5 +1,5 @@
-import { createSubgraphClient, fetchAllVaultEvents, type VaultEventsResponse } from "@lagoon-protocol/internal-subgraph";
-import { SUBGRAPHS } from "environnement";
+import { fetchAllVaultEvents, type VaultEventsResponse } from "@lagoon-protocol/internal-subgraph";
+import { getSubgraphClientForChain } from "lib/subgraphClient";
 import type { Address } from "viem";
 
 export async function fetchTestVaultEvents({
@@ -11,10 +11,7 @@ export async function fetchTestVaultEvents({
   vaultAddress: Address;
   toBlock?: bigint;
 }): Promise<VaultEventsResponse> {
-  const subgraphUrl = SUBGRAPHS[chainId];
-  if (!subgraphUrl) throw new Error(`No subgraph URL for chainId ${chainId}`);
-
-  const client = createSubgraphClient({ urls: { [chainId]: subgraphUrl } });
+  const client = getSubgraphClientForChain(chainId);
   return fetchAllVaultEvents({
     client,
     chainId,

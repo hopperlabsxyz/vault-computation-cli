@@ -32,7 +32,17 @@
       "Bash(bun add:*)",
       "Bash(trash /Users/francoisschuers/Documents/workspace/vault-computation-cli/src/core/rates.ts /Users/francoisschuers/Documents/workspace/vault-computation-cli/src/core/userAccount.ts /Users/francoisschuers/Documents/workspace/vault-computation-cli/src/core/pointTracker.ts /Users/francoisschuers/Documents/workspace/vault-computation-cli/src/core/monthlyPerformance.ts)",
       "Bash(trash /Users/francoisschuers/Documents/workspace/vault-computation-cli/src/utils/fetchAll.ts /Users/francoisschuers/Documents/workspace/vault-computation-cli/src/utils/fetchVaultEvents.ts /Users/francoisschuers/Documents/workspace/vault-computation-cli/src/utils/fetchVaultTotalAssetsUpdated.ts /Users/francoisschuers/Documents/workspace/vault-computation-cli/src/utils/fetchTransfer.ts /Users/francoisschuers/Documents/workspace/vault-computation-cli/src/utils/fetchBalance.ts /Users/francoisschuers/Documents/workspace/vault-computation-cli/src/utils/getTotalSupply.ts)",
-      "Bash(bunx tsc:*)"
+      "Bash(bunx tsc:*)",
+      "Bash(xargs cat:*)",
+      "Bash(grep -r \"\\\\bany\\\\b\" src/core/*.ts src/cli/*.ts src/utils/*.ts)",
+      "Bash(grep -E \"\\\\.ts$\")",
+      "Bash(npm run:*)",
+      "Bash(grep -n \"processEvents\\\\|ProcessVaultParams\\\\|ProcessVaultReturn\" src/cli/*.ts src/utils/*.ts)",
+      "Bash(ls -la tsconfig*)",
+      "Bash(grep -n \"createSubgraphClient\\\\|fetchAllVaultEvents\" src/**/*.ts)",
+      "Bash(grep -n \"import.*@lagoon-protocol/internal-computation\" src/**/*.ts src/cli/*.ts)",
+      "Bash(grep -r \"TransferEvent\\\\|PeriodFees\\\\|Dot\" src/cli/*.ts src/core/*.ts)",
+      "Bash(grep -r \"import.*TransferEvent\\\\|import.*PeriodFees\\\\|import.*Dot\" src/cli/*.ts)"
     ]
   }
 }
