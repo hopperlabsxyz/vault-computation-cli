@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { preprocessEvents } from "core/preprocessEvents";
 import { checkStrictBlockNumberMatching } from "core/strictBlockNumberMatching";
 import { generateVault } from "core/vault";
-import { fetchAllVaultEvents } from "utils/fetchVaultEvents";
+import { fetchTestVaultEvents } from "./common/subgraph";
 
 test("events of same blocknumber must have growing logIndex", async () => {
   const address = "0x07ed467acD4ffd13023046968b0859781cb90D9B";
@@ -16,14 +16,14 @@ test("events of same blocknumber must have growing logIndex", async () => {
       chainId,
     },
   });
-  const vaultEvents = await fetchAllVaultEvents({
+  const vaultEvents = await fetchTestVaultEvents({
     chainId,
     vaultAddress: address,
     toBlock,
   });
   checkStrictBlockNumberMatching({ events: vaultEvents, fromBlock, toBlock });
 
-  let events = preprocessEvents({
+  const events = preprocessEvents({
     events: vaultEvents,
     addresses: {
       silo: vault.silo,
@@ -40,13 +40,13 @@ test("events of same blocknumber must have growing logIndex", async () => {
   const blockNumbers = Object.keys(eventsByBlockNumber);
   // Some general rules
   blockNumbers.forEach((b) => {
-    const events = eventsByBlockNumber[Number(b)];
-    for (let i = 0; i < events.length; i++) {
+    const blockEvents = eventsByBlockNumber[Number(b)];
+    for (let i = 0; i < blockEvents.length; i++) {
       if (i > 0) {
-        expect(events[i]).toBeGreaterThan(events[i - 1]);
+        expect(blockEvents[i]).toBeGreaterThan(blockEvents[i - 1]);
       }
-      if (i < events.length - 1) {
-        expect(events[i]).toBeLessThan(events[i + 1]);
+      if (i < blockEvents.length - 1) {
+        expect(blockEvents[i]).toBeLessThan(blockEvents[i + 1]);
       }
     }
   });

@@ -1,110 +1,36 @@
-import type { Transfer, VaultEventsQuery } from "../../gql/graphql";
 import type { Address } from "viem";
 import type { Vault } from "types/Vault";
-import type { Dot } from "./pointTracker";
 import type { OffChainReferral } from "parsing/parseOffchainReferrals";
 import type { RebateDeal } from "parsing/parseRebateDeals";
+import type { VaultEventsResponse } from "@lagoon-protocol/internal-subgraph";
 
-export interface EventBase {
-  blockNumber: number;
-  blockTimestamp: number;
-  logIndex: number;
-}
-
-export type RebateEvent = {
-  feeRebateRate: number;
-  vault: "0x"; // todo: maybe put a real vault address and 0x0 if wild card ?
-  __typename: "RebateDeal";
-  owner: Address;
-} & EventBase;
-
-export type OffChainReferralEvent = {
-  feeRewardRate: number;
-  vault: "0x"; // todo: maybe put a real vault address and 0x0 if wild card ?
-  __typename: "OffChainReferral";
-  owner: Address;
-  referral: Address;
-  reward: number;
-} & EventBase;
-
-/// A point transformed to mimic an Event type.
-export type PointEvent = {
-  amount: number;
-  vault: Address;
-  __typename: "Point";
-  name: string;
-} & EventBase;
-
-/// Basic form of a Point data.
-export type Point = Dot & { name: string };
-
-export type ReferralEvent = {
-  rewardRateBps: number;
-  rebateRateBps: number;
-  offchain: boolean;
-  assets: bigint;
-  requestId: bigint;
-  __typename: "Referral";
-  id: `0x${string}`;
-  transactionHash: `0x${string}`;
-  owner: `0x${string}`;
-  referral: `0x${string}`;
-} & EventBase;
-
-export interface ReferralRates {
-  feeRebateRateBps: number;
-  feeRewardRateBps: number;
-}
-
-export interface ReferralConfig {
-  referral: Address;
-  rewardRateBps: number;
-}
-
-// export type ReferralConfig = {
-//   referral: Address;
-//   feeRewardRateBps: number;
-// };
-
-export interface OffChainReferralRates {
-  feeRewardRate: number;
-}
-
-export interface VaultAddrresses {
-  silo: Address;
-  vault: Address;
-}
-
-export type OffChainReferrals = [
-  {
-    referral: Address;
-    referee: Address;
-    rewardRateBps: number;
-    blockNumber: number;
-    blockTimestamp: number;
-    logIndex: number;
-  }
-];
+// Re-export SDK types used by CLI commands
+export type {
+  PeriodFees,
+  PeriodFeeEntry,
+  Rates,
+  ReferralConfig,
+  RebateEvent,
+  PointEvent,
+  ReferralEvent,
+  VaultEvent,
+  Dot,
+  Point,
+  VaultAddresses,
+  TransferEvent,
+} from "@lagoon-protocol/internal-computation";
 
 export interface PreProcessingParams {
-  events: VaultEventsQuery;
-  addresses: VaultAddrresses;
+  events: VaultEventsResponse;
+  addresses: {
+    silo: Address;
+    vault: Address;
+  };
   defaultReferralRateBps?: number;
   defaultRebateRateBps?: number;
   rebateDeals?: RebateDeal[];
   offChainReferrals?: OffChainReferral[];
-  points?: Point[];
-}
-
-export interface ProcessEventParams {
-  event: { __typename: string; blockNumber: bigint } & Record<string, any>;
-  distributeFeesFromBlock: bigint;
-}
-
-export interface ProcessEventsParams {
-  events: { __typename: string; blockNumber: bigint }[];
-  distributeFeesFromBlock: bigint;
-  blockEndHook?: (blockNumber: string) => Promise<any>;
+  points?: Array<{ name: string; amount: number; timestamp: number }>;
 }
 
 export interface ProcessVaultParams {
@@ -112,7 +38,7 @@ export interface ProcessVaultParams {
   readable: boolean;
   rebateDeals?: RebateDeal[];
   offChainReferrals?: OffChainReferral[];
-  points?: Point[];
+  points?: Array<{ name: string; amount: number; timestamp: number }>;
   fromBlock?: bigint;
   toBlock?: bigint;
   defaultReferralRateBps?: number;
@@ -124,14 +50,14 @@ export interface ProcessVaultReturn {
   asset: {
     decimals: number;
     address: Address;
-  }
+  };
   chainId: number;
   address: Address;
   decimals: number;
   pricePerShare: number;
   pointNames: string[];
-  events: VaultEventsQuery;
-  feeReceiverTransfersFrom: Transfer[];
+  events: VaultEventsResponse;
+  feeReceiverTransfersFrom: import("@lagoon-protocol/internal-computation").TransferEvent[];
   data: {
     balance: number;
     cashback: number;
@@ -141,24 +67,5 @@ export interface ProcessVaultReturn {
     referrer: Address;
   }[];
 
-  periodFees: PeriodFees;
+  periodFees: import("@lagoon-protocol/internal-computation").PeriodFees;
 }
-
-export type PeriodFees = Array<{
-  managementFees: string;
-  performanceFees: string;
-  protocolFees: string;
-  blockNumber: number;
-  period: number;
-  timestamp: number;
-  managementRate: number;
-  performanceRate: number;
-  pricePerShare: string;
-  totalAssets: string;
-  totalSupply: string;
-}>;
-
-export type Rates = {
-  management: number;
-  performance: number;
-};

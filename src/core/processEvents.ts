@@ -1,9 +1,10 @@
 import { formatUnits, maxUint256 } from "viem";
-import { generateVault } from "./vault";
-import { checkStrictBlockNumberMatching } from "./strictBlockNumberMatching";
 import type { ProcessVaultParams, ProcessVaultReturn } from "./types";
 import { preprocessEvents } from "./preprocessEvents";
-import { fetchAllVaultEvents } from "utils/fetchVaultEvents";
+import { generateVault } from "./vault";
+import { checkStrictBlockNumberMatching } from "./strictBlockNumberMatching";
+import { createSubgraphClient, fetchAllVaultEvents } from "@lagoon-protocol/internal-subgraph";
+import { SUBGRAPHS } from "environnement";
 
 export async function processEvents({
   vault,
@@ -19,11 +20,17 @@ export async function processEvents({
 }: ProcessVaultParams): Promise<ProcessVaultReturn> {
   console.log(`Loading vault ${vault.address} on chain ${vault.chainId}`);
 
+  const subgraphUrl = SUBGRAPHS[vault.chainId];
+  if (!subgraphUrl) throw new Error(`No subgraph URL for chainId ${vault.chainId}`);
+
+  const client = createSubgraphClient({ urls: { [vault.chainId]: subgraphUrl } });
   const vaultEvents = await fetchAllVaultEvents({
+    client,
     chainId: vault.chainId,
     vaultAddress: vault.address,
-    toBlock: toBlock ? BigInt(toBlock) : undefined,
+    toBlock: toBlock ? toBlock.toString() : undefined,
   });
+
   if (strictBlockNumberMatching) {
     checkStrictBlockNumberMatching({
       events: vaultEvents,
@@ -32,10 +39,9 @@ export async function processEvents({
     });
   }
 
-  const vaultState = await generateVault({
-    vault,
-  });
-  let events = preprocessEvents({
+  const vaultState = await generateVault({ vault });
+
+  const events = preprocessEvents({
     events: vaultEvents,
     addresses: {
       silo: vaultState.silo,
@@ -47,12 +53,12 @@ export async function processEvents({
     rebateDeals,
     offChainReferrals,
   });
-  vaultState.processEvents({
-    events: events as { __typename: string; blockNumber: bigint }[],
+
+  await vaultState.processEvents({
+    events,
     distributeFeesFromBlock: fromBlock || 0n,
   });
 
-  // now we can compute the rebate users can get
   vaultState.distributeRebatesAndRewards();
 
   const accounts = vaultState.getAccounts();
@@ -73,7 +79,9 @@ export async function processEvents({
     pricePerShare: Number(
       formatUnits(vaultState.pricePerShare(), assetDecimals)
     ),
-    periodFees: vaultState.periodFees.filter((period) => period.blockNumber >= Number(fromBlock) || 0),
+    periodFees: vaultState.periodFees.filter(
+      (period) => period.blockNumber >= Number(fromBlock) || 0
+    ),
     data: accounts.map((account) => ({
       balance: Number(formatUnits(account.getBalance(), sharesDecimals)),
       fees: Number(formatUnits(account.getFees(), sharesDecimals)),

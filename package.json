@@ -34,7 +34,8 @@
   "dependencies": {
     "@commander-js/extra-typings": "^13.1.0",
     "@graphql-codegen/cli": "^5.0.5",
-    "@morpho-org/blue-sdk": "^4.9.0",
+    "@lagoon-protocol/internal-computation": "0.1.1",
+    "@lagoon-protocol/internal-subgraph": "0.1.1",
     "commander": "^13.1.0",
     "env-var": "^7.5.0",
     "graphql": "^16.10.0",

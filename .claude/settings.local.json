@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bun install:*)",
+      "Bash(bun run:*)",
+      "Bash(npm install:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(wc -l /Users/francoisschuers/Documents/workspace/lagoon-internal-sdk/packages/computation/src/*.ts)",
+      "Bash(wc -l src/*.ts)",
+      "Bash(find /Users/francoisschuers/Documents/workspace/vault-computation-cli/src -type f -name *.ts)",
+      "Bash(grep \"any\" /Users/francoisschuers/Documents/workspace/lagoon-internal-sdk/packages/computation/src/*.ts)",
+      "Bash(grep -n \"maxUint256\\\\|zeroAddress\\\\|formatUnits\\\\|parseUnits\" src/*.ts)",
+      "Bash(grep -E \"0n|1n|10n|23|59|0\\\\.\\\\|100\" /Users/francoisschuers/Documents/workspace/lagoon-internal-sdk/packages/computation/src/*.ts)",
+      "Bash(grep -n \"filterWildCard\\\\|isWildCard\" /Users/francoisschuers/Documents/workspace/lagoon-internal-sdk/packages/computation/src/*.ts)",
+      "mcp__sequential-thinking__sequentialthinking",
+      "Bash(wc -l /Users/francoisschuers/Documents/workspace/lagoon-internal-sdk/packages/subgraph/src/**/*.ts)",
+      "Bash(grep -l \"fetchStateUpdateds\\\\|fetchAllTransfers\\\\|fetchAllTotalAssetsUpdated\" /Users/francoisschuers/Documents/workspace/lagoon-internal-sdk/packages/subgraph/test/**/*.ts)",
+      "Bash(grep -n \"999999999999\\\\|1000\" /Users/francoisschuers/Documents/workspace/lagoon-internal-sdk/packages/subgraph/src/**/*.ts)",
+      "Bash(grep -n \"999999999999\\\\|1000\" /Users/francoisschuers/Documents/workspace/vault-computation-cli/src/utils/*.ts)",
+      "Bash(git branch:*)",
+      "Bash(git checkout:*)",
+      "Bash(git rm:*)",
+      "Bash(git cherry-pick:*)",
+      "Bash(gh pr:*)",
+      "Bash(gh api:*)",
+      "Bash(git tag:*)",
+      "Bash(gh run:*)",
+      "Bash(grep '\"\"files\"\"' packages/computation/package.json packages/subgraph/package.json)",
+      "Bash(git stash:*)",
+      "Bash(bun add:*)",
+      "Bash(trash /Users/francoisschuers/Documents/workspace/vault-computation-cli/src/core/rates.ts /Users/francoisschuers/Documents/workspace/vault-computation-cli/src/core/userAccount.ts /Users/francoisschuers/Documents/workspace/vault-computation-cli/src/core/pointTracker.ts /Users/francoisschuers/Documents/workspace/vault-computation-cli/src/core/monthlyPerformance.ts)",
+      "Bash(trash /Users/francoisschuers/Documents/workspace/vault-computation-cli/src/utils/fetchAll.ts /Users/francoisschuers/Documents/workspace/vault-computation-cli/src/utils/fetchVaultEvents.ts /Users/francoisschuers/Documents/workspace/vault-computation-cli/src/utils/fetchVaultTotalAssetsUpdated.ts /Users/francoisschuers/Documents/workspace/vault-computation-cli/src/utils/fetchTransfer.ts /Users/francoisschuers/Documents/workspace/vault-computation-cli/src/utils/fetchBalance.ts /Users/francoisschuers/Documents/workspace/vault-computation-cli/src/utils/getTotalSupply.ts)",
+      "Bash(bunx tsc:*)"
+    ]
+  }
+}

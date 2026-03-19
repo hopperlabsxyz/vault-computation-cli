@@ -1,4 +1,4 @@
-import type { VaultEventsQuery } from "../../gql/graphql";
+import type { VaultEventsResponse } from "@lagoon-protocol/internal-subgraph";
 
 // This function checks some element to make sure the data are sain
 export function checkStrictBlockNumberMatching({
@@ -6,7 +6,7 @@ export function checkStrictBlockNumberMatching({
   fromBlock,
   toBlock,
 }: {
-  events: VaultEventsQuery;
+  events: VaultEventsResponse;
   fromBlock: bigint;
   toBlock: bigint;
 }) {
@@ -23,5 +23,3 @@ export function checkStrictBlockNumberMatching({
   if (lastBlock != toBlock)
     throw new Error(`invalid toBlock, found: ${lastBlock}`);
 }
-
-

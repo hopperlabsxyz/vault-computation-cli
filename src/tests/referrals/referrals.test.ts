@@ -1,17 +1,17 @@
 import { expect, test } from "bun:test";
-import { BPS_DIVIDER } from "../../utils/constants";
+import { BPS_DIVIDER } from "@lagoon-protocol/internal-computation";
 import { preprocessEvents } from "core/preprocessEvents";
 import { checkStrictBlockNumberMatching } from "core/strictBlockNumberMatching";
 import { generateVault } from "core/vault";
 import { parseOffchainReferrals } from "parsing/parseOffchainReferrals";
-import { fetchAllVaultEvents } from "utils/fetchVaultEvents";
+import { fetchTestVaultEvents } from "../common/subgraph";
 
 test("check 0-0x0 works as a wildcard", async () => {
   const vaultAddress = "0x07ed467acD4ffd13023046968b0859781cb90D9B";
   const chainId = 1;
   const fromBlock = 21142252n;
   const toBlock = 23105892n;
-  const vaultEvents = await fetchAllVaultEvents({
+  const vaultEvents = await fetchTestVaultEvents({
     chainId,
     vaultAddress,
     toBlock,
@@ -26,7 +26,7 @@ test("check 0-0x0 works as a wildcard", async () => {
   });
   const referee = "0x924359B91Eae607ba539fF6daB5bB914956ae624";
   const referral = "0x8fa4f2d62457bade5eee9206c5fb1c20471b0ea5";
-  let events = preprocessEvents({
+  const events = preprocessEvents({
     events: vaultEvents,
     addresses: {
       silo: vault.silo,
@@ -48,15 +48,15 @@ test("check 0-0x0 works as a wildcard", async () => {
   });
 
   await vault.processEvents({
-    events: events as { __typename: string; blockNumber: bigint }[],
+    events,
     distributeFeesFromBlock: fromBlock,
     blockEndHook: async (_: string) => {
       // we need to be sure that at least one deposit has been made
 
       if (vault.totalAssets == 0n) return;
       const refereeAccount = vault.getAccount(referee);
-      expect(refereeAccount.getRebateRateBps()).toBe(60);
-      const referralConfig = refereeAccount.getReferral();
+      expect(refereeAccount?.getRebateRateBps()).toBe(60);
+      const referralConfig = refereeAccount?.getReferral();
       expect(referralConfig?.rewardRateBps).toBe(1600);
       expect(referralConfig?.referral).toBe(referral);
     },
@@ -68,7 +68,7 @@ test("check matching chainId-address works", async () => {
   const chainId = 1;
   const fromBlock = 21142252n;
   const toBlock = 23105892n;
-  const vaultEvents = await fetchAllVaultEvents({
+  const vaultEvents = await fetchTestVaultEvents({
     chainId,
     vaultAddress,
     toBlock,
@@ -83,7 +83,7 @@ test("check matching chainId-address works", async () => {
   });
   const user = "0x924359B91Eae607ba539fF6daB5bB914956ae624";
   const referral = "0x8fa4f2d62457bade5eee9206c5fb1c20471b0ea5";
-  let events = preprocessEvents({
+  const events = preprocessEvents({
     events: vaultEvents,
     addresses: {
       silo: vault.silo,
@@ -105,14 +105,14 @@ test("check matching chainId-address works", async () => {
   });
 
   await vault.processEvents({
-    events: events as { __typename: string; blockNumber: bigint }[],
+    events,
     distributeFeesFromBlock: fromBlock,
     blockEndHook: async (_: string) => {
       // we need to be sure that at least one deposit has been made
       if (vault.totalAssets == 0n) return;
       const userAccount = vault.getAccount(user);
-      expect(userAccount.getRebateRateBps()).toBe(26);
-      const referralConfig = userAccount.getReferral();
+      expect(userAccount?.getRebateRateBps()).toBe(26);
+      const referralConfig = userAccount?.getReferral();
       expect(referralConfig?.rewardRateBps).toBe(26);
       expect(referralConfig?.referral).toBe(referral);
     },
@@ -124,7 +124,7 @@ test("check matching chainId-address overrides a wildcard deal", async () => {
   const chainId = 1;
   const fromBlock = 21142252n;
   const toBlock = 23105892n;
-  const vaultEvents = await fetchAllVaultEvents({
+  const vaultEvents = await fetchTestVaultEvents({
     chainId,
     vaultAddress,
     toBlock,
@@ -142,7 +142,7 @@ test("check matching chainId-address overrides a wildcard deal", async () => {
   });
   const referree = "0x924359B91Eae607ba539fF6daB5bB914956ae624";
   const referral = "0x8fa4f2d62457bade5eee9206c5fb1c20471b0ea5";
-  let events = preprocessEvents({
+  const events = preprocessEvents({
     events: vaultEvents,
     addresses: {
       silo: vault.silo,
@@ -154,13 +154,13 @@ test("check matching chainId-address overrides a wildcard deal", async () => {
   });
 
   await vault.processEvents({
-    events: events as { __typename: string; blockNumber: bigint }[],
+    events,
     distributeFeesFromBlock: fromBlock,
     blockEndHook: async (_: string) => {
       if (vault.totalAssets == 0n) return;
       const referreeAccount = vault.getAccount(referree);
-      expect(referreeAccount.getRebateRateBps()).toBe(26);
-      const referralConfig = referreeAccount.getReferral();
+      expect(referreeAccount?.getRebateRateBps()).toBe(26);
+      const referralConfig = referreeAccount?.getReferral();
       expect(referralConfig?.rewardRateBps).toBe(26);
       expect(referralConfig?.referral).toBe(referral);
     },
@@ -172,7 +172,7 @@ test("check that an offchain referral doesn't get overriden by another onchain r
   const chainId = 1;
   const fromBlock = 21142252n;
   const toBlock = 23105892n;
-  const vaultEvents = await fetchAllVaultEvents({
+  const vaultEvents = await fetchTestVaultEvents({
     chainId,
     vaultAddress,
     toBlock,
@@ -193,7 +193,7 @@ test("check that an offchain referral doesn't get overriden by another onchain r
   );
   expect(referral).not.toBe(undefined);
 
-  let events = preprocessEvents({
+  const events = preprocessEvents({
     events: vaultEvents,
     addresses: {
       silo: vault.silo,
@@ -215,13 +215,13 @@ test("check that an offchain referral doesn't get overriden by another onchain r
   });
 
   await vault.processEvents({
-    events: events as { __typename: string; blockNumber: bigint }[],
+    events,
     distributeFeesFromBlock: fromBlock,
     blockEndHook: async (_: string) => {
       if (vault.totalAssets == 0n) return;
       const userAccount = vault.getAccount(user);
-      expect(userAccount.getRebateRateBps()).toBe(28);
-      const referralConfig = userAccount.getReferral();
+      expect(userAccount?.getRebateRateBps()).toBe(28);
+      const referralConfig = userAccount?.getReferral();
       expect(referralConfig?.referral).toBe(virginReferral);
       expect(referralConfig?.rewardRateBps).toBe(36);
     },
@@ -233,7 +233,7 @@ test("check that an offchain referral generates a cashback for the referral and 
   const chainId = 1;
   const fromBlock = 21142252n;
   const toBlock = 23105892n;
-  const vaultEvents = await fetchAllVaultEvents({
+  const vaultEvents = await fetchTestVaultEvents({
     chainId,
     vaultAddress,
     toBlock,
@@ -255,7 +255,7 @@ test("check that an offchain referral generates a cashback for the referral and 
   );
   expect(referral === undefined).toBe(true);
 
-  let events = preprocessEvents({
+  const events = preprocessEvents({
     events: vaultEvents,
     addresses: {
       silo: vault.silo,
@@ -277,20 +277,20 @@ test("check that an offchain referral generates a cashback for the referral and 
   });
 
   await vault.processEvents({
-    events: events as { __typename: string; blockNumber: bigint }[],
+    events,
     distributeFeesFromBlock: fromBlock,
     blockEndHook: async (_: string) => {
       if (vault.totalAssets == 0n) return;
       const referreeAcc = vault.getAccount(userWithoutOnChainReferral);
-      expect(referreeAcc.getRebateRateBps()).toBe(100);
-      const referralConfig = referreeAcc.getReferral();
+      expect(referreeAcc?.getRebateRateBps()).toBe(100);
+      const referralConfig = referreeAcc?.getReferral();
       expect(referralConfig?.rewardRateBps).toBe(1000);
       expect(referralConfig?.referral).toBe(virginReferral); // a user that has nether interacted with the vault ever
     },
   });
 
   // now we can get the amount of fees generated by the referee
-  const referreeAcc = vault.getAccount(userWithoutOnChainReferral);
+  const referreeAcc = vault.getAccount(userWithoutOnChainReferral)!;
   const fees = referreeAcc.getFees();
 
   // we can compute the expected amount of cashback for the referree:
@@ -301,7 +301,7 @@ test("check that an offchain referral generates a cashback for the referral and 
 
   vault.distributeRebatesAndRewards();
   expect(referreeAcc.getCashback()).toBe(referreeCashback);
-  expect(vault.getAccount(virginReferral).getCashback()).toBe(referrerCashback); // a user that has nether interacted with the vault ever
+  expect(vault.getAccount(virginReferral)!.getCashback()).toBe(referrerCashback); // a user that has nether interacted with the vault ever
 });
 
 test("check that an offchain referral does generate a cashback for the referral and the referree event with an onchain referral", async () => {
@@ -309,7 +309,7 @@ test("check that an offchain referral does generate a cashback for the referral 
   const chainId = 1;
   const fromBlock = 21142252n;
   const toBlock = 23105892n;
-  const vaultEvents = await fetchAllVaultEvents({
+  const vaultEvents = await fetchTestVaultEvents({
     chainId,
     vaultAddress,
     toBlock,
@@ -330,7 +330,7 @@ test("check that an offchain referral does generate a cashback for the referral 
   );
   expect(referral).not.toBe(undefined);
 
-  let events = preprocessEvents({
+  const events = preprocessEvents({
     events: vaultEvents,
     addresses: {
       silo: vault.silo,
@@ -352,20 +352,20 @@ test("check that an offchain referral does generate a cashback for the referral 
   });
 
   await vault.processEvents({
-    events: events as { __typename: string; blockNumber: bigint }[],
+    events,
     distributeFeesFromBlock: fromBlock,
     blockEndHook: async (_: string) => {
       if (vault.totalAssets == 0n) return;
       const referreeAcc = vault.getAccount(userWithOnchainReferral);
-      expect(referreeAcc.getRebateRateBps()).toBe(100);
-      const referralConfig = referreeAcc.getReferral();
+      expect(referreeAcc?.getRebateRateBps()).toBe(100);
+      const referralConfig = referreeAcc?.getReferral();
       expect(referralConfig?.rewardRateBps).toBe(1000);
       expect(referralConfig?.referral).toBe(virginReferral); // a user that has nether interacted with the vault ever
     },
   });
 
   // now we can get the amount of fees generated by the referee
-  const referreeAcc = vault.getAccount(userWithOnchainReferral);
+  const referreeAcc = vault.getAccount(userWithOnchainReferral)!;
   const fees = referreeAcc.getFees();
 
   // we can compute the expected amount of cashback for the referree:
@@ -376,7 +376,7 @@ test("check that an offchain referral does generate a cashback for the referral 
 
   vault.distributeRebatesAndRewards();
   expect(referreeAcc.getCashback()).toBe(referreeCashback);
-  expect(vault.getAccount(virginReferral).getCashback()).toBe(referrerCashback); // a user that has nether interacted with the vault ever
+  expect(vault.getAccount(virginReferral)!.getCashback()).toBe(referrerCashback); // a user that has nether interacted with the vault ever
 });
 
 test("check that the total % of redistribution cannot be > 100% via an offchain referral", async () => {
@@ -384,7 +384,7 @@ test("check that the total % of redistribution cannot be > 100% via an offchain 
   const chainId = 1;
   const fromBlock = 21142252n;
   const toBlock = 23105892n;
-  const vaultEvents = await fetchAllVaultEvents({
+  const vaultEvents = await fetchTestVaultEvents({
     chainId,
     vaultAddress,
     toBlock,
@@ -405,7 +405,7 @@ test("check that the total % of redistribution cannot be > 100% via an offchain 
   );
   expect(referral).not.toBe(undefined);
 
-  let events = preprocessEvents({
+  const events = preprocessEvents({
     events: vaultEvents,
     addresses: {
       silo: vault.silo,
@@ -427,7 +427,7 @@ test("check that the total % of redistribution cannot be > 100% via an offchain 
   });
 
   await vault.processEvents({
-    events: events as { __typename: string; blockNumber: bigint }[],
+    events,
     distributeFeesFromBlock: fromBlock,
   });
 

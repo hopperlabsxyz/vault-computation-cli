@@ -1,12 +1,12 @@
 import { publicClient } from "lib/publicClient";
 import type { Command } from "@commander-js/extra-typings";
 import { preprocessEvents } from "core/preprocessEvents";
-import type { DepositRequest, DepositRequestCanceled } from "../../gql/graphql";
 import { getAddress, type Address } from "viem";
-import { fetchAllVaultEvents } from "utils/fetchVaultEvents";
+import { createSubgraphClient, fetchAllVaultEvents } from "@lagoon-protocol/internal-subgraph";
 import { generateVault } from "core/vault";
 import { parseVaultArgument } from "parsing/parseVault";
 import { LagoonVaultAbi } from "abis/VaultABI";
+import { SUBGRAPHS } from "environnement";
 
 export function setControllersCommand(command: Command) {
   command
@@ -32,22 +32,27 @@ Examples:
     `
     )
     .action(async (vault, options) => {
-      const client = publicClient[vault.chainId];
+      const rpcClient = publicClient[vault.chainId];
       const toBlock = options.block ? BigInt(options.block) : (
-        await client.getBlock({ blockTag: "latest" })
+        await rpcClient.getBlock({ blockTag: "latest" })
       ).number;
 
+      const subgraphUrl = SUBGRAPHS[vault.chainId];
+      if (!subgraphUrl) throw new Error(`No subgraph URL for chainId ${vault.chainId}`);
+
+      const sgClient = createSubgraphClient({ urls: { [vault.chainId]: subgraphUrl } });
       const vaultEvents = await fetchAllVaultEvents({
+        client: sgClient,
         chainId: vault.chainId,
         vaultAddress: vault.address,
-        toBlock: toBlock,
+        toBlock: toBlock.toString(),
       });
 
       const vaultState = await generateVault({
         vault,
       });
 
-      let events = preprocessEvents({
+      const events = preprocessEvents({
         events: vaultEvents,
         addresses: {
           silo: vaultState.silo,
@@ -58,13 +63,14 @@ Examples:
           e.__typename === "DepositRequest" ||
           e.__typename === "DepositRequestCanceled" ||
           e.__typename === "TotalAssetsUpdated"
-      ) as (DepositRequest | DepositRequestCanceled)[];
+      );
 
       const controllersIntention = events.reduce((map, event) => {
-        const controller = (event as DepositRequest | DepositRequestCanceled)
-          .controller;
-        if (controller) {
-          map[controller] = event.__typename === "DepositRequest";
+        if (event.__typename === "DepositRequest" || event.__typename === "DepositRequestCanceled") {
+          const controller = event.controller;
+          if (controller) {
+            map[controller] = event.__typename === "DepositRequest";
+          }
         }
         return map;
       }, {} as Record<Address, boolean>);
@@ -72,9 +78,9 @@ Examples:
       const controllers = Object.entries(controllersIntention)
         .filter(([, value]) => value)
         .map(([address]) => address);
-      
+
       const controllersToClaim = (await Promise.all(controllers.map(async (c) => {
-        const claimableDepositRequest = await client.readContract({
+        const claimableDepositRequest = await rpcClient.readContract({
           address: vault.address,
           abi: LagoonVaultAbi,
           functionName: "claimableDepositRequest",
@@ -84,7 +90,7 @@ Examples:
         return { address: c, claimableDepositRequest };
       }))).filter((c) => c.claimableDepositRequest > 0n).map((c) => c.address);
 
-      
+
       console.log("[" + controllersToClaim.map((c) => '"' + c + '"').join(", ") + "]");
     });
 }

@@ -3,9 +3,9 @@ import { preprocessEvents } from "core/preprocessEvents";
 import { checkStrictBlockNumberMatching } from "core/strictBlockNumberMatching";
 import { generateVault } from "core/vault";
 import { publicClient } from "lib/publicClient";
-import { fetchAllVaultEvents } from "utils/fetchVaultEvents";
 import { formatUnits } from "viem";
 import { getHistoricBalances } from "./common/historic-balances";
+import { fetchTestVaultEvents } from "./common/subgraph";
 
 test(
   "check balance match real data after each block",
@@ -16,7 +16,7 @@ test(
     const fromBlock = 21142252n;
     const toBlock = 22624283n;
 
-    const vaultEvents = await fetchAllVaultEvents({
+    const vaultEvents = await fetchTestVaultEvents({
       chainId,
       vaultAddress: address,
       toBlock,
@@ -29,7 +29,7 @@ test(
         chainId,
       },
     });
-    let events = preprocessEvents({
+    const events = preprocessEvents({
       events: vaultEvents,
       addresses: {
         silo: vault.silo,
@@ -45,12 +45,13 @@ test(
       client,
     });
 
-    vault.processEvents({
-      events: events as { __typename: string; blockNumber: bigint }[],
+    await vault.processEvents({
+      events,
       distributeFeesFromBlock: fromBlock,
       blockEndHook: async (blockNumber: string) => {
         for (const user of vault.getAccountsAddresses()) {
           const account = vault.getAccount(user);
+          if (!account) continue;
           if (user.toLowerCase() == vault.feeReceiver.toLowerCase()) continue;
           const balance = account.getBalance();
 

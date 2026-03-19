@@ -3,14 +3,14 @@ import { preprocessEvents } from "core/preprocessEvents";
 import { checkStrictBlockNumberMatching } from "core/strictBlockNumberMatching";
 import { generateVault } from "core/vault";
 import { parseRebateDeals } from "parsing/parseRebateDeals";
-import { fetchAllVaultEvents } from "utils/fetchVaultEvents";
+import { fetchTestVaultEvents } from "../common/subgraph";
 
 test("check 0-0x0 works as a wildcard", async () => {
   const address = "0x07ed467acD4ffd13023046968b0859781cb90D9B";
   const chainId = 1;
   const fromBlock = 21142252n;
   const toBlock = 23105892n;
-  const vaultEvents = await fetchAllVaultEvents({
+  const vaultEvents = await fetchTestVaultEvents({
     chainId,
     vaultAddress: address,
     toBlock,
@@ -24,7 +24,7 @@ test("check 0-0x0 works as a wildcard", async () => {
     },
   });
   const user = "0x924359B91Eae607ba539fF6daB5bB914956ae624";
-  let events = preprocessEvents({
+  const events = preprocessEvents({
     events: vaultEvents,
     addresses: {
       silo: vault.silo,
@@ -43,11 +43,11 @@ test("check 0-0x0 works as a wildcard", async () => {
   });
 
   await vault.processEvents({
-    events: events as { __typename: string; blockNumber: bigint }[],
+    events,
     distributeFeesFromBlock: fromBlock,
     blockEndHook: async (_: string) => {
       const userAccount = vault.getAccount(user);
-      expect(userAccount.getRebateRateBps()).toBe(50);
+      expect(userAccount?.getRebateRateBps()).toBe(50);
     },
   });
 });
@@ -57,7 +57,7 @@ test("check matching chainId-address works", async () => {
   const chainId = 1;
   const fromBlock = 21142252n;
   const toBlock = 23105892n;
-  const vaultEvents = await fetchAllVaultEvents({
+  const vaultEvents = await fetchTestVaultEvents({
     chainId,
     vaultAddress: address,
     toBlock,
@@ -71,7 +71,7 @@ test("check matching chainId-address works", async () => {
     },
   });
   const user = "0x924359B91Eae607ba539fF6daB5bB914956ae624";
-  let events = preprocessEvents({
+  const events = preprocessEvents({
     events: vaultEvents,
     addresses: {
       silo: vault.silo,
@@ -90,11 +90,11 @@ test("check matching chainId-address works", async () => {
   });
 
   await vault.processEvents({
-    events: events as { __typename: string; blockNumber: bigint }[],
+    events,
     distributeFeesFromBlock: fromBlock,
     blockEndHook: async (_: string) => {
       const userAccount = vault.getAccount(user);
-      expect(userAccount.getRebateRateBps()).toBe(26);
+      expect(userAccount?.getRebateRateBps()).toBe(26);
     },
   });
 });
@@ -104,7 +104,7 @@ test("check matching chainId-address overrides a wildcard deal", async () => {
   const chainId = 1;
   const fromBlock = 21142252n;
   const toBlock = 23105892n;
-  const vaultEvents = await fetchAllVaultEvents({
+  const vaultEvents = await fetchTestVaultEvents({
     chainId,
     vaultAddress: address,
     toBlock,
@@ -119,7 +119,7 @@ test("check matching chainId-address overrides a wildcard deal", async () => {
     },
   });
   const user = "0x924359B91Eae607ba539fF6daB5bB914956ae624";
-  let events = preprocessEvents({
+  const events = preprocessEvents({
     events: vaultEvents,
     addresses: {
       silo: vault.silo,
@@ -131,12 +131,11 @@ test("check matching chainId-address overrides a wildcard deal", async () => {
   });
 
   await vault.processEvents({
-    events: events as { __typename: string; blockNumber: bigint }[],
+    events,
     distributeFeesFromBlock: fromBlock,
     blockEndHook: async (_: string) => {
       const userAccount = vault.getAccount(user);
-      // expect(userAccount.getReferral()).toBeUndefined();
-      expect(userAccount.getRebateRateBps()).toBe(26);
+      expect(userAccount?.getRebateRateBps()).toBe(26);
     },
   });
 });
@@ -146,7 +145,7 @@ test("check that an offchain rebate doesn't get overriden by a referral", async 
   const chainId = 1;
   const fromBlock = 21142252n;
   const toBlock = 23105892n;
-  const vaultEvents = await fetchAllVaultEvents({
+  const vaultEvents = await fetchTestVaultEvents({
     chainId,
     vaultAddress: address,
     toBlock,
@@ -161,18 +160,17 @@ test("check that an offchain rebate doesn't get overriden by a referral", async 
   });
   const user = "0x924359B91Eae607ba539fF6daB5bB914956ae624";
   vaultEvents.referrals.push({
-    __typename: "Referral",
-    blockNumber: 1,
-    blockTimestamp: 1n,
+    blockNumber: "1",
+    blockTimestamp: "1",
     id: "0x0",
     owner: user,
     referral: "0x0123456789012345678901234567890123456789",
-    requestId: 0n,
+    requestId: "0",
     transactionHash: "0x0",
     logIndex: 0,
-    assets: 0n,
+    assets: "0",
   });
-  let events = preprocessEvents({
+  const events = preprocessEvents({
     events: vaultEvents,
     addresses: {
       silo: vault.silo,
@@ -191,11 +189,11 @@ test("check that an offchain rebate doesn't get overriden by a referral", async 
   });
 
   await vault.processEvents({
-    events: events as { __typename: string; blockNumber: bigint }[],
+    events,
     distributeFeesFromBlock: fromBlock,
     blockEndHook: async (_: string) => {
       const userAccount = vault.getAccount(user);
-      expect(userAccount.getRebateRateBps()).toBe(50);
+      expect(userAccount?.getRebateRateBps()).toBe(50);
     },
   });
 });
@@ -205,7 +203,7 @@ test("check that a user reabte doens't get overriden by the rebate of a referral
   const chainId = 1;
   const fromBlock = 21142252n;
   const toBlock = 23105892n;
-  const vaultEvents = await fetchAllVaultEvents({
+  const vaultEvents = await fetchTestVaultEvents({
     chainId,
     vaultAddress: address,
     toBlock,
@@ -219,7 +217,7 @@ test("check that a user reabte doens't get overriden by the rebate of a referral
     },
   });
   const user = "0x8fa4f2d62457bade5eee9206c5fb1c20471b0ea5";
-  let events = preprocessEvents({
+  const events = preprocessEvents({
     events: vaultEvents,
     addresses: {
       silo: vault.silo,
@@ -243,11 +241,11 @@ test("check that a user reabte doens't get overriden by the rebate of a referral
   expect(userHasARefferal).not.toBe(undefined);
 
   await vault.processEvents({
-    events: events as { __typename: string; blockNumber: bigint }[],
+    events,
     distributeFeesFromBlock: fromBlock,
     blockEndHook: async (_: string) => {
       const userAccount = vault.getAccount(user);
-      expect(userAccount.getRebateRateBps()).toBe(50);
+      expect(userAccount?.getRebateRateBps()).toBe(50);
     },
   });
 });
@@ -257,7 +255,7 @@ test("check that a user referred has a rebate of defaultRebateRate", async () =>
   const chainId = 1;
   const fromBlock = 21142252n;
   const toBlock = 23105892n;
-  const vaultEvents = await fetchAllVaultEvents({
+  const vaultEvents = await fetchTestVaultEvents({
     chainId,
     vaultAddress: address,
     toBlock,
@@ -271,7 +269,7 @@ test("check that a user referred has a rebate of defaultRebateRate", async () =>
     },
   });
   const user = "0x8fa4f2d62457bade5eee9206c5fb1c20471b0ea5";
-  let events = preprocessEvents({
+  const events = preprocessEvents({
     events: vaultEvents,
     addresses: {
       silo: vault.silo,
@@ -287,14 +285,14 @@ test("check that a user referred has a rebate of defaultRebateRate", async () =>
   );
   expect(refferalEvent).not.toBe(undefined);
   await vault.processEvents({
-    events: events as { __typename: string; blockNumber: bigint }[],
+    events,
     distributeFeesFromBlock: fromBlock,
     blockEndHook: async (blockNumber: string) => {
       const userAccount = vault.getAccount(user);
       if (BigInt(blockNumber) >= BigInt(refferalEvent?.blockNumber ?? 0n)) {
         const preRebate = vault.preRebate[user];
         if (preRebate != undefined) expect(preRebate).toBe(500);
-        else expect(userAccount.getRebateRateBps()).toBe(500);
+        else expect(userAccount?.getRebateRateBps()).toBe(500);
       }
     },
   });
@@ -305,7 +303,7 @@ test("check that a a user.referral.rewardRate + user.rebateRate < 100%", async (
   const chainId = 1;
   const fromBlock = 21142252n;
   const toBlock = 23105892n;
-  const vaultEvents = await fetchAllVaultEvents({
+  const vaultEvents = await fetchTestVaultEvents({
     chainId,
     vaultAddress: address,
     toBlock,
@@ -323,7 +321,7 @@ test("check that a a user.referral.rewardRate + user.rebateRate < 100%", async (
     (ref) => ref.owner.toLowerCase() === user.toLowerCase()
   );
   expect(refferalEvent).not.toBe(undefined);
-  let events = preprocessEvents({
+  const events = preprocessEvents({
     events: vaultEvents,
     addresses: {
       silo: vault.silo,
@@ -342,12 +340,12 @@ test("check that a a user.referral.rewardRate + user.rebateRate < 100%", async (
   });
 
   await vault.processEvents({
-    events: events as { __typename: string; blockNumber: bigint }[],
+    events,
     distributeFeesFromBlock: fromBlock,
     blockEndHook: async (blockNumber: string) => {
       const userAccount = vault.getAccount(user);
       if (BigInt(blockNumber) >= BigInt(refferalEvent?.blockNumber ?? 0n))
-        expect(userAccount.getRebateRateBps()).toBe(10000);
+        expect(userAccount?.getRebateRateBps()).toBe(10000);
     },
   });
   expect(() => vault.distributeRebatesAndRewards()).toThrow();

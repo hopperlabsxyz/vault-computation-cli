@@ -2,6 +2,7 @@ import type { preprocessEvents } from "core/preprocessEvents";
 import { generateVault } from "core/vault";
 import { totalBalanceOf } from "utils/onchain-calls";
 import { maxUint256, type Address, type PublicClient } from "viem";
+import type { VaultEvent } from "@lagoon-protocol/internal-computation";
 
 export type EventsArray = ReturnType<typeof preprocessEvents>;
 
@@ -66,15 +67,15 @@ async function getFinalState({
   events: EventsArray;
   address: Address;
   chainId: number;
-}): Promise<ReturnType<typeof generateVault>> {
+}): Promise<Awaited<ReturnType<typeof generateVault>>> {
   const vault = await generateVault({
     vault: {
       address,
       chainId,
     },
   });
-  vault.processEvents({
-    events: events as { __typename: string; blockNumber: bigint }[],
+  await vault.processEvents({
+    events: events as VaultEvent[],
     distributeFeesFromBlock: maxUint256,
   });
 

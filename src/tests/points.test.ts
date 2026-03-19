@@ -1,15 +1,15 @@
 import { expect, test } from "bun:test";
 import { preprocessEvents } from "core/preprocessEvents";
-import { fetchAllVaultEvents } from "utils/fetchVaultEvents";
 import { mock_points } from "./mock/points";
 import { generateVault } from "core/vault";
+import { fetchTestVaultEvents } from "./common/subgraph";
 
 export type EventsArray = ReturnType<typeof preprocessEvents>;
 
 test("check balance match real data after each block", async () => {
   const address = "0x07ed467acD4ffd13023046968b0859781cb90D9B";
   const chainId = 1;
-  const vaultEvents = await fetchAllVaultEvents({
+  const vaultEvents = await fetchTestVaultEvents({
     chainId,
     vaultAddress: address,
   });
@@ -21,7 +21,7 @@ test("check balance match real data after each block", async () => {
     },
   });
 
-  let events = preprocessEvents({
+  const events = preprocessEvents({
     events: vaultEvents,
     addresses: {
       silo: vault.silo,
@@ -32,10 +32,10 @@ test("check balance match real data after each block", async () => {
     defaultRebateRateBps: 1500,
   });
 
-  vault.processEvents({
-    events: events as { __typename: string; blockNumber: bigint }[],
+  await vault.processEvents({
+    events,
     distributeFeesFromBlock: 0n,
-    blockEndHook: async (_: bigint) => {
+    blockEndHook: async (_: string) => {
       const accumulatedPoints = vault.totalPointsAmongUsers(
         mock_points[0].name
       );
