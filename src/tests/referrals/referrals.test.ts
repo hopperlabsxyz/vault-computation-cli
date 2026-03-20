@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { BPS_DIVIDER } from "@lagoon-protocol/internal-computation";
+import { BPS_DIVIDER } from "@hopperlabsxyz/internal-computation";
 import { preprocessEvents } from "core/preprocessEvents";
 import { checkStrictBlockNumberMatching } from "core/strictBlockNumberMatching";
 import { generateVault } from "core/vault";

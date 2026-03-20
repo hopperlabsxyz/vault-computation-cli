@@ -2,7 +2,7 @@ import type { preprocessEvents } from "core/preprocessEvents";
 import { generateVault } from "core/vault";
 import { totalBalanceOf } from "utils/onchain-calls";
 import { maxUint256, type Address, type PublicClient } from "viem";
-import type { VaultEvent } from "@lagoon-protocol/internal-computation";
+import type { VaultEvent } from "@hopperlabsxyz/internal-computation";
 
 export type EventsArray = ReturnType<typeof preprocessEvents>;
 

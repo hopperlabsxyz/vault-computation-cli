@@ -2,7 +2,7 @@ import { publicClient } from "lib/publicClient";
 import type { Command } from "@commander-js/extra-typings";
 import { preprocessEvents } from "core/preprocessEvents";
 import { getAddress, type Address } from "viem";
-import { fetchAllVaultEvents } from "@lagoon-protocol/internal-subgraph";
+import { fetchAllVaultEvents } from "@hopperlabsxyz/internal-subgraph";
 import { getSubgraphClientForChain } from "lib/subgraphClient";
 import { generateVault } from "core/vault";
 import { parseVaultArgument } from "parsing/parseVault";

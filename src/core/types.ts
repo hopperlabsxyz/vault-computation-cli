@@ -2,11 +2,11 @@ import type { Address } from "viem";
 import type { Vault } from "types/Vault";
 import type { OffChainReferral } from "parsing/parseOffchainReferrals";
 import type { RebateDeal } from "parsing/parseRebateDeals";
-import type { VaultEventsResponse } from "@lagoon-protocol/internal-subgraph";
+import type { VaultEventsResponse } from "@hopperlabsxyz/internal-subgraph";
 import type {
   PeriodFees as _PeriodFees,
   TransferEvent as _TransferEvent,
-} from "@lagoon-protocol/internal-computation";
+} from "@hopperlabsxyz/internal-computation";
 
 // Re-export SDK types used by CLI commands
 export type {
@@ -22,7 +22,7 @@ export type {
   Point,
   VaultAddresses,
   TransferEvent,
-} from "@lagoon-protocol/internal-computation";
+} from "@hopperlabsxyz/internal-computation";
 
 export interface PreProcessingParams {
   events: VaultEventsResponse;

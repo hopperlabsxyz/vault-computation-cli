@@ -1,7 +1,7 @@
 import {
   fetchStateUpdateds,
   type StateUpdatedsResponse,
-} from "@lagoon-protocol/internal-subgraph";
+} from "@hopperlabsxyz/internal-subgraph";
 import { getSubgraphClientForChain } from "lib/subgraphClient";
 import type { Address } from "viem";
 

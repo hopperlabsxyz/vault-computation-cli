@@ -6,8 +6,8 @@
       "dependencies": {
         "@commander-js/extra-typings": "^13.1.0",
         "@graphql-codegen/cli": "^5.0.5",
-        "@lagoon-protocol/internal-computation": "0.1.1",
-        "@lagoon-protocol/internal-subgraph": "0.1.1",
+        "@hopperlabsxyz/internal-computation": "0.2.0",
+        "@hopperlabsxyz/internal-subgraph": "0.2.0",
         "commander": "^13.1.0",
         "env-var": "^7.5.0",
         "graphql": "^16.10.0",
@@ -145,6 +145,10 @@
 
     "@graphql-typed-document-node/core": ["@graphql-typed-document-node/core@3.2.0", "", { "peerDependencies": { "graphql": "^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0" } }, "sha512-mB9oAsNCm9aM3/SOv4YtBMqZbYj10R7dkq8byBqxGY/ncFwhf2oQzMV+LCRlWoDSEBJ3COiR1yeDvMtsoOsuFQ=="],
 
+    "@hopperlabsxyz/internal-computation": ["@hopperlabsxyz/internal-computation@0.2.0", "https://npm.pkg.github.com/download/@hopperlabsxyz/internal-computation/0.2.0/79c7b319fb31dc918b2ef76a43841f2ad13bc928", { "peerDependencies": { "viem": "^2.0.0" } }, "sha512-4y0Dw15zecVXtD95CSworIL5FztpXq839RQtCo6jwN9ViulUdXOaI7eJtUHwBqX49dwszyOBlu1XikDIkBtjqA=="],
+
+    "@hopperlabsxyz/internal-subgraph": ["@hopperlabsxyz/internal-subgraph@0.2.0", "https://npm.pkg.github.com/download/@hopperlabsxyz/internal-subgraph/0.2.0/3907bd2566bb6f3acec91cdfc67f887bd42b2365", { "peerDependencies": { "graphql": "^16.0.0", "graphql-request": "^7.0.0", "viem": "^2.0.0" } }, "sha512-XD+048QKKv41iuys+1AWYTE16LIhh+HbmNUVDkd63OVf4u4x1dc1BxXbTkmC1OMMxgFk85ECKeQWyE8FEPP7VQ=="],
+
     "@jridgewell/gen-mapping": ["@jridgewell/gen-mapping@0.3.8", "", { "dependencies": { "@jridgewell/set-array": "^1.2.1", "@jridgewell/sourcemap-codec": "^1.4.10", "@jridgewell/trace-mapping": "^0.3.24" } }, "sha512-imAbBGkb+ebQyxKgzv5Hu2nmROxoDOXHh80evxdoXNOrvAnVx7zimzc1Oo5h9RlfV4vPXaE2iM5pOFbvOCClWA=="],
 
     "@jridgewell/resolve-uri": ["@jridgewell/resolve-uri@3.1.2", "", {}, "sha512-bRISgCIjP20/tbWSPWMEi54QVPRZExkuD9lJL+UIxUKtwVJA8wW1Trb1jMs1RFXo1CBTNZ/5hpC9QvmKWdopKw=="],
@@ -154,10 +158,6 @@
     "@jridgewell/sourcemap-codec": ["@jridgewell/sourcemap-codec@1.5.0", "", {}, "sha512-gv3ZRaISU3fjPAgNsriBRqGWQL6quFx04YMPW/zD8XMLsU32mhCCbfbO6KZFLjvYpCZ8zyDEgqsgf+PwPaM7GQ=="],
 
     "@jridgewell/trace-mapping": ["@jridgewell/trace-mapping@0.3.25", "", { "dependencies": { "@jridgewell/resolve-uri": "^3.1.0", "@jridgewell/sourcemap-codec": "^1.4.14" } }, "sha512-vNk6aEwybGtawWmy/PzwnGDOjCkLWSD2wqvjGGAgOAwCGWySYXfYoxt00IJkTF+8Lb57DwOb3Aa0o9CApepiYQ=="],
-
-    "@lagoon-protocol/internal-computation": ["@lagoon-protocol/internal-computation@0.1.1", "", { "peerDependencies": { "viem": "^2.0.0" } }, "sha512-Wx9Y3ueUzMzouhZxfTeIVRnUumvIiVZQO3OXqkk80Z0RheKQUtcuR7lJUcP1VPuo204mWkQg2eQXROH5K7Sjew=="],
-
-    "@lagoon-protocol/internal-subgraph": ["@lagoon-protocol/internal-subgraph@0.1.1", "", { "peerDependencies": { "graphql": "^16.0.0", "graphql-request": "^7.0.0", "viem": "^2.0.0" } }, "sha512-J3K2XwinDmTodoVUACNZE1KQhR08+cS7OZHvcY6LnoJFDeKohKD2cyh6AJZayeH7QOv6GsYIcZUdYx0z42HFKw=="],
 
     "@noble/ciphers": ["@noble/ciphers@1.3.0", "", {}, "sha512-2I0gnIVPtfnMw9ee9h1dJG7tp81+8Ob3OJb3Mv37rx5L40/b0i7djjCVvGOVqc9AEIQyvyu1i6ypKdFw8R8gQw=="],
 

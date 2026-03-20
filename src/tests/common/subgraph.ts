@@ -1,4 +1,4 @@
-import { fetchAllVaultEvents, type VaultEventsResponse } from "@lagoon-protocol/internal-subgraph";
+import { fetchAllVaultEvents, type VaultEventsResponse } from "@hopperlabsxyz/internal-subgraph";
 import { getSubgraphClientForChain } from "lib/subgraphClient";
 import type { Address } from "viem";
 

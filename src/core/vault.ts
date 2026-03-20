@@ -1,5 +1,5 @@
 import type { Address } from "viem";
-import { Vault } from "@lagoon-protocol/internal-computation";
+import { Vault } from "@hopperlabsxyz/internal-computation";
 import { fetchVault } from "utils/fetchVault";
 import { fetchVaultStateUpdateds } from "utils/fetchVaultStateUpdateds";
 

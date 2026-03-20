@@ -1,7 +1,7 @@
 import type {
   SubgraphTransfer,
   SubgraphReferral,
-} from "@lagoon-protocol/internal-subgraph";
+} from "@hopperlabsxyz/internal-subgraph";
 import type {
   VaultEvent,
   RebateEvent,
@@ -9,7 +9,7 @@ import type {
   ReferralEvent,
   TransferEvent,
   VaultAddresses,
-} from "@lagoon-protocol/internal-computation";
+} from "@hopperlabsxyz/internal-computation";
 import type { OffChainReferral } from "parsing/parseOffchainReferrals";
 import type { RebateDeal } from "parsing/parseRebateDeals";
 import type { PreProcessingParams } from "./types";

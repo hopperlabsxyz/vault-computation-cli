@@ -1,4 +1,4 @@
-import { fetchAllVaultEvents } from "@lagoon-protocol/internal-subgraph";
+import { fetchAllVaultEvents } from "@hopperlabsxyz/internal-subgraph";
 import { getSubgraphClientForChain } from "lib/subgraphClient";
 import type { Vault } from "types/Vault";
 

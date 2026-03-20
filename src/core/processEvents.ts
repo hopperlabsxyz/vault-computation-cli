@@ -3,7 +3,7 @@ import type { ProcessVaultParams, ProcessVaultReturn } from "./types";
 import { preprocessEvents } from "./preprocessEvents";
 import { generateVault } from "./vault";
 import { checkStrictBlockNumberMatching } from "./strictBlockNumberMatching";
-import { fetchAllVaultEvents } from "@lagoon-protocol/internal-subgraph";
+import { fetchAllVaultEvents } from "@hopperlabsxyz/internal-subgraph";
 import { getSubgraphClientForChain } from "lib/subgraphClient";
 
 export async function processEvents({

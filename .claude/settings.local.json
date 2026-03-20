@@ -42,7 +42,25 @@
       "Bash(grep -n \"createSubgraphClient\\\\|fetchAllVaultEvents\" src/**/*.ts)",
       "Bash(grep -n \"import.*@lagoon-protocol/internal-computation\" src/**/*.ts src/cli/*.ts)",
       "Bash(grep -r \"TransferEvent\\\\|PeriodFees\\\\|Dot\" src/cli/*.ts src/core/*.ts)",
-      "Bash(grep -r \"import.*TransferEvent\\\\|import.*PeriodFees\\\\|import.*Dot\" src/cli/*.ts)"
+      "Bash(grep -r \"import.*TransferEvent\\\\|import.*PeriodFees\\\\|import.*Dot\" src/cli/*.ts)",
+      "Bash(pnpm add:*)",
+      "Bash(npx tsc:*)",
+      "Bash(pnpm run:*)",
+      "Bash(pnpm test:*)",
+      "Bash(docker ps:*)",
+      "Bash(export DATABASE_URL='postgresql://lagoon:localdev@localhost:5432/lagoon')",
+      "Bash(psql \"$DATABASE_URL\" -c \"\\\\dn\")",
+      "Bash(psql \"$DATABASE_URL\" -c \"SELECT count\\(*\\) FROM smeltery_v1_19_5.vault_states\")",
+      "Bash(psql \"$DATABASE_URL\" -c \"SELECT count\\(*\\) FROM smeltery_v1_19_5.vault_config\")",
+      "Bash(psql \"$DATABASE_URL\" -c \"SELECT vs.address, vs.chain_id FROM smeltery_v1_19_5.vault_states vs WHERE vs.integration_name = ''smeltery-v1.19.5'' LIMIT 3\")",
+      "Bash(psql \"$DATABASE_URL\" -c \"\\\\d smeltery_v1_19_5.vault_states\")",
+      "Bash(psql 'postgresql://lagoon:localdev@localhost:5432/lagoon' -c \"\\\\d smeltery_v1_19_5.vault_states\")",
+      "Bash(curl -s http://127.0.0.1:3001/health)",
+      "Bash(psql 'postgresql://lagoon:localdev@localhost:5432/lagoon' -c \"\\\\d metadata.vault_metadata\")",
+      "Bash(psql 'postgresql://lagoon:localdev@localhost:5432/lagoon' -c \"SELECT schemaname, tablename FROM pg_tables WHERE tablename LIKE ''%vault_metadata%'' OR tablename LIKE ''%metadata%''\")",
+      "Bash(DATABASE_URL='postgresql://lagoon:localdev@localhost:5432/lagoon' pnpm drizzle-kit push)",
+      "Bash(psql 'postgresql://lagoon:localdev@localhost:5432/lagoon' -c \"SELECT count\\(*\\) FROM metadata.chains\")",
+      "Bash(bun remove:*)"
     ]
   }
 }

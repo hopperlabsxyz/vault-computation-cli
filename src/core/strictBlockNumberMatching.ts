@@ -1,4 +1,4 @@
-import type { VaultEventsResponse } from "@lagoon-protocol/internal-subgraph";
+import type { VaultEventsResponse } from "@hopperlabsxyz/internal-subgraph";
 
 // This function checks some element to make sure the data are sain
 export function checkStrictBlockNumberMatching({

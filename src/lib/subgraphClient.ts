@@ -1,4 +1,4 @@
-import { createSubgraphClient, type SubgraphClient } from "@lagoon-protocol/internal-subgraph";
+import { createSubgraphClient, type SubgraphClient } from "@hopperlabsxyz/internal-subgraph";
 import { SUBGRAPHS } from "environnement";
 
 let cachedClient: SubgraphClient | null = null;

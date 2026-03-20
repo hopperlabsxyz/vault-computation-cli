@@ -1,6 +1,6 @@
 import type { Command } from "@commander-js/extra-typings";
-import { DAY_IN_SECONDS } from "@lagoon-protocol/internal-computation";
-import type { Dot } from "@lagoon-protocol/internal-computation";
+import { DAY_IN_SECONDS } from "@hopperlabsxyz/internal-computation";
+import type { Dot } from "@hopperlabsxyz/internal-computation";
 
 export function setInterpolateCommand(command: Command) {
   command
