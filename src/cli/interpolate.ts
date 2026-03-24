@@ -1,6 +1,6 @@
 import type { Command } from "@commander-js/extra-typings";
-import { DAY_IN_SECONDS, interpolateEveryX } from "@hopperlabsxyz/internal-computation";
-import type { Dot } from "@hopperlabsxyz/internal-computation";
+import { DAY_IN_SECONDS, interpolateEveryX } from "utils/interpolation";
+import type { Dot } from "utils/interpolation";
 
 export function setInterpolateCommand(command: Command) {
   command
@@ -30,13 +30,6 @@ export function setInterpolateCommand(command: Command) {
       "Time between each points added, in second. Default is one day",
       DAY_IN_SECONDS.toString()
     )
-    .addHelpText(
-      "after",
-      `
-Examples:
-  $ interpolate find-claimable-controllers 1:0x123...                    # Find all claimable controllers 
-    `
-    )
     .action(async (args, options) => {
       const fileName = args.split("/").slice(-1)[0].slice(0, -4);
       const pointsRaw = (await Bun.file(args).text()).split("\n").slice(1);
@@ -54,28 +47,27 @@ Examples:
           amount: Number(line[1]),
         };
 
-        if (fromTime == dot.timestamp) {
+        if (fromTime === dot.timestamp) {
           fromDot = dot;
-        } else if (toTime == dot.timestamp) {
+        } else if (toTime === dot.timestamp) {
           toDot = dot;
-          if (fromDot! == undefined)
+          if (fromDot === undefined)
             throw new Error(
               'From timestamp doesn\'t exist or is higher than "to" timestamp'
             );
-          const interpolatedPoints = interpolateEveryX(
-           { start:fromDot,
-            end:toDot,
+          const interpolatedPoints = interpolateEveryX({
+            start: fromDot,
+            end: toDot,
             seconds: Number(options.frequency),
-            precision: Number(options.precision)
-          }
-          );
+            precision: Number(options.precision),
+          });
           points.push(...interpolatedPoints);
         } else if (dot.timestamp < fromTime || dot.timestamp > toTime) {
           points.push(dot);
         }
       }
-      if (fromDot == undefined) throw new Error("From timestamp not valid");
-      if (toDot == undefined) throw new Error("To timestamp not valid");
+      if (fromDot === undefined) throw new Error("From timestamp not valid");
+      if (toDot === undefined) throw new Error("To timestamp not valid");
       const csv = convertToCSVPoints(points, fileName);
       if (options.output) {
         try {
@@ -83,8 +75,10 @@ Examples:
           const file = Bun.file(path);
           await file.write(csv);
           console.log(`CSV report written to: ${file.name}`);
-        } catch (error: any) {
-          console.error("Error writing CSV file:", error.message);
+        } catch (error: unknown) {
+          const msg =
+            error instanceof Error ? error.message : "unknown error";
+          console.error("Error writing CSV file:", msg);
           console.log("CSV content:");
           console.log(csv);
         }
@@ -92,10 +86,8 @@ Examples:
     });
 }
 
-
 export function convertToCSVPoints(points: Dot[], name: string) {
-  const header = `timestamp, amount, name`; // CSV header
+  const header = `timestamp, amount, name`;
   const csvRows = points.map((p) => `${p.timestamp},${p.amount},${name}`);
-
   return [header, ...csvRows].join("\n");
 }

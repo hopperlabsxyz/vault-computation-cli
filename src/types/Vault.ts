@@ -1,6 +1,4 @@
-import { type Address } from "viem";
-
 export type Vault = {
   chainId: number;
-  address: Address;
+  address: string;
 };
