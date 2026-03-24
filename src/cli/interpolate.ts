@@ -1,5 +1,5 @@
 import type { Command } from "@commander-js/extra-typings";
-import { DAY_IN_SECONDS } from "@hopperlabsxyz/internal-computation";
+import { DAY_IN_SECONDS, interpolateEveryX } from "@hopperlabsxyz/internal-computation";
 import type { Dot } from "@hopperlabsxyz/internal-computation";
 
 export function setInterpolateCommand(command: Command) {
@@ -92,40 +92,6 @@ Examples:
     });
 }
 
-/**
- * Linearly interpolates between two points, generating a point every second.
- * Includes the original points in the output.
- *
- * @param start The starting point [x, y]
- * @param end The ending point [x, y]
- * @param seconds Number of seconds between points
- * @param precision Number of decimals to use for the interpolated points
- * @returns An array of interpolated points, including originals
- */
-function interpolateEveryX({start, end, seconds, precision}:{start: Dot, end: Dot, seconds: number, precision: number}): Dot[] {
-  const { timestamp: timestamp0, amount: amount0 } = start;
-  const { timestamp: timestamp1, amount: amount1 } = end;
-  if (timestamp0 >= timestamp1) {
-    throw new Error("Start x must be less than end x");
-  }
-
-  const slope = (amount1 - amount0) / (timestamp1 - timestamp0);
-  const points: Dot[] = new Array();
-
-  for (let x = timestamp0; x <= timestamp1; x += seconds) {
-    const amount = amount0 + slope * (x - timestamp0);
-    points.push({
-      timestamp: x,
-      amount: Number(amount.toFixed(precision)),
-    });
-
-    if (x + seconds > timestamp1) {
-      points.push(end);
-      break;
-    }
-  }
-  return points;
-}
 
 export function convertToCSVPoints(points: Dot[], name: string) {
   const header = `timestamp, amount, name`; // CSV header

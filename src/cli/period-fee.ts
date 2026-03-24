@@ -5,7 +5,7 @@ import type { PeriodFees } from "core/types";
 import { formatUnits } from "viem";
 import { getTotalAssetsUpdatedBlockRange } from "utils/getTotalAssetsUpdatedBlockRange";
 import { fetchAirdrops, type Airdrop } from "utils/fetchAirdrops";
-import { getEndOfMonthTimestamps } from "utils/time";
+import { getEndOfMonthTimestamps } from "@hopperlabsxyz/internal-computation";
 
 export function setPeriodFeeCommand(command: Command) {
   command
