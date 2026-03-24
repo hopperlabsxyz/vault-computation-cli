@@ -4,6 +4,27 @@ import { apiClient } from "api/client";
 import { USER_POINTS_QUERY } from "api/queries";
 import type { UserPointsResultResponse } from "api/types";
 
+interface PointEntry {
+  amount: number;
+  name: string;
+  timestamp: number;
+}
+
+async function parsePointsFile(path: string): Promise<PointEntry[]> {
+  const raw = await Bun.file(path).text();
+  const lines = raw.trim().split("\n").slice(1); // skip header
+  return lines
+    .filter((l) => l.trim())
+    .map((line) => {
+      const [timestamp, amount, name] = line.split(",");
+      return {
+        timestamp: Number(timestamp),
+        amount: Number(amount),
+        name: name.trim(),
+      };
+    });
+}
+
 export function setUserPointsCommand(command: Command) {
   command
     .command("user-points")
@@ -14,12 +35,19 @@ export function setUserPointsCommand(command: Command) {
       "The chain ID and vault address\n",
       parseVaultArgument
     )
-    .action(async (vault) => {
+    .requiredOption(
+      "-p, --points <file>",
+      "CSV file with point distribution data (timestamp,amount,name)\n"
+    )
+    .action(async (vault, options) => {
+      const points = await parsePointsFile(options.points);
+
       const data = await apiClient.request<UserPointsResultResponse>(
         USER_POINTS_QUERY,
         {
           address: vault.address,
           chainId: vault.chainId,
+          points,
         }
       );
 

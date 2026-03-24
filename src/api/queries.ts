@@ -80,8 +80,8 @@ export const USER_BALANCES_QUERY = gql`
 `;
 
 export const USER_POINTS_QUERY = gql`
-  query UserPoints($address: Address!, $chainId: Int!) {
-    userPoints(address: $address, chainId: $chainId) {
+  query UserPoints($address: Address!, $chainId: Int!, $points: [PointInput!]) {
+    userPoints(address: $address, chainId: $chainId, points: $points) {
       chainId
       address
       pointNames
