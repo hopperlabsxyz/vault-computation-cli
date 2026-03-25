@@ -34,15 +34,16 @@ export function setUserBalanceCommand(command: Command) {
       );
 
       const result = data.userBalances;
+
       const csvRows = [
         `chainId,vault,wallet,balance`,
         ...result.entries
           .sort((a, b) => a.account.localeCompare(b.account))
-          .filter(({ balance }) => balance !== 0)
-          .map(
-            ({ balance, account }) =>
-              `${result.chainId},${result.address},${account},${balance}`
-          ),
+          .filter(({ balance }) => balance !== "0")
+          .map(({ balance, account }) => {
+            // Raw output matches main CLI behavior (raw BigInt string)
+            return `${result.chainId},${result.address},${account},${balance}`;
+          }),
       ];
 
       console.log(csvRows.join("\n"));

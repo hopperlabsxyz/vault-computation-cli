@@ -54,6 +54,8 @@ export const USER_FEES_QUERY = gql`
     ) {
       chainId
       address
+      decimals
+      assetDecimals
       pricePerShare
       entries {
         account
@@ -71,6 +73,7 @@ export const USER_BALANCES_QUERY = gql`
     userBalances(address: $address, chainId: $chainId, block: $block) {
       chainId
       address
+      decimals
       entries {
         account
         balance

@@ -3,6 +3,7 @@ import type { Command } from "@commander-js/extra-typings";
 import { apiClient } from "api/client";
 import { USER_FEES_QUERY } from "api/queries";
 import type { UserFeeResultResponse } from "api/types";
+import { formatUnits } from "utils/format";
 
 export function setUserFeeCommand(command: Command) {
   command
@@ -35,13 +36,27 @@ export function setUserFeeCommand(command: Command) {
       );
 
       const result = data.userFees;
+      const { decimals, assetDecimals } = result;
+
       const csvRows = [
         `chainId,vault,wallet,referrer,balance,fees,pricePerShare,cashback`,
         ...result.entries
           .sort((a, b) => a.account.localeCompare(b.account))
           .map(({ balance, fees, cashback, account, referrer }) => {
-            if (balance === 0 && cashback === 0 && fees === 0) return "";
-            return `${result.chainId},${result.address},${account},${referrer},${balance},${fees},${result.pricePerShare},${cashback}`;
+            if (balance === "0" && cashback === "0" && fees === "0") return "";
+            const bal = options.readable
+              ? formatUnits(balance, decimals)
+              : balance;
+            const fee = options.readable
+              ? formatUnits(fees, decimals)
+              : fees;
+            const cb = options.readable
+              ? formatUnits(cashback, decimals)
+              : cashback;
+            const pps = options.readable
+              ? formatUnits(result.pricePerShare, assetDecimals)
+              : result.pricePerShare;
+            return `${result.chainId},${result.address},${account},${referrer},${bal},${fee},${pps},${cb}`;
           })
           .filter(Boolean),
       ];

@@ -32,29 +32,32 @@ export interface PeriodFeeResultResponse {
 export interface UserFeeEntryResponse {
   account: string;
   referrer: string;
-  balance: number;
-  fees: number;
-  cashback: number;
+  balance: string;
+  fees: string;
+  cashback: string;
 }
 
 export interface UserFeeResultResponse {
   userFees: {
     chainId: number;
     address: string;
-    pricePerShare: number;
+    decimals: number;
+    assetDecimals: number;
+    pricePerShare: string;
     entries: UserFeeEntryResponse[];
   };
 }
 
 export interface UserBalanceEntryResponse {
   account: string;
-  balance: number;
+  balance: string;
 }
 
 export interface UserBalanceResultResponse {
   userBalances: {
     chainId: number;
     address: string;
+    decimals: number;
     entries: UserBalanceEntryResponse[];
   };
 }
