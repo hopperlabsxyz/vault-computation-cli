@@ -3,6 +3,7 @@ import type {
   AirdropResponse,
 } from "../api/types";
 import { getEndOfMonthTimestamps } from "../utils/time";
+import { formatUnits } from "../utils/format";
 
 const csvHeader =
   "chainId,vault,period,blockNumber,managementFees,performanceFees,protocolFees,timestamp,managementRate,performanceRate,pricePerShare,totalAssets,totalSupply,vpps";
@@ -46,8 +47,11 @@ export function convertToCSVPeriodFees(
     let totalSupply = fee.totalSupply;
 
     if (readable) {
-      // Values from the API are already in readable format (String type preserves precision)
-      // No additional formatting needed — they come as full-precision strings
+      managementFees = formatUnits(managementFees, vault.decimals);
+      performanceFees = formatUnits(performanceFees, vault.decimals);
+      protocolFees = formatUnits(protocolFees, vault.decimals);
+      totalAssets = formatUnits(totalAssets, vault.assetDecimals);
+      totalSupply = formatUnits(totalSupply, vault.decimals);
     }
 
     const airdropSum = computeAirdropSum(airdrops, fee.timestamp);
