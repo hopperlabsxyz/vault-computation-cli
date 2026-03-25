@@ -1,90 +1,58 @@
 import { parseVaultArgument } from "parsing/parseVault";
-import { publicClient } from "lib/publicClient";
 import type { Command } from "@commander-js/extra-typings";
-import { processEvents } from "core/processEvents";
+import { apiClient } from "api/client";
+import { VAULT_EVENTS_SUMMARY_QUERY } from "api/queries";
+import type { VaultEventsSummaryResponse } from "api/types";
+import { withErrorHandler } from "utils/error-handler";
 
-export function setBlocksCommand(command: Command) {
+export function setFindBlocksCommand(command: Command) {
   command
     .command("find-blocks")
     .alias("fb")
+    .description("Find totalAssetsUpdated events for a vault.\n")
     .argument(
       "chainId:VaultAddress",
-      "The chain ID and vault address to find blocks for\n",
+      "The chain ID and vault address\n",
       parseVaultArgument
     )
-    .description(
-      "Find all blocks where a total assets update happened for a vault. Use this command to determine the block range for fee computation.\n"
+    .option(
+      "-f, --from-block <number>",
+      "Starting block number\n"
     )
     .option(
-      "--fromBlock <number>",
-      "Start searching from this block number (inclusive). Defaults to 0\n",
-      "0"
+      "-t, --to-block <number>",
+      "Ending block number\n"
     )
-    .option(
-      "--toBlock <number>",
-      "Search up to this block number (inclusive). Defaults to the latest block\n"
-    )
-    .addHelpText(
-      "after",
-      `
-Examples:
-  $ fees-computation-cli find-blocks 1:0x123...                    # Find all fee distribution blocks
-  $ fees-computation-cli find-blocks 1:0x123... --fromBlock 1000000 # Find blocks from block 1000000
-  $ fees-computation-cli find-blocks 1:0x123... --toBlock 1001000   # Find blocks up to block 1001000
-  $ fees-computation-cli find-blocks 1:0x123... -d                 # Find blocks since last fee receiver transfer
-    `
-    )
-    .action(async (vault, options) => {
-      const client = publicClient[vault.chainId];
-      if (!options.toBlock) {
-        options.toBlock = (
-          await client.getBlock({ blockTag: "latest" })
-        ).number.toString();
+    .action(withErrorHandler(async (vault, options) => {
+      const data = await apiClient.request<VaultEventsSummaryResponse>(
+        VAULT_EVENTS_SUMMARY_QUERY,
+        {
+          address: vault.address,
+          chainId: vault.chainId,
+          fromBlock: options.fromBlock || undefined,
+          toBlock: options.toBlock || undefined,
+        }
+      );
+
+      const events = data.vaultEventsSummary.events;
+      const fromBlock = options.fromBlock || events[0]?.blockNumber || "0";
+      const toBlock =
+        options.toBlock ||
+        events[events.length - 1]?.blockNumber ||
+        "latest";
+
+      console.log(`From ${fromBlock}\n`);
+      console.log("Events in chronological order:");
+
+      for (const event of events) {
+        const date = new Date(event.blockTimestamp * 1000);
+        const typeLabel =
+          event.type === "TotalAssetsUpdated"
+            ? "Total assets updated"
+            : "Fee receiver sent shares";
+        console.log(`${date} - ${event.blockNumber} - ${typeLabel}`);
       }
 
-      const result = await processEvents({
-        fromBlock: BigInt(options.fromBlock),
-        toBlock: BigInt(options.toBlock),
-        rebateDeals: [],
-        readable: false,
-        vault,
-        strictBlockNumberMatching: false,
-      });
-
-      const feeReceiverTransfersFrom = result.feeReceiverTransfersFrom.map((t) => {
-        return {
-          blockNumber: t.blockNumber,
-          type: "Fee receiver sent shares",
-          blockTimestamp: t.blockTimestamp,
-        };
-      });
-
-      const totalAssetsUpdateds = result.events.totalAssetsUpdateds
-        .filter(
-          (ev) =>
-            ev.blockNumber >= options.fromBlock! &&
-            ev.blockNumber <= options.toBlock!
-        )
-        .map((e) => ({
-          blockNumber: e.blockNumber,
-          type: "Total assets updated",
-          blockTimestamp: e.blockTimestamp,
-        }));
-
-      // Combine and sort all events chronologically
-      const allEvents = [...totalAssetsUpdateds, ...feeReceiverTransfersFrom].sort(
-        (a, b) => Number(a.blockNumber) - Number(b.blockNumber)
-      );
-
-      console.log(`From ${options.fromBlock}`);
-      console.log("\nEvents in chronological order:");
-      allEvents.forEach((event) =>
-        console.log(
-          `${new Date(Number(event.blockTimestamp) * 1000).toDateString()} - ${
-            event.blockNumber
-          } - ${event.type}`
-        )
-      );
-      console.log(`\nTo ${options.toBlock}`);
-    });
+      console.log(`\nTo ${toBlock}`);
+    }));
 }

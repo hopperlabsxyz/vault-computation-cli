@@ -1,103 +1,52 @@
-import { processEvents } from "core/processEvents";
 import { parseVaultArgument } from "parsing/parseVault";
 import type { Command } from "@commander-js/extra-typings";
-import { publicClient } from "lib/publicClient";
-import type { ProcessVaultReturn } from "core/types";
-import type { Vault } from "types/Vault";
+import { apiClient } from "api/client";
+import { USER_BALANCES_QUERY } from "api/queries";
+import type { UserBalanceResultResponse } from "api/types";
+import { withErrorHandler } from "utils/error-handler";
 
 export function setUserBalanceCommand(command: Command) {
   command
     .command("user-balance")
     .alias("ub")
-    .description(
-      "Calculate and generate a balance report for a specified vault, including all users balance. \
-If no block range is provided, uses the oldest and newest totalAssetsUpdated blocks.\n"
-    )
+    .description("Snapshot user balances at a specific block.\n")
     .argument(
       "chainId:VaultAddress",
-      "The chain ID and vault address to find blocks for\n",
+      "The chain ID and vault address\n",
       parseVaultArgument
+    )
+    .option(
+      "-b, --block <number>",
+      "Block number to snapshot (defaults to latest)\n"
     )
     .option(
       "-r, --readable",
       "Format the output in a human-readable format\n",
       false
     )
-    .option(
-      "-b, --block <number>",
-      "Block number at which the snapshot is taken. If not provided, the latest is used\n"
-    )
-    .option(
-      "-o, --output",
-      "Will save the result in output/user-balance in a csv file with following name: <chainId>-<vaultAddress>-<to-block>.csv\n"
-    )
-    .option(
-      "--silent",
-      "This will prevent the printing of the output on stdout\n",
-      false
-    )
-    .addHelpText(
-      "after",
-      `
-Example:
-  $ bun user-balance 1:0x07ed467acd4ffd13023046968b0859781cb90d9b -r -o --block 1000000
-    `
-    )
-    .action(async (vault, options) => {
-      const client = publicClient[vault.chainId];
-      if (!options.block)
-        options.block = (await client.getBlockNumber()).toString();
-
-      const result = await processEvents({
-        readable: options.readable,
-        vault,
-        toBlock: BigInt(options.block),
-        strictBlockNumberMatching: false,
-      });
-
-      const csv = convertToCSV({
-        vault,
-        data: result.data,
-      });
-
-      if (!options.silent) {
-        console.log(csv);
-      }
-      if (options.output) {
-        try {
-          const file = Bun.file(
-            `./output/user-balance/${vault.chainId}-${vault.address}-${options.block}.csv`
-          );
-          await file.write(csv);
-          console.log(`CSV report written to: ${file.name}`);
-        } catch (error: any) {
-          console.error("Error writing CSV file:", error.message);
-          console.log("CSV content:");
-          console.log(csv);
+    .action(withErrorHandler(async (vault, options) => {
+      const data = await apiClient.request<UserBalanceResultResponse>(
+        USER_BALANCES_QUERY,
+        {
+          address: vault.address,
+          chainId: vault.chainId,
+          block: options.block || undefined,
         }
-      }
-    });
-}
+      );
 
-function convertToCSV({
-  vault,
-  data,
-}: {
-  vault: Vault;
-  data: ProcessVaultReturn["data"];
-}) {
-  const csvRows = [
-    `chainId,vault,wallet,balance`, // CSV header
-    ...data.sort((a, b) => a.account.localeCompare(b.account)).map(({ balance, account }) => {
-      if (balance === 0) return "";
-      let balanceStr = balance.toString();
-      balanceStr = balance.toLocaleString("fullwide", {
-        useGrouping: false,
-      });
+      const result = data.userBalances;
 
-      let str = `${vault.chainId},${vault.address},${account},${balanceStr}`;
-      return str;
-    }),
-  ];
-  return csvRows.filter((row) => row !== "").join("\n");
+      const csvRows = [
+        `chainId,vault,wallet,balance`,
+        ...result.entries
+          .sort((a, b) => a.account.localeCompare(b.account))
+          .filter(({ balance }) => balance !== "0")
+          .map(({ balance, account }) => {
+            // Raw output matches main CLI behavior (raw BigInt string)
+            return `${result.chainId},${result.address},${account},${balance}`;
+          }),
+      ];
+
+      console.log(csvRows.join("\n"));
+    }));
 }
