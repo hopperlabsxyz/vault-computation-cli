@@ -3,6 +3,7 @@ import type { Command } from "@commander-js/extra-typings";
 import { apiClient } from "api/client";
 import { VAULT_EVENTS_SUMMARY_QUERY } from "api/queries";
 import type { VaultEventsSummaryResponse } from "api/types";
+import { withErrorHandler } from "utils/error-handler";
 
 export function setFindBlocksCommand(command: Command) {
   command
@@ -22,7 +23,7 @@ export function setFindBlocksCommand(command: Command) {
       "-t, --to-block <number>",
       "Ending block number\n"
     )
-    .action(async (vault, options) => {
+    .action(withErrorHandler(async (vault, options) => {
       const data = await apiClient.request<VaultEventsSummaryResponse>(
         VAULT_EVENTS_SUMMARY_QUERY,
         {
@@ -53,5 +54,5 @@ export function setFindBlocksCommand(command: Command) {
       }
 
       console.log(`\nTo ${toBlock}`);
-    });
+    }));
 }

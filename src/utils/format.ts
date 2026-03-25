@@ -5,6 +5,10 @@
 export function formatUnits(value: string | bigint, decimals: number): string {
   const str = typeof value === "string" ? value : String(value);
 
+  if (!/^-?\d+$/.test(str)) {
+    throw new Error(`formatUnits: invalid integer string "${str}"`);
+  }
+
   if (decimals === 0) return str;
 
   const negative = str.startsWith("-");

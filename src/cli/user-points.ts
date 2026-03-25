@@ -3,6 +3,7 @@ import type { Command } from "@commander-js/extra-typings";
 import { apiClient } from "api/client";
 import { USER_POINTS_QUERY } from "api/queries";
 import type { UserPointsResultResponse } from "api/types";
+import { withErrorHandler } from "utils/error-handler";
 
 interface PointEntry {
   amount: number;
@@ -39,7 +40,7 @@ export function setUserPointsCommand(command: Command) {
       "-p, --points <file>",
       "CSV file with point distribution data (timestamp,amount,name)\n"
     )
-    .action(async (vault, options) => {
+    .action(withErrorHandler(async (vault, options) => {
       const points = await parsePointsFile(options.points);
 
       const data = await apiClient.request<UserPointsResultResponse>(
@@ -71,5 +72,5 @@ export function setUserPointsCommand(command: Command) {
       ];
 
       console.log(csvRows.join("\n"));
-    });
+    }));
 }

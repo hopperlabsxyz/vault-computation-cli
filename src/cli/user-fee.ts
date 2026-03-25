@@ -4,6 +4,7 @@ import { apiClient } from "api/client";
 import { USER_FEES_QUERY } from "api/queries";
 import type { UserFeeResultResponse } from "api/types";
 import { formatUnits } from "utils/format";
+import { withErrorHandler } from "utils/error-handler";
 
 export function setUserFeeCommand(command: Command) {
   command
@@ -24,7 +25,7 @@ export function setUserFeeCommand(command: Command) {
       "Format the output in a human-readable format\n",
       false
     )
-    .action(async (vault, options) => {
+    .action(withErrorHandler(async (vault, options) => {
       const data = await apiClient.request<UserFeeResultResponse>(
         USER_FEES_QUERY,
         {
@@ -62,5 +63,5 @@ export function setUserFeeCommand(command: Command) {
       ];
 
       console.log(csvRows.join("\n"));
-    });
+    }));
 }

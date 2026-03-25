@@ -4,6 +4,7 @@ import { apiClient } from "api/client";
 import { PERIOD_FEES_QUERY } from "api/queries";
 import type { PeriodFeeResultResponse } from "api/types";
 import { convertToCSVPeriodFees } from "formatting/period-fee-csv";
+import { withErrorHandler } from "utils/error-handler";
 
 export function setPeriodFeeCommand(command: Command) {
   command
@@ -37,7 +38,7 @@ If fromBlock and toBlock are not provided, uses the full range.\n`
       "Save the result to output/period-fee directory\n"
     )
     .option("--silent", "Suppress stdout output\n", false)
-    .action(async (vault, options) => {
+    .action(withErrorHandler(async (vault, options) => {
       const data = await apiClient.request<PeriodFeeResultResponse>(
         PERIOD_FEES_QUERY,
         {
@@ -82,5 +83,5 @@ If fromBlock and toBlock are not provided, uses the full range.\n`
           console.log(csv);
         }
       }
-    });
+    }));
 }

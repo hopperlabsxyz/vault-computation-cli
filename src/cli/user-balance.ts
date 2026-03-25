@@ -3,6 +3,7 @@ import type { Command } from "@commander-js/extra-typings";
 import { apiClient } from "api/client";
 import { USER_BALANCES_QUERY } from "api/queries";
 import type { UserBalanceResultResponse } from "api/types";
+import { withErrorHandler } from "utils/error-handler";
 
 export function setUserBalanceCommand(command: Command) {
   command
@@ -23,7 +24,7 @@ export function setUserBalanceCommand(command: Command) {
       "Format the output in a human-readable format\n",
       false
     )
-    .action(async (vault, options) => {
+    .action(withErrorHandler(async (vault, options) => {
       const data = await apiClient.request<UserBalanceResultResponse>(
         USER_BALANCES_QUERY,
         {
@@ -47,5 +48,5 @@ export function setUserBalanceCommand(command: Command) {
       ];
 
       console.log(csvRows.join("\n"));
-    });
+    }));
 }

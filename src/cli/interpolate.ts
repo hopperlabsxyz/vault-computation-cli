@@ -69,6 +69,7 @@ export function setInterpolateCommand(command: Command) {
       if (fromDot === undefined) throw new Error("From timestamp not valid");
       if (toDot === undefined) throw new Error("To timestamp not valid");
       const csv = convertToCSVPoints(points, fileName);
+      console.log(csv);
       if (options.output) {
         try {
           const path = `output/interpolate/${fileName}.csv`;

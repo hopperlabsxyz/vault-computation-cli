@@ -3,6 +3,7 @@ import { parseVaultArgument } from "parsing/parseVault";
 import { apiClient } from "api/client";
 import { CLAIMABLE_CONTROLLERS_QUERY } from "api/queries";
 import type { ClaimableControllersResponse } from "api/types";
+import { withErrorHandler } from "utils/error-handler";
 
 export function setFindClaimableControllersCommand(command: Command) {
   command
@@ -14,7 +15,7 @@ export function setFindClaimableControllersCommand(command: Command) {
       "The chain ID and vault address\n",
       parseVaultArgument
     )
-    .action(async (vault) => {
+    .action(withErrorHandler(async (vault) => {
       const data = await apiClient.request<ClaimableControllersResponse>(
         CLAIMABLE_CONTROLLERS_QUERY,
         {
@@ -24,5 +25,5 @@ export function setFindClaimableControllersCommand(command: Command) {
       );
 
       console.log(JSON.stringify(data.claimableControllers));
-    });
+    }));
 }
