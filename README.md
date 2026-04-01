@@ -49,8 +49,8 @@ For Windows users, Bun can be installed using WSL (Windows Subsystem for Linux) 
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/hopperlabsxyz/fees-computation-cli.git
-cd fees-computation-cli
+git clone https://github.com/hopperlabsxyz/vault-computation-cli.git
+cd vault-computation-cli
 ```
 
 2. Install dependencies:
