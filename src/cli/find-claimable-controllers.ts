@@ -45,7 +45,7 @@ Examples:
       });
       if (version === "v0.6.0") {
         throw new Error(
-          `Vault ${vault.address} on chain ${vault.chainId} is at version v0.6.0 at block ${toBlock}. This tool does not support v0.6.0 vaults. Use an earlier block (before the upgrade) to compute fees.`
+          `Vault ${vault.address} on chain ${vault.chainId} is at version v0.6.0 at block ${toBlock}. This tool does not support v0.6.0 vaults. Use an earlier block (before the upgrade) or wait for support. ETA: middle of May 2026`
         );
       }
 
