@@ -4,6 +4,7 @@ import { checkStrictBlockNumberMatching } from "./strictBlockNumberMatching";
 import type { ProcessVaultParams, ProcessVaultReturn } from "./types";
 import { preprocessEvents } from "./preprocessEvents";
 import { fetchAllVaultEvents } from "utils/fetchVaultEvents";
+import { fetchVaultVersion } from "utils/fetchVaultVersion";
 
 export async function processEvents({
   vault,
@@ -18,6 +19,17 @@ export async function processEvents({
   strictBlockNumberMatching = true,
 }: ProcessVaultParams): Promise<ProcessVaultReturn> {
   console.log(`Loading vault ${vault.address} on chain ${vault.chainId}`);
+
+  const version = await fetchVaultVersion({
+    chainId: vault.chainId,
+    address: vault.address,
+    block: toBlock ? BigInt(toBlock) : undefined,
+  });
+  if (version === "v0.6.0") {
+    throw new Error(
+      `Vault ${vault.address} on chain ${vault.chainId} is at version v0.6.0 at block ${toBlock ?? "latest"}. This tool does not support v0.6.0 vaults. Use an earlier toBlock (before the upgrade) to compute fees.`
+    );
+  }
 
   const vaultEvents = await fetchAllVaultEvents({
     chainId: vault.chainId,
