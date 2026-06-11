@@ -7,6 +7,7 @@ import { fetchAllVaultEvents } from "utils/fetchVaultEvents";
 import { generateVault } from "core/vault";
 import { parseVaultArgument } from "parsing/parseVault";
 import { LagoonVaultAbi } from "abis/VaultABI";
+import { fetchVaultVersion } from "utils/fetchVaultVersion";
 
 export function setControllersCommand(command: Command) {
   command
@@ -36,6 +37,17 @@ Examples:
       const toBlock = options.block ? BigInt(options.block) : (
         await client.getBlock({ blockTag: "latest" })
       ).number;
+
+      const version = await fetchVaultVersion({
+        chainId: vault.chainId,
+        address: vault.address,
+        block: toBlock,
+      });
+      if (version === "v0.6.0") {
+        throw new Error(
+          `Vault ${vault.address} on chain ${vault.chainId} is at version v0.6.0 at block ${toBlock}. This tool does not support v0.6.0 vaults. Use an earlier block (before the upgrade) or wait for support. ETA: middle of May 2026`
+        );
+      }
 
       const vaultEvents = await fetchAllVaultEvents({
         chainId: vault.chainId,
