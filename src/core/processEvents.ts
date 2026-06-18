@@ -82,14 +82,13 @@ export async function processEvents({
     pointNames: vaultState.pointNames(),
     events: vaultEvents,
     feeReceiverTransfersFrom: vaultState.feeReceiverTransfersFrom,
-    pricePerShare: Number(
-      formatUnits(vaultState.pricePerShare(), assetDecimals)
-    ),
+    // ponytail: keep formatUnits' exact string; Number() re-rounded it to float
+    pricePerShare: formatUnits(vaultState.pricePerShare(), assetDecimals),
     periodFees: vaultState.periodFees.filter((period) => period.blockNumber >= Number(fromBlock) || 0),
     data: accounts.map((account) => ({
-      balance: Number(formatUnits(account.getBalance(), sharesDecimals)),
-      fees: Number(formatUnits(account.getFees(), sharesDecimals)),
-      cashback: Number(formatUnits(account.getCashback(), sharesDecimals)),
+      balance: formatUnits(account.getBalance(), sharesDecimals),
+      fees: formatUnits(account.getFees(), sharesDecimals),
+      cashback: formatUnits(account.getCashback(), sharesDecimals),
       points: account.getAllPoints(),
       account: account.address,
       referrer: account.getReferral()?.referral || "0x",

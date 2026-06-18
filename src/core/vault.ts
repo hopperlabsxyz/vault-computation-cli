@@ -155,20 +155,19 @@ class Vault {
     if (this.lastTotalAssetsUpdateTimestamp != 0) {
       const timepast =
         Number(event.blockTimestamp) - this.lastTotalAssetsUpdateTimestamp;
-        const ratioOverAYear = YEAR_IN_SECONDS / Number(timepast);
-    
-      const percentToDeposit =
-        rates.management / ratioOverAYear;
 
-      // the percent of the total assets that will be collected as fees
-      const feesInAsset = Math.trunc(
-        percentToDeposit * Number(this.totalAssets)
-      );
+      // ponytail: integer math mirrors the SC. The old float path
+      // (Number(totalAssets) * rate) lost precision above 2^53 wei.
+      // feesInAsset = floor(managementBps * timepast * totalAssets / (BPS * YEAR))
+      const managementBps = BigInt(Math.round(rates.management * Number(BPS_DIVIDER)));
+      const feesInAsset =
+        (managementBps * BigInt(timepast) * this.totalAssets) /
+        (BPS_DIVIDER * BigInt(YEAR_IN_SECONDS));
 
       this.nextManagementFees = MathLib.mulDivUp(
-        BigInt(feesInAsset),
+        feesInAsset,
         this.totalSupply + 10n ** BigInt(this.decimalsOffset),
-        this.totalAssets - BigInt(feesInAsset) + 1n
+        this.totalAssets - feesInAsset + 1n
       );
       // we do not store this value because we will compute the whole protocol fees later
       const protocolManagementFeesCut = MathLib.mulDivUp(

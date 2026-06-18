@@ -128,14 +128,14 @@ export interface ProcessVaultReturn {
   chainId: number;
   address: Address;
   decimals: number;
-  pricePerShare: number;
+  pricePerShare: string;
   pointNames: string[];
   events: VaultEventsQuery;
   feeReceiverTransfersFrom: Transfer[];
   data: {
-    balance: number;
-    cashback: number;
-    fees: number;
+    balance: string;
+    cashback: string;
+    fees: string;
     points: Record<string, number>;
     account: Address;
     referrer: Address;

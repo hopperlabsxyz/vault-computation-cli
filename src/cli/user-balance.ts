@@ -89,14 +89,8 @@ function convertToCSV({
   const csvRows = [
     `chainId,vault,wallet,balance`, // CSV header
     ...data.sort((a, b) => a.account.localeCompare(b.account)).map(({ balance, account }) => {
-      if (balance === 0) return "";
-      let balanceStr = balance.toString();
-      balanceStr = balance.toLocaleString("fullwide", {
-        useGrouping: false,
-      });
-
-      let str = `${vault.chainId},${vault.address},${account},${balanceStr}`;
-      return str;
+      if (balance === "0") return "";
+      return `${vault.chainId},${vault.address},${account},${balance}`;
     }),
   ];
   return csvRows.filter((row) => row !== "").join("\n");
