@@ -26,11 +26,9 @@ export async function parsePoints(filePath: string): Promise<{
 
 function parseLine(line: string): [number, number, string] | undefined {
   if (line === "") return [0, 0, "empty"];
-  const [timestamp, amount, name] = line.replace(" ", "").split(",") as [
-    number,
-    number,
-    string
-  ];
+  const [timestampStr, amountStr, name] = line.replace(" ", "").split(",");
+  const timestamp = Number(timestampStr);
+  const amount = Number(amountStr);
   if (amount < 0) {
     throw new Error(
       `Invalid point value in point file: ${amount}. Amount cannot be negative`
