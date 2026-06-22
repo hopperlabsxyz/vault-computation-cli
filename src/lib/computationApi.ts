@@ -3,9 +3,7 @@ import { get } from "env-var";
 // Default points at the preview; override with COMPUTATION_API_URL. Swapped to
 // the real endpoint before the PR.
 const BASE_URL = get("COMPUTATION_API_URL")
-  .default(
-    "https://preview-2a12d55---lagoon-backend-dev-tlhg2lya3q-od.a.run.app"
-  )
+  .default("https://api.lagoon.finance")
   .asString();
 
 export type PeriodFeeRow = {
