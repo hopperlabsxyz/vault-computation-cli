@@ -1,9 +1,7 @@
-import { processEvents } from "core/processEvents";
 import { parseVaultArgument } from "parsing/parseVault";
 import type { Command } from "@commander-js/extra-typings";
-import type { ProcessVaultReturn } from "core/types";
 import { parsePoints } from "parsing/parsePoints";
-import type { Vault } from "types/Vault";
+import { computationApi, type UserPointsResult } from "lib/computationApi";
 
 export function setUserPointsCommand(command: Command) {
   command
@@ -38,18 +36,13 @@ For each line the program will distribute the new points proportionnaly to share
     .action(async (vault, options) => {
       const { points, filename } = await options.points;
 
-      const result = await processEvents({
-        readable: false,
-        strictBlockNumberMatching: false,
-        vault,
-        points,
-      });
+      const result = await computationApi.userPoints(
+        vault.chainId,
+        vault.address,
+        { points }
+      );
 
-      const csv = convertToCSV({
-        vault,
-        data: result.data,
-        pointNames: result.pointNames,
-      });
+      const csv = convertToCSV(result);
       if (!options.silent) {
         console.log(csv);
       }
@@ -69,37 +62,20 @@ For each line the program will distribute the new points proportionnaly to share
     });
 }
 
-function convertToCSV({
-  vault,
-  data,
-  pointNames,
-}: {
-  vault: Vault;
-  pointNames: string[];
-  data: ProcessVaultReturn["data"];
-}) {
-  const pointNamesString = pointNames.reduce(
+function convertToCSV(result: UserPointsResult) {
+  const pointNamesString = result.pointNames.reduce(
     (prev, cur) => `${prev},${cur}`,
     ""
   );
   const csvRows = [
-    `chainId,vault,wallet${pointNamesString}`, // CSV header
-    ...data.sort((a, b) => a.account.localeCompare(b.account)).map(({ points, account }) => {
-      let str = `${vault.chainId},${vault.address},${account}`;
-      str += pointsToCsv(points, pointNames);
-      return str;
+    `chainId,vault,wallet${pointNamesString}`,
+    ...result.rows.map((d) => {
+      const pts = result.pointNames.reduce(
+        (prev, cur) => `${prev},${d.points[cur] || 0}`,
+        ""
+      );
+      return `${result.chainId},${result.vault},${d.account}${pts}`;
     }),
   ];
   return csvRows.join("\n");
-}
-
-function pointsToCsv(
-  points: Record<string, number>,
-  pointsName: string[]
-): string {
-  const a = pointsName.reduce((prev, cur) => {
-    const value = points[cur] || 0n;
-    return `${prev},${value}`;
-  }, "");
-  return a;
 }

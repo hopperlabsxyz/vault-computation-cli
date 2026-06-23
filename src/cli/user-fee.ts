@@ -1,12 +1,10 @@
-import { processEvents } from "core/processEvents";
 import { parseRebateDeals } from "parsing/parseRebateDeals";
 import { parseOffchainReferrals } from "parsing/parseOffchainReferrals";
 import { parseVaultArgument } from "parsing/parseVault";
 import type { Command } from "@commander-js/extra-typings";
 import { filterWildCard } from "utils/various";
-import { getTotalAssetsUpdatedBlockRange } from "utils/getTotalAssetsUpdatedBlockRange";
-import type { ProcessVaultReturn } from "core/types";
-import type { Vault } from "types/Vault";
+import { formatUnits } from "viem";
+import { computationApi, type UserFeesResult } from "lib/computationApi";
 
 export function setUserFeeCommand(command: Command) {
   command
@@ -87,50 +85,36 @@ Example:
     `
     )
     .action(async (vault, options) => {
-      const rebateDeals = filterWildCard(await options.deals, vault);
-      const offChainReferrals = filterWildCard(await options.referrals, vault);
+      // The backend filters deals/referrals to this vault itself, but its
+      // wildcard sentinel is the zero-address — not the CLI's "0x0". Resolve
+      // wildcards here (filterWildCard) and send concrete (chainId, vault)
+      // entries so nothing is rejected.
+      const scope = { chainId: vault.chainId, vault: vault.address };
+      const rebateDeals = filterWildCard(await options.deals, vault).map((d) => ({
+        ...d,
+        ...scope,
+      }));
+      const offChainReferrals = filterWildCard(await options.referrals, vault).map(
+        (r) => ({ ...r, ...scope })
+      );
 
-      // Get default block range from totalAssetsUpdated events if not provided
-      let fromBlock: bigint;
-      let toBlock: bigint;
-      
-      if (!options.fromBlock || !options.toBlock) {
-        const blockRange = await getTotalAssetsUpdatedBlockRange(vault);
-        if (!blockRange) {
-          throw new Error("No totalAssetsUpdated events found for this vault. Cannot determine default block range.");
-        }
-        fromBlock = options.fromBlock ? BigInt(options.fromBlock) : blockRange.oldestBlock;
-        toBlock = options.toBlock ? BigInt(options.toBlock) : blockRange.newestBlock;
-      } else {
-        fromBlock = BigInt(options.fromBlock);
-        toBlock = BigInt(options.toBlock);
-      }
-
-      const result = await processEvents({
+      const result = await computationApi.userFees(vault.chainId, vault.address, {
+        fromBlock: options.fromBlock,
+        toBlock: options.toBlock,
         rebateDeals,
         offChainReferrals,
-        readable: options.readable,
-        defaultReferralRateBps: Number(options.feeRewardRate),
         defaultRebateRateBps: Number(options.feeRebateRate),
-        vault,
-        fromBlock,
-        toBlock,
-        strictBlockNumberMatching: true,
+        defaultRewardRateBps: Number(options.feeRewardRate),
       });
 
-      const csv = convertToCSV({
-        vault,
-        data: result.data,
-        pricePerShare: result.pricePerShare,
-      });
-
+      const csv = convertToCSV(result, options.readable);
       if (!options.silent) {
         console.log(csv);
       }
       if (options.output) {
         try {
           const file = Bun.file(
-            `./output/user-fee/${vault.chainId}-${vault.address}-${fromBlock}-${toBlock}.csv`
+            `./output/user-fee/${vault.chainId}-${vault.address}-${options.fromBlock}-${options.toBlock}.csv`
           );
           await file.write(csv);
           console.log(`CSV report written to: ${file.name}`);
@@ -143,23 +127,22 @@ Example:
     });
 }
 
-function convertToCSV({
-  vault,
-  data,
-  pricePerShare,
-}: {
-  vault: Vault;
-  data: ProcessVaultReturn["data"];
-  pricePerShare: number;
-}) {
+function convertToCSV(result: UserFeesResult, readable: boolean) {
+  // Amounts come back as raw wei; format with the vault decimals only when -r.
+  const amount = (v: string) =>
+    readable ? formatUnits(BigInt(v), result.decimals) : v;
+  const pricePerShare = readable
+    ? formatUnits(BigInt(result.pricePerShare), result.assetDecimals)
+    : result.pricePerShare;
+
   const csvRows = [
-    `chainId,vault,wallet,referrer,balance,fees,pricePerShare,cashback$`, // CSV header
-    ...data.sort((a, b) => a.account.localeCompare(b.account)).map(({ balance, fees, cashback, account, referrer }) => {
-      if (balance === 0 && cashback == 0 && fees == 0) return "";
-      let str = `${vault.chainId},${vault.address},${account},${referrer},${balance},${fees}`;
-      str += `,${pricePerShare},${cashback}`;
-      return str;
-    }),
+    `chainId,vault,wallet,referrer,balance,fees,pricePerShare,cashback$`,
+    ...result.rows.map(
+      (d) =>
+        `${result.chainId},${result.vault},${d.account},${d.referrer},${amount(
+          d.balance
+        )},${amount(d.fees)},${pricePerShare},${amount(d.cashback)}`
+    ),
   ];
-  return csvRows.filter((row) => row !== "").join("\n");
+  return csvRows.join("\n");
 }

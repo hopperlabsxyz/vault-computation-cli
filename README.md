@@ -1,294 +1,118 @@
 # Vault Computation CLI
 
-A command-line tool for computing lagoon v0 vault data on multiple blockchain networks (Ethereum, Base, Arbitrum, and Avalanche).
+A command-line tool for computing Lagoon vault data. It calls the Lagoon
+**computation API** (`api.lagoon.finance`) and renders the results as CSV — no
+RPC or subgraph access required.
 
 ## Features
 
-- Multi-chain support (Ethereum, Base, Arbitrum, Avalanche)
-- Fee computation and analysis
-- Referral reward tracking
-- Fee rebate calculations
-- OTC (Over-The-Counter) deals support
-- CSV report generation
-- Points repartition
-- Points interpolation
-- Airdrop-aware performance reporting with virtual price-per-share (vPPS)
-- Interpolated end-of-month performance snapshots
-- Fee receiver transfer tracking
-- User balance tracking
+- Per-period fee reports (management / performance / protocol fees, vpps,
+  interpolated end-of-month snapshots)
+- Per-user fee reports with referral rewards and OTC fee rebates
+- Points repartition over a time series
+- Linear interpolation of a CSV time series (offline utility)
+- CSV report generation, raw or human-readable (`-r`)
 
 ## Prerequisites
 
-- Bun runtime (v1.0.0 or higher)
-- Access to blockchain RPC endpoints
-
-### Installing Bun
-
-1. Install Bun using curl (macOS and Linux):
-
-```bash
-curl -fsSL https://bun.sh/install | bash
-```
-
-2. Or using npm:
-
-```bash
-npm install -g bun
-```
-
-3. Verify the installation:
-
-```bash
-bun --version
-```
-
-For Windows users, Bun can be installed using WSL (Windows Subsystem for Linux) or through the official installer from [bun.sh](https://bun.sh).
+- [Bun](https://bun.sh) (v1.0.0 or higher)
 
 ## Installation
 
-1. Clone the repository:
-
 ```bash
-git clone https://github.com/hopperlabsxyz/vault-computation-cli.git
-cd vault-computation-cli
-```
-
-2. Install dependencies:
-
-```bash
+git clone https://github.com/hopperlabsxyz/fees-computation-cli.git
+cd fees-computation-cli
 bun install
 ```
 
-3. Create a `.env` file in the root directory with your RPC URLs and subgraph URLs:
-
-```env
-MAINNET_RPC_URL=https://eth-mainnet.g.alchemy.com/v2/your-api-key
-BASE_RPC_URL=https://mainnet.base.org
-AVALANCHE_RPC_URL=https://api.avax.network/ext/bc/C/rpc
-MAINNET_SUBGRAPH_URL=
-BASE_SUBGRAPH_URL=
-```
-
-You can find the subgraph URLs [here](https://docs.lagoon.finance/resources/networks-and-addresses).
-
-## Available Commands
-
-You can list all available commands by running:
+No configuration is required — the CLI targets `https://api.lagoon.finance` by
+default. To point at a different deployment, set `COMPUTATION_API_URL`:
 
 ```bash
-bun run help
+COMPUTATION_API_URL=https://my-backend.example bun run period-fee ...
 ```
 
-### Command Aliases
+## Commands
 
-For convenience, shorter aliases are available for all commands:
+List everything with `bun run help`. Each command takes a `chainId:VaultAddress`
+argument; the three computation commands also accept `--silent` and `-o/--output`.
 
-| Full Command                 | Alias | Description                     |
-| ---------------------------- | ----- | ------------------------------- |
-| `user-fee`                   | `uf`  | Generate fee reports per user   |
-| `user-balance`               | `ub`  | Generate balance reports        |
-| `user-points`                | `up`  | Calculate and distribute points |
-| `period-fee`                 | `pf`  | Generate period fee reports     |
-| `find-blocks`                | `fb`  | Find blocks with fee events     |
-| `find-claimable-controllers` | `fcc` | Find claimable controllers      |
-| `interpolate`                | `ip`  | Perform linear interpolation    |
-
-Example usage with aliases:
-
-```bash
-bun run uf <chainId:VaultAddress> --to-block 12345678
-bun run ub <chainId:VaultAddress> --to-block 12345678
-bun run up <chainId:VaultAddress> --points points.csv
-```
-
-### User Balance (ub)
-
-```bash
-bun run user-balance <chainId:VaultAddress> [options]
-```
-
-Generates a balance report for a specified vault, including all users balance.
-
-Required options:
-
-- `--to-block <number>`: Ending block number for fee computation (inclusive). Use 'find-blocks' command to find the appropriate block number
-- `-o, --output`: Will save the result in output/user-balance in a csv file with following name: <chainId>-<vaultAddress>-<to-block>.csv
-- `--silent`: This will prevent the printing of the output on stdout
-
-To know more:
-
-```bash
-bun run user-balance --help
-```
+| Command | Alias | Description |
+| --- | --- | --- |
+| `find-blocks` | `fb` | List a vault's totalAssetsUpdated / fee-receiver blocks |
+| `find-claimable-controllers` | `fcc` | Controllers with a claimable deposit request |
+| `period-fee` | `pf` | Per-period fee report |
+| `user-fee` | `uf` | Per-user fee report (referrals, rebates) |
+| `user-points` | `up` | Points repartition |
+| `interpolate` | `ip` | Linear interpolation of a CSV time series |
 
 ### Find Blocks (fb)
 
 ```bash
-bun run find-blocks <chainId:VaultAddress> [options]
+bun run find-blocks <chainId:VaultAddress> [--fromBlock <n>] [--toBlock <n>]
 ```
 
-Identifies blocks where fee distributions and fee receiver transfers occurred for a specific vault. This command helps determine the block range for fee computation by showing:
-
-- Blocks with total assets updates
-- Blocks with fee receiver transfers
-- All events in chronological order with timestamps
-
-To know more:
-
-```bash
-bun run find-blocks --help
-```
-
-### User Fee (uf)
-
-```bash
-bun run user-fee <chainId:VaultAddress> [options]
-```
-
-Generates comprehensive fee reports per user for a vault, calculating:
-
-- User balances
-- Fee amounts
-- Referral rewards
-- Fee rebates
-- Price per share
-
-To know more:
-
-```bash
-bun run user-fee --help
-```
-
-### User Points (up)
-
-```bash
-bun run user-points <chainId:VaultAddress> [options]
-```
-
-Calculates and distributes points to shareholders proportionally based on their holdings. Points are distributed according to a time series specified in a CSV file.
-
-Required options:
-
-- `--points <string>`: CSV file with point evolution data (format: timestamp,amount,name)
-
-To know more:
-
-```bash
-bun run user-points --help
-```
+Lists, in chronological order, the blocks where the vault emitted a
+`totalAssetsUpdated` (period boundaries — use these for `period-fee`/`user-fee`
+`-f/-t`) and where the fee receiver moved shares. Reads from the indexer
+(`api.lagoon.finance/query`).
 
 ### Find Claimable Controllers (fcc)
 
 ```bash
-bun run find-claimable-controllers <chainId:VaultAddress> [options]
+bun run find-claimable-controllers <chainId:VaultAddress>
 ```
 
-Identifies all controllers (users) who have made deposit requests on the vault and haven't cancelled them. Useful for getting the arguments for the `claimSharesOnBehalf()` function.
-
-To know more:
-
-```bash
-bun run find-claimable-controllers --help
-```
-
-#### Usage Example in Smart Contract Interaction
-
-This list can be used directly as input to the Vault smart contract function:
-
-```solidity
-claimSharesOnBehalf(address[] controllers)
-```
-
-You can pass this list of addresses as an argument to `claimSharesOnBehalf()` in order to trigger the claiming process on behalf of these users.
-
-Make sure the caller has the permission to claim on behalf of these addresses.
+Prints a JSON array of controllers that have a settled-but-unclaimed deposit
+request (`claimableDeposit > 0`) — ready to pass to `claimSharesOnBehalf()`.
+Reads current state from the indexer (`api.lagoon.finance/query`).
 
 ### Period Fee (pf)
 
 ```bash
-bun run period-fee <chainId:VaultAddress> [options]
+bun run period-fee <chainId:VaultAddress> [-f <fromBlock>] [-t <toBlock>] [-r]
 ```
 
-Generates detailed fee reports for specific periods between totalAssets updates. The report includes:
+Fees per period between `totalAssetsUpdated` events. If `-f/-t` are omitted, the
+oldest and newest update blocks are used. `-r` formats amounts in human units;
+without it, amounts are raw wei. Columns:
 
-- Management fees
-- Performance fees
-- Management and performance rates
-- Price per share
-- Timestamps for each period
-- Virtual price per share (vpps), including the effect of airdrops
-- Interpolated end-of-month snapshots with price per share and vpps
+`chainId,vault,period,blockNumber,managementFees,performanceFees,protocolFees,timestamp,managementRate,performanceRate,pricePerShare,totalAssets,totalSupply,vpps`
 
-The generated CSV has the following columns:
+Rows that are interpolated end-of-month snapshots populate only
+`chainId,vault,period,timestamp,pricePerShare,vpps`.
 
-- `chainId`
-- `vault`
-- `period`
-- `blockNumber`
-- `managementFees`
-- `performanceFees`
-- `protocolFees`
-- `timestamp`
-- `managementRate`
-- `performanceRate`
-- `pricePerShare`
-- `totalAssets`
-- `totalSupply`
-- `vpps` (price per share including all airdrop pps increases distributed up to `timestamp`)
-
-For rows that correspond to interpolated **end-of-month** snapshots (i.e. not actual vault updates), only the following columns are populated:
-
-- `chainId`
-- `vault`
-- `period`
-- `timestamp` (end-of-month timestamp in seconds)
-- `pricePerShare` (linearly interpolated between surrounding totalAssets updates)
-- `vpps` (interpolated vpps including airdrops up to that timestamp)
-
-All airdrop information is fetched from the Lagoon public API (`https://api.lagoon.finance/query`), so running this command requires network access.
-
-To know more:
+### User Fee (uf)
 
 ```bash
-bun run period-fee --help
+bun run user-fee <chainId:VaultAddress> -f <fromBlock> -t <toBlock> [-r] \
+  [-d deals.csv] [--referrals refs.csv]
 ```
+
+Per-user balances, fees, referrer and cashback. `-f/-t` must be
+`totalAssetsUpdated` block numbers. Optional OTC inputs:
+
+- `-d, --deals <csv>` — `chainId,vault,owner,rebateRateBps` (a `0,0x0` row is a
+  wildcard for any vault)
+- `--referrals <csv>` — `chainId,vault,referrer,referred,rewardRateBps,rebateRateBps`
+
+### User Points (up)
+
+```bash
+bun run user-points <chainId:VaultAddress> --points points.csv
+```
+
+Distributes points to shareholders proportionally at each timestamp. `--points`
+is a CSV of `timestamp,amount,name`. For accuracy, use timestamps right before
+`totalAssetsUpdated` events.
 
 ### Interpolate (ip)
 
 ```bash
-bun run interpolate <csv file> [options]
+bun run interpolate <csv file> -f <fromTimestamp> -t <toTimestamp> [--frequency <seconds>]
 ```
 
-Performs linear interpolation on a CSV file containing time series points, generating intermediate points at specified intervals.
-
-To know more:
-
-```bash
-bun run interpolate --help
-```
-
-# Project Structure
-
-```
-src/
-├── abis/         # Contract ABIs
-├── cli/          # Command-line interface
-├── core/         # Core business logic
-├── gql/          # GraphQL queries
-├── lib/          # Shared libraries
-├── parsing/      # Data parsing utilities
-├── tests/        # Test files
-├── types/        # TypeScript type definitions
-└── utils/        # Utility functions
-```
-
-## Development
-
-### Running Tests
-
-```bash
-bun test
-```
+Linear interpolation of a CSV time series, generating intermediate points.
 
 ## License
 
@@ -296,8 +120,7 @@ bun test
 
 ## Disclaimer ⚠️
 
-This code is provided on a best-effort basis by the Lagoon team to facilitate integration with Lagoon Vaults. While we strive to ensure the accuracy, reliability, and security of this software, it is provided “as is” without any guarantees or warranties of any kind, express or implied.
-
-Lagoon and its contributors accept no responsibility or liability for any loss, damage, or other consequences resulting from the use, misuse, or inability to use this SDK. It is the responsibility of the integrator to perform appropriate testing, due diligence, and security assessments before deploying or relying on this software in production environments.
-
-By using this code, you acknowledge and agree to assume all associated risks.
+This code is provided on a best-effort basis by the Lagoon team. It is provided
+"as is" without warranties of any kind. Lagoon and its contributors accept no
+liability for any loss or damage resulting from its use. Perform your own
+testing and due diligence before relying on it.
