@@ -4,14 +4,12 @@
   "engines": {
     "bun": ">=1.0.0"
   },
-  "description": "Obtain various data regarding a vault.",
+  "description": "Compute Lagoon vault data via the Lagoon computation API.",
   "main": "index.js",
   "scripts": {
     "help": "bun run index.ts help",
     "user-fee": "bun index.ts user-fee",
     "uf": "bun index.ts user-fee",
-    "user-balance": "bun index.ts user-balance",
-    "ub": "bun index.ts user-balance",
     "user-points": "bun index.ts user-points",
     "up": "bun index.ts user-points",
     "period-fee": "bun index.ts period-fee",
@@ -21,8 +19,7 @@
     "find-claimable-controllers": "bun index.ts find-claimable-controllers",
     "fcc": "bun index.ts find-claimable-controllers",
     "interpolate": "bun index.ts interpolate",
-    "ip": "bun index.ts interpolate",
-    "generate": "bunx --bun graphql-codegen --config graphql-codegen-cli/fetch-schema.ts"
+    "ip": "bun index.ts interpolate"
   },
   "keywords": [],
   "author": "",
@@ -33,12 +30,8 @@
   },
   "dependencies": {
     "@commander-js/extra-typings": "^13.1.0",
-    "@graphql-codegen/cli": "^5.0.5",
-    "@morpho-org/blue-sdk": "^4.9.0",
     "commander": "^13.1.0",
     "env-var": "^7.5.0",
-    "graphql": "^16.10.0",
-    "graphql-request": "^7.1.2",
     "viem": "^2.40.3"
   }
 }

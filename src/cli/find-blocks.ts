@@ -1,7 +1,32 @@
 import { parseVaultArgument } from "parsing/parseVault";
-import { publicClient } from "lib/publicClient";
 import type { Command } from "@commander-js/extra-typings";
-import { processEvents } from "core/processEvents";
+import { lagoonQuery } from "lib/computationApi";
+import type { Vault } from "types/Vault";
+
+type Tx = { blockNumber: number; timestamp: number };
+
+// Fetch every transaction of the given types for a vault, paging through the API.
+async function fetchTxs(
+  vault: Vault,
+  types: string[],
+  extraFilter = ""
+): Promise<Tx[]> {
+  const out: Tx[] = [];
+  const PAGE = 1000;
+  for (let skip = 0; ; skip += PAGE) {
+    const data = await lagoonQuery<{ transactions: { items: Tx[] } }>(
+      `{ transactions(where:{ chainId_eq:${vault.chainId}, vault_in:["${
+        vault.address
+      }"], type_in:[${types.join(",")}]${extraFilter} },
+         orderBy:blockNumber, orderDirection:asc, first:${PAGE}, skip:${skip}){
+        items{ blockNumber timestamp } } }`
+    );
+    const items = data.transactions.items;
+    out.push(...items);
+    if (items.length < PAGE) break;
+  }
+  return out;
+}
 
 export function setBlocksCommand(command: Command) {
   command
@@ -22,69 +47,54 @@ export function setBlocksCommand(command: Command) {
     )
     .option(
       "--toBlock <number>",
-      "Search up to this block number (inclusive). Defaults to the latest block\n"
-    )
-    .addHelpText(
-      "after",
-      `
-Examples:
-  $ fees-computation-cli find-blocks 1:0x123...                    # Find all fee distribution blocks
-  $ fees-computation-cli find-blocks 1:0x123... --fromBlock 1000000 # Find blocks from block 1000000
-  $ fees-computation-cli find-blocks 1:0x123... --toBlock 1001000   # Find blocks up to block 1001000
-  $ fees-computation-cli find-blocks 1:0x123... -d                 # Find blocks since last fee receiver transfer
-    `
+      "Search up to this block number (inclusive). Defaults to the latest indexed block\n"
     )
     .action(async (vault, options) => {
-      const client = publicClient[vault.chainId];
-      if (!options.toBlock) {
-        options.toBlock = (
-          await client.getBlock({ blockTag: "latest" })
-        ).number.toString();
-      }
-
-      const result = await processEvents({
-        fromBlock: BigInt(options.fromBlock),
-        toBlock: BigInt(options.toBlock),
-        rebateDeals: [],
-        readable: false,
-        vault,
-        strictBlockNumberMatching: false,
-      });
-
-      const feeReceiverTransfersFrom = result.feeReceiverTransfersFrom.map((t) => {
-        return {
-          blockNumber: t.blockNumber,
-          type: "Fee receiver sent shares",
-          blockTimestamp: t.blockTimestamp,
-        };
-      });
-
-      const totalAssetsUpdateds = result.events.totalAssetsUpdateds
-        .filter(
-          (ev) =>
-            ev.blockNumber >= options.fromBlock! &&
-            ev.blockNumber <= options.toBlock!
-        )
-        .map((e) => ({
-          blockNumber: e.blockNumber,
-          type: "Total assets updated",
-          blockTimestamp: e.blockTimestamp,
-        }));
-
-      // Combine and sort all events chronologically
-      const allEvents = [...totalAssetsUpdateds, ...feeReceiverTransfersFrom].sort(
-        (a, b) => Number(a.blockNumber) - Number(b.blockNumber)
+      // The fee receiver can be read from current vault state; transfers from it
+      // mark fee distributions. ponytail: uses the current fee receiver only — a
+      // vault that changed receivers would miss transfers from the old one.
+      const vaultData = await lagoonQuery<{
+        vaults: { items: { state: { roles: { feeReceiver: string } } }[] };
+      }>(
+        `{ vaults(where:{ chainId_eq:${vault.chainId}, address_in:["${vault.address}"] }){
+          items{ state{ roles{ feeReceiver } } } } }`
       );
+      const feeReceiver = vaultData.vaults.items[0]?.state.roles.feeReceiver;
 
-      console.log(`From ${options.fromBlock}`);
+      const [totalAssetsUpdateds, feeReceiverTransfers] = await Promise.all([
+        fetchTxs(vault, ["TotalAssetsUpdated"]),
+        feeReceiver
+          ? fetchTxs(vault, ["Transfer"], `, transfer_from_in:["${feeReceiver}"]`)
+          : Promise.resolve([]),
+      ]);
+
+      const fromBlock = Number(options.fromBlock);
+      const allBlocks = [...totalAssetsUpdateds, ...feeReceiverTransfers].map(
+        (t) => t.blockNumber
+      );
+      const toBlock = options.toBlock
+        ? Number(options.toBlock)
+        : Math.max(fromBlock, ...allBlocks);
+
+      const allEvents = [
+        ...totalAssetsUpdateds.map((t) => ({ ...t, type: "Total assets updated" })),
+        ...feeReceiverTransfers.map((t) => ({
+          ...t,
+          type: "Fee receiver sent shares",
+        })),
+      ]
+        .filter((e) => e.blockNumber >= fromBlock && e.blockNumber <= toBlock)
+        .sort((a, b) => a.blockNumber - b.blockNumber);
+
+      console.log(`From ${fromBlock}`);
       console.log("\nEvents in chronological order:");
       allEvents.forEach((event) =>
         console.log(
-          `${new Date(Number(event.blockTimestamp) * 1000).toDateString()} - ${
+          `${new Date(event.timestamp * 1000).toDateString()} - ${
             event.blockNumber
           } - ${event.type}`
         )
       );
-      console.log(`\nTo ${options.toBlock}`);
+      console.log(`\nTo ${toBlock}`);
     });
 }

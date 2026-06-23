@@ -1,13 +1,15 @@
-import { publicClient } from "lib/publicClient";
-import type { Command } from "@commander-js/extra-typings";
-import { preprocessEvents } from "core/preprocessEvents";
-import type { DepositRequest, DepositRequestCanceled } from "../../gql/graphql";
-import { getAddress, type Address } from "viem";
-import { fetchAllVaultEvents } from "utils/fetchVaultEvents";
-import { generateVault } from "core/vault";
 import { parseVaultArgument } from "parsing/parseVault";
-import { LagoonVaultAbi } from "abis/VaultABI";
-import { fetchVaultVersion } from "utils/fetchVaultVersion";
+import type { Command } from "@commander-js/extra-typings";
+import { lagoonQuery } from "lib/computationApi";
+import type { Vault } from "types/Vault";
+
+type UserItem = {
+  address: string;
+  vaultPositions: {
+    vault: { address: string };
+    state: { claimableDeposit: { assets: string } | null };
+  }[];
+};
 
 export function setControllersCommand(command: Command) {
   command
@@ -19,84 +21,34 @@ export function setControllersCommand(command: Command) {
       parseVaultArgument
     )
     .description(
-      "Finds all controllers that have a claimable deposit request. Use this command if you want to get the args for claimSharesOnBehalf().\n"
-    )
-    .option(
-      "-b, --block <number>",
-      "Block number at which the snapshot is taken. If not provided, the latest is used\n"
+      "Finds all controllers that have a claimable deposit request (settled but not yet claimed). Use this command to get the args for claimSharesOnBehalf().\n"
     )
     .addHelpText(
       "after",
       `
 Examples:
-  $ fees-computation-cli find-claimable-controllers 1:0x123...                    # Find all claimable controllers
+  $ fees-computation-cli find-claimable-controllers 1:0x123...
     `
     )
-    .action(async (vault, options) => {
-      const client = publicClient[vault.chainId];
-      const toBlock = options.block ? BigInt(options.block) : (
-        await client.getBlock({ blockTag: "latest" })
-      ).number;
-
-      const version = await fetchVaultVersion({
-        chainId: vault.chainId,
-        address: vault.address,
-        block: toBlock,
-      });
-      if (version === "v0.6.0") {
-        throw new Error(
-          `Vault ${vault.address} on chain ${vault.chainId} is at version v0.6.0 at block ${toBlock}. This tool does not support v0.6.0 vaults. Use an earlier block (before the upgrade) or wait for support. ETA: middle of May 2026`
+    .action(async (vault: Vault) => {
+      const claimable: string[] = [];
+      const PAGE = 1000;
+      for (let skip = 0; ; skip += PAGE) {
+        const data = await lagoonQuery<{ users: { items: UserItem[] } }>(
+          `{ users(where:{ chainId_eq:${vault.chainId}, vault_in:["${vault.address}"] }, first:${PAGE}, skip:${skip}){
+            items{ address vaultPositions{ vault{ address } state{ claimableDeposit{ assets } } } } } }`
         );
+        const items = data.users.items;
+        for (const u of items) {
+          const pos = u.vaultPositions.find(
+            (p) => p.vault.address.toLowerCase() === vault.address.toLowerCase()
+          );
+          if (pos?.state.claimableDeposit && BigInt(pos.state.claimableDeposit.assets) > 0n)
+            claimable.push(u.address);
+        }
+        if (items.length < PAGE) break;
       }
 
-      const vaultEvents = await fetchAllVaultEvents({
-        chainId: vault.chainId,
-        vaultAddress: vault.address,
-        toBlock: toBlock,
-      });
-
-      const vaultState = await generateVault({
-        vault,
-      });
-
-      let events = preprocessEvents({
-        events: vaultEvents,
-        addresses: {
-          silo: vaultState.silo,
-          vault: vault.address,
-        },
-      }).filter(
-        (e) =>
-          e.__typename === "DepositRequest" ||
-          e.__typename === "DepositRequestCanceled" ||
-          e.__typename === "TotalAssetsUpdated"
-      ) as (DepositRequest | DepositRequestCanceled)[];
-
-      const controllersIntention = events.reduce((map, event) => {
-        const controller = (event as DepositRequest | DepositRequestCanceled)
-          .controller;
-        if (controller) {
-          map[controller] = event.__typename === "DepositRequest";
-        }
-        return map;
-      }, {} as Record<Address, boolean>);
-
-      const controllers = Object.entries(controllersIntention)
-        .filter(([, value]) => value)
-        .map(([address]) => address);
-      
-      const controllersToClaim = (await Promise.all(controllers.map(async (c) => {
-        const claimableDepositRequest = await client.readContract({
-          address: vault.address,
-          abi: LagoonVaultAbi,
-          functionName: "claimableDepositRequest",
-          args: [0n, getAddress(c)],
-          blockTag: "latest",
-        });
-        return { address: c, claimableDepositRequest };
-      }))).filter((c) => c.claimableDepositRequest > 0n).map((c) => c.address);
-
-      
-      console.log("[" + controllersToClaim.map((c) => '"' + c + '"').join(", ") + "]");
+      console.log("[" + claimable.map((c) => `"${c}"`).join(", ") + "]");
     });
 }

@@ -5,14 +5,13 @@ import { setControllersCommand } from "cli/find-claimable-controllers";
 import { setPeriodFeeCommand } from "cli/period-fee";
 import { setInterpolateCommand } from "cli/interpolate";
 import { setUserPointsCommand } from "cli/user-points";
-import { setUserBalanceCommand } from "cli/user-balance";
 
 export const computationProgram = new Command();
 
 computationProgram
   .name("fees-computation-cli")
   .description(
-    "A general purpose cli to compute data of a Lagoon vault using its events."
+    "A general purpose cli to compute data of a Lagoon vault via the Lagoon computation API."
   )
   .version("0.0.1");
 
@@ -22,6 +21,5 @@ setUserPointsCommand(computationProgram);
 setControllersCommand(computationProgram);
 setPeriodFeeCommand(computationProgram);
 setInterpolateCommand(computationProgram);
-setUserBalanceCommand(computationProgram);
 
 computationProgram.parse();
