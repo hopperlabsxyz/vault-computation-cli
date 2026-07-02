@@ -5,6 +5,7 @@ import { setControllersCommand } from "cli/find-claimable-controllers";
 import { setPeriodFeeCommand } from "cli/period-fee";
 import { setInterpolateCommand } from "cli/interpolate";
 import { setUserPointsCommand } from "cli/user-points";
+import { setRefundHwmCommand } from "cli/refund-hwm";
 
 export const computationProgram = new Command();
 
@@ -18,6 +19,7 @@ computationProgram
 setBlocksCommand(computationProgram);
 setUserFeeCommand(computationProgram);
 setUserPointsCommand(computationProgram);
+setRefundHwmCommand(computationProgram);
 setControllersCommand(computationProgram);
 setPeriodFeeCommand(computationProgram);
 setInterpolateCommand(computationProgram);

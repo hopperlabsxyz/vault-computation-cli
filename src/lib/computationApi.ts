@@ -56,6 +56,23 @@ export type UserPointsResult = {
   rows: { account: string; points: Record<string, number> }[];
 };
 
+export type RefundRow = {
+  account: string;
+  perfFees: string;
+  refund: string;
+  refundGross: string;
+};
+
+export type RefundHwmResult = {
+  chainId: number;
+  vault: string;
+  decimals: number;
+  assetDecimals: number;
+  pricePerShare: string;
+  highWaterMark: string;
+  rows: RefundRow[];
+};
+
 // POST a computation request and return the parsed JSON body. On a non-2xx the
 // backend sends { message }, which we surface verbatim so the CLI prints the
 // same clear errors it used to throw locally (invalid block, zero supply, ...).
@@ -86,6 +103,8 @@ export const computationApi = {
     post<UserFeesResult>(`/computation/${chainId}/${vault}/user-fees`, body),
   userPoints: (chainId: number, vault: string, body: object) =>
     post<UserPointsResult>(`/computation/${chainId}/${vault}/user-points`, body),
+  refundHwm: (chainId: number, vault: string, body: object) =>
+    post<RefundHwmResult>(`/computation/${chainId}/${vault}/refund-hwm`, body),
 };
 
 // GraphQL query against the Lagoon indexer (api.lagoon.finance/query).
