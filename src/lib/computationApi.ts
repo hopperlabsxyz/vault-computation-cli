@@ -1,9 +1,9 @@
 import { get } from "env-var";
 
-// Default points at the preview; override with COMPUTATION_API_URL. Swapped to
-// the real endpoint before the PR.
+// Default points at the Lagoon backend (computation API + GraphQL); override with
+// COMPUTATION_API_URL to target another environment.
 const BASE_URL = get("COMPUTATION_API_URL")
-  .default("https://api.lagoon.finance")
+  .default("https://api-pprod.lagoon.finance")
   .asString();
 
 export type PeriodFeeRow = {
