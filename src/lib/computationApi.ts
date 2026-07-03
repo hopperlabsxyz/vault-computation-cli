@@ -50,6 +50,18 @@ export type UserFeesResult = {
   rows: UserFeeRow[];
 };
 
+export type UserBalanceRow = {
+  account: string;
+  balance: string;
+};
+
+export type UserBalancesResult = {
+  chainId: number;
+  vault: string;
+  decimals: number;
+  rows: UserBalanceRow[];
+};
+
 export type UserPointsResult = {
   chainId: number;
   vault: string;
@@ -102,6 +114,11 @@ export const computationApi = {
     post<PeriodFeesResult>(`/computation/${chainId}/${vault}/period-fees`, body),
   userFees: (chainId: number, vault: string, body: object) =>
     post<UserFeesResult>(`/computation/${chainId}/${vault}/user-fees`, body),
+  userBalances: (chainId: number, vault: string, body: object) =>
+    post<UserBalancesResult>(
+      `/computation/${chainId}/${vault}/user-balances`,
+      body
+    ),
   userPoints: (chainId: number, vault: string, body: object) =>
     post<UserPointsResult>(`/computation/${chainId}/${vault}/user-points`, body),
   refundHwm: (chainId: number, vault: string, body: object) =>

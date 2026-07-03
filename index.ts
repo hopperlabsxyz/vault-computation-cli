@@ -1,6 +1,7 @@
 import { Command } from "@commander-js/extra-typings";
 import { setBlocksCommand } from "cli/find-blocks";
 import { setUserFeeCommand } from "cli/user-fee";
+import { setUserBalanceCommand } from "cli/user-balance";
 import { setControllersCommand } from "cli/find-claimable-controllers";
 import { setPeriodFeeCommand } from "cli/period-fee";
 import { setInterpolateCommand } from "cli/interpolate";
@@ -18,6 +19,7 @@ computationProgram
 
 setBlocksCommand(computationProgram);
 setUserFeeCommand(computationProgram);
+setUserBalanceCommand(computationProgram);
 setUserPointsCommand(computationProgram);
 setRefundHwmCommand(computationProgram);
 setControllersCommand(computationProgram);
