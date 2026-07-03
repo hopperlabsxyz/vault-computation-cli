@@ -9,6 +9,8 @@ RPC or subgraph access required.
 - Per-period fee reports (management / performance / protocol fees, vpps,
   interpolated end-of-month snapshots)
 - Per-user fee reports with referral rewards and OTC fee rebates
+- Per-user share balances at a snapshot block
+- Per-wallet performance-fee refund after a high-water-mark reset
 - Points repartition over a time series
 - Linear interpolation of a CSV time series (offline utility)
 - CSV report generation, raw or human-readable (`-r`)
@@ -35,7 +37,7 @@ COMPUTATION_API_URL=https://my-backend.example bun run period-fee ...
 ## Commands
 
 List everything with `bun run help`. Each command takes a `chainId:VaultAddress`
-argument; the three computation commands also accept `--silent` and `-o/--output`.
+argument; the computation commands also accept `--silent` and `-o/--output`.
 
 | Command | Alias | Description |
 | --- | --- | --- |
@@ -43,7 +45,9 @@ argument; the three computation commands also accept `--silent` and `-o/--output
 | `find-claimable-controllers` | `fcc` | Controllers with a claimable deposit request |
 | `period-fee` | `pf` | Per-period fee report |
 | `user-fee` | `uf` | Per-user fee report (referrals, rebates) |
+| `user-balance` | `ub` | Per-user share balances at a snapshot block |
 | `user-points` | `up` | Points repartition |
+| `refund-hwm` | `rhwm` | Per-wallet performance-fee refund after an HWM reset |
 | `interpolate` | `ip` | Linear interpolation of a CSV time series |
 
 ### Find Blocks (fb)
@@ -96,6 +100,19 @@ Per-user balances, fees, referrer and cashback. `-f/-t` must be
   wildcard for any vault)
 - `--referrals <csv>` — `chainId,vault,referrer,referred,rewardRateBps,rebateRateBps`
 
+### User Balance (ub)
+
+```bash
+bun run user-balance <chainId:VaultAddress> [-b <block>] [-r]
+```
+
+Per-user share balances at a snapshot block. `-b/--block` sets the snapshot
+block; omit it for the latest available state (any block works — no
+`totalAssetsUpdated` boundary required). `-r` formats balances in human units;
+without it, they are raw wei. Columns:
+
+`chainId,vault,wallet,balance`
+
 ### User Points (up)
 
 ```bash
@@ -105,6 +122,31 @@ bun run user-points <chainId:VaultAddress> --points points.csv
 Distributes points to shareholders proportionally at each timestamp. `--points`
 is a CSV of `timestamp,amount,name`. For accuracy, use timestamps right before
 `totalAssetsUpdated` events.
+
+### Refund HWM (rhwm)
+
+```bash
+bun run refund-hwm <chainId:VaultAddress> [-f <fromBlock>] [-t <toBlock>] [-r] \
+  [-d deals.csv] [--hwm overrides.csv]
+```
+
+Per-wallet performance fees to refund after a high-water-mark reset (v0.6.0
+`resetHighWaterMark`). A personal HWM is tracked per deposit lot; fees charged on
+a price recovery below that mark were paid before the drawdown and are refunded
+by the fee receiver. `-f/-t` must be `totalAssetsUpdated` block numbers; the
+usual workflow runs it at each settlement with `-f` = the last settlement already
+refunded. Amounts are raw vault shares (`-r` for human units). Columns:
+
+`chainId,vault,wallet,perfFees,refund,refundGross,highWaterMark,pricePerShare`
+
+Optional inputs:
+
+- `-d, --deals <csv>` — `chainId,vault,owner,rebateRateBps`; a deal reduces the
+  refund to the perf fees the wallet still bears after its rebate (no double
+  refund). A `0,0x0` row is a wildcard for any vault.
+- `--hwm <csv>` — `wallet,hwmPricePerShare` personal HWM overrides for LPs
+  migrating with a historical drawdown from outside the vault (applied once, on
+  the wallet's first acquisition).
 
 ### Interpolate (ip)
 
