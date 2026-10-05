@@ -1,0 +1,41 @@
+{
+  "name": "fees-computation-cli",
+  "version": "1.0.0",
+  "engines": {
+    "bun": ">=1.0.0"
+  },
+  "description": "Compute Lagoon vault data via the Lagoon computation API.",
+  "main": "index.js",
+  "scripts": {
+    "help": "bun run index.ts help",
+    "user-fee": "bun index.ts user-fee",
+    "uf": "bun index.ts user-fee",
+    "user-balance": "bun index.ts user-balance",
+    "ub": "bun index.ts user-balance",
+    "user-points": "bun index.ts user-points",
+    "up": "bun index.ts user-points",
+    "refund-hwm": "bun index.ts refund-hwm",
+    "rhwm": "bun index.ts refund-hwm",
+    "period-fee": "bun index.ts period-fee",
+    "pf": "bun index.ts period-fee",
+    "find-blocks": "bun index.ts find-blocks",
+    "fb": "bun index.ts find-blocks",
+    "find-claimable-controllers": "bun index.ts find-claimable-controllers",
+    "fcc": "bun index.ts find-claimable-controllers",
+    "interpolate": "bun index.ts interpolate",
+    "ip": "bun index.ts interpolate"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/bun": "^1.2.4",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "@commander-js/extra-typings": "^13.1.0",
+    "commander": "^13.1.0",
+    "env-var": "^7.5.0",
+    "viem": "^2.40.3"
+  }
+}
