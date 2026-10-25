@@ -113,18 +113,16 @@ function interpolateEveryX({start, end, seconds, precision}:{start: Dot, end: Do
   const slope = (amount1 - amount0) / (timestamp1 - timestamp0);
   const points: Dot[] = new Array();
 
-  for (let x = timestamp0; x <= timestamp1; x += seconds) {
+  for (let x = timestamp0; x < timestamp1; x += seconds) {
     const amount = amount0 + slope * (x - timestamp0);
     points.push({
       timestamp: x,
       amount: Number(amount.toFixed(precision)),
     });
-
-    if (x + seconds > timestamp1) {
-      points.push(end);
-      break;
-    }
   }
+  // the end point closes the series exactly once, whether or not the span
+  // is a multiple of `seconds`
+  points.push(end);
   return points;
 }
 
